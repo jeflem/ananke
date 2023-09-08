@@ -1,0 +1,13 @@
+{% extends "base.html.jinja" %}
+{% block content %}
+<h1>Kore</h1> 
+
+<p>Course {{ data.course_id }} successfully removed.</p>
+
+<p>Attention: As soon as you login to the hub via corresponding LMS course the nbgrader course will be recreated.</p>
+
+<p style="font-weight: bold;">The hub is being restarted. Wait 10 seconds before you go on.</p>
+
+<p><a href="{{ data.prefix }}">back to home</a></p>
+
+{% endblock %}

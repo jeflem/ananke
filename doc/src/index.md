@@ -1,4 +1,4 @@
-# Ananke Jupyter Distribution
+# Ananke documentation
 
 The Ananke project provides preconfigured [JupyterHub](https://jupyter.org/hub) images for [Podman](https://podman.io) (a [Docker](https://www.docker.com)-like containerization tool) with a focus on integrating [JupyterLab](https://jupyter.org) and [nbgrader](https://nbgrader.readthedocs.io) into learning management systems (LMS) like [Moodle](https://moodle.org), [Canvas](https://www.instructure.com/canvas) and many other.
 
@@ -8,8 +8,6 @@ Target group are administrators of small to medium sized JupyterHubs used in tea
 * easy setup and operation for instructors and students,
 * advice and preconfiguration for administrators,
 * flexibility to implement different application scenarios.
-
-Also have a look at [Ananke website](https://gauss.fh-zwickau.de/ananke).
 
 ## Overall architecture
 
@@ -26,9 +24,13 @@ Following container images are provided by the Ananke project:
 * `ananke-base` (JupyterHub with LTI login and nbgitpuller)
 * `ananke-nbgrader` (like `ananke-base` plus LTI integrated nbgrader)
 
-## Documentation
+## Where to go from here?
 
-See `doc` subdirectory. There's also an [HTML rendering of the doc](https://gauss.fh-zwickau.de/ananke/doc).
+This documentation of the Ananke project aims at a wide audience including server administrators as well as instructors and students. Read [](what-read) to find out what kind of user you are. Then go on to the corresponding chapter targeting your role and needs.
+
+For source code see [Ananke's GitHub repo](https://github.com/jeflem/ananke).
+
+For general information and download see [Ananke website](https://gauss.fh-zwickau.de/ananke).
 
 ## Contact and contributors
 
@@ -38,3 +40,28 @@ The project team currently consists of:
 * [Jens Flemming](https://www.fh-zwickau.de/~jef19jdw)
 * [Konrad Schöbel](https://fdit.htwk-leipzig.de/fakultaet-dit/personen/professoren/prof-dr-konrad-schoebel)
 * [Marcus Wittig](https://www.fh-zwickau.de/?id=5361)
+
+## Funding
+
+The Ananke project started in 2022 as a government-funded project. Funding is provided by [Saxon State Ministry of Education and Cultural Affairs](https://www.smk.sachsen.de/) (Germany) till end of 2023.
+
+For legal reasons we state the following (funding information in German):
+
+> Dieses Projekt wurde durch den [Arbeitskreis E-Learning](https://bildungsportal.sachsen.de/portal/parentpage/institutionen/arbeitskreis-e-learning-der-lrk-sachsen/) der [Landesrektorenkonferenz Sachsen](https://www.lrk-sachsen.de/) im Rahmen der sächsische E-Learning-Landesinitiative gefördert. Die sächsische E-Learning-Landesinitiative wird mitfinanziert durch Steuermittel auf der Grundlage des vom [Sächsischen Landtag](https://www.landtag.sachsen.de) beschlossenen Haushaltes.
+
+## Table of contents
+
+```{toctree}
+---
+maxdepth: 1
+---
+
+what-read
+hub-users
+instructors
+hub-admins
+container-admins
+host-admins
+developers
+```
+ 

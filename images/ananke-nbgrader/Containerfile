@@ -1,0 +1,62 @@
+FROM ananke-base
+
+#ARG NBGRADER_VERSION=0.9.0a1
+
+# install nbgrader
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda activate jhub; \
+#    pip install git+https://github.com/jupyter/nbgrader.git@v$NBGRADER_VERSION"
+    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.1"
+
+# install additional packages
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda activate jhub; \
+    conda install -y -c conda-forge flask flask-session jwcrypto pycryptodome gunicorn"
+
+# copy config files
+COPY ./assets/nbgrader_config.py /opt/conda/envs/jhub/etc/jupyter/nbgrader_config.py
+
+# configure nbgrader
+# nbgrader exchange directory
+RUN mkdir /opt/nbgrader_exchange && \
+    chmod 777 /opt/nbgrader_exchange
+
+# set nbgrader_exchange permissions in boot script
+# (permissions may be overwritten by mount at container creation)
+RUN echo "chmod 777 /opt/nbgrader_exchange" >> /opt/boot.sh
+
+# nbgrader log file
+RUN touch /opt/conda/envs/jhub/share/jupyter/nbgrader.log && \
+    chmod 666 /opt/conda/envs/jhub/share/jupyter/nbgrader.log
+
+# nbgrader extensions
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda activate jhub; \
+    jupyter server extension disable --sys-prefix nbgrader.server_extensions.formgrader; \
+    jupyter server extension disable --sys-prefix nbgrader.server_extensions.course_list; \
+    jupyter labextension disable --level=sys_prefix nbgrader:formgrader; \
+    jupyter labextension disable --level=sys_prefix nbgrader:course-list; \
+    jupyter labextension disable --level=sys_prefix nbgrader:create-assignment"
+
+#jupyter server extension disable --sys-prefix nbgrader.server_extensions.assignment_list
+#jupyter server extension disable --sys-prefix nbgrader.server_extensions.validate_assignment
+#jupyter labextension disable --level=sys_prefix nbgrader:assignment-list
+#jupyter labextension disable --level=sys_prefix nbgrader:validate-assignment
+
+# copy Kore
+COPY ./assets/kore /opt/kore
+RUN chmod -R go-rwx /opt/kore
+
+# extend boot script to create LTI keys
+RUN echo "cd /opt/kore" >> /opt/boot.sh && \
+    echo "mkdir -p keys" >> /opt/boot.sh && \
+    echo "source /opt/conda/etc/profile.d/conda.sh" >> /opt/boot.sh && \
+    echo "conda activate jhub" >> /opt/boot.sh && \
+    echo "python make_keys.py" >> /opt/boot.sh && \
+    echo "chmod 600 keys/lti_key" >> /opt/boot.sh
+
+WORKDIR /
+
+EXPOSE 8000
+
+ENTRYPOINT ["/lib/systemd/systemd"]

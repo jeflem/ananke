@@ -1,0 +1,43 @@
+{% extends "base.html.jinja" %}
+{% block content %}
+<h1>Kore</h1> 
+
+<p>Manage your nbgrader courses.</p>
+
+<p>
+You logged in as user {{ data.username }}
+(<span style="font-weight: bold;">{{ data.first_name }} {{ data.last_name }}</span>)
+from LMS course
+<span style="font-weight: bold;">{{ data.login_course_title }}</span>, nbgrader course ID {{ data.login_course_id }}.
+</p>
+
+{% for course_id in data.course_ids %}
+    <hr />
+    <p>Course <span style="font-weight: bold;">{{ course_id }}</span></p>
+    <p>instructors:<ul>
+        {% for instructor in data.instructors[course_id] %}
+            <li>{{ instructor }}</li>
+        {% endfor %}
+    </ul></p>
+    {% if course_id == data.login_course_id %}
+        <p><a href="send_all">send all grades to LMS</a></p>
+    {% else %}
+        <p>If you want to send this course's grades to the LMS, login to the hub via corresponding LMS course.</p>
+    {% endif %}
+    <p><a href="backup_course?course_id={{ course_id }}">backup course</a> (copy all course files to my home directory, including submissions, gradebook,...)</p>
+    <p>
+        <form method="get" action="import_assignments">
+            import assignments from directory: /home/{{ data.username }}/
+            <input type="text" name="path" />
+            <input type="hidden" name="course_id" value="{{ course_id }}" />
+            <button type="submit">import</button>
+            (only works if there aren't any assignments in the course)
+        </form>
+    </p>
+    <p><a href="reset_course?course_id={{ course_id }}">reset course</a> (remove all students, submissions,... only keep assignment source files)</p>
+    <p><a href="remove_course?course_id={{ course_id }}">remove course from hub</a></p>
+{% endfor %}
+
+<!--<hr />
+<p>LTI state: {{ data.lti_state }}</p>-->
+{% endblock %}

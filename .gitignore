@@ -1,0 +1,8 @@
+/.idea
+*.iml
+*.log
+*.xml
+*.image
+*.tgz
+20_users.py
+30_lms.py
