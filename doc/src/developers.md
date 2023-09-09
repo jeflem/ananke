@@ -136,6 +136,7 @@ Steps for new Ananke release:
    * `podman save -o ananke-nbgrader.tar ananke-nbgrader`
    * `gzip -9 ananke-nbgrader.tar`
 7. Upload tar files to webserver.
+8. Upload HTML doc to webserver.
 
 ## Links
 

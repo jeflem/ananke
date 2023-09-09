@@ -7,7 +7,7 @@ project = 'Ananke'
 copyright = '2023, Ananke Team'
 author = 'Ananke Team'
 version = ''
-release = '0.1'
+release = '0.2'
 
 extensions = ['myst_parser']
 
