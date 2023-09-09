@@ -8,12 +8,22 @@ import hashlib
 def course_id_to_grader_user(course_id):
     
     return course_id[0:32]
-    #h = hashlib.shake_256(course_id.encode())
-    #return ('c-' + h.hexdigest(4) + '-' + '-'.join(course_id.split('-')[3:]))[:32]    # Debian usernames are limited to 32 characters
 
 
-def make_course_id(lti_state):
-    ''' Make course ID, course title, grader username from LTI data.'''
+def make_course_id(lti_state: dict) -> tuple[str, str, str]:
+    """
+    Make course ID, course title, grader username from LTI data.
+
+    Parameters
+    ----------
+    lti_state : dict
+        The authentication dict for the user.
+
+    Returns
+    -------
+    tuple[str, str, str]
+        The returned tuple contains the course id, course title and the grader user as strings.
+    """
     
     deployment_id = lti_state.get('https://purl.imsglobal.org/spec/lti/claim/deployment_id', '0')
     resource_link_id = lti_state.get('https://purl.imsglobal.org/spec/lti/claim/resource_link').get('id')

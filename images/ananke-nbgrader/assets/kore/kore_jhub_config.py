@@ -1,16 +1,21 @@
 # configure nbgrader and Kore
 
+import asyncio
+import fcntl
+import json
 import logging
 import os
-import asyncio
-import re
-import subprocess
-import json
-import fcntl
-import secrets
-import sys
 import pwd
+import re
+import secrets
+import subprocess
+import sys
+from typing import NoReturn
+
+from ltiauthenticator.lti13.auth import LTI13Authenticator
+from ltiauthenticator.lti13.handlers import LTI13CallbackHandler
 from nbgrader.api import Gradebook  # noqa
+from nbgrader.apps import NbGraderAPI  # noqa
 from traitlets.config import Config
 
 sys.path.append('/opt/kore')
@@ -56,25 +61,109 @@ except:
     instructors = []
 logging.debug('found {} instructors'.format(len(instructors)))
 
-# post authentication callback for nbgrader configuration
-async def nbgrader_post_auth(authenticator, handler, authentication):
-    
-    def get_dir_owner(path):
-        ''' Return uid and gid of directory. '''
+# post-authentication callback for nbgrader configuration
+async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13CallbackHandler, authentication: dict) -> bool:
+    """
+    This hook does a multiple of tasks, depending on the parameters from the authentication dict.
+    (1) If the user is an instructor
+    (1.1) ~ and it is the first login of the instructor to the `JupyterHub`, then
+    (1.1.1) the nbgrader extensions get enabled for the instructor and
+    (1.1.1) the user (instructor) is added to the corresponding database.
+    (1.2) ~, then the LTI parameters are written to file.
+
+    (2) The course parameters are generated, see the make_course_id function of the kore_utils.py file.
+
+    (3) Check if a grader for the supplied course is present.
+    (3.1) Where, if the user is an instructor and the grader does not yet exist, then
+    (3.1.1) the grader user is created on the OS,
+    (3.1.2) the nbgrader extensions are enabled,
+    (3.1.3) the nbgrader config is generated and written to file and
+    (3.1.4) the home directory creation and permission relevant task are handled.
+
+    (4) If the user is an instructor and the course is not present as a service on the `JupyterHub`, then
+    (4.1) the course gets added as a service,
+    (4.2) the user (instructor) is added to the formgrade group of the service.
+
+    (5) If the user is a student and the grader exists, then the user (student) gets added to the course.
+
+    (6) Finally a bool is returned which indicates if the `JupyterHub` has to be restarted.
+
+    Parameters
+    ----------
+    authenticator : LTI13Authenticator
+        The JupyterHub LTI 1.3 Authenticator.
+    handler : LTI13CallbackHandler
+        Handles JupyterHub authentication requests responses according to the LTI 1.3 standard.
+    authentication : dict
+        The authentication dict for the user.
+
+    Returns
+    -------
+    bool
+        True if a restart of the JupyterHub is necessary, False otherwise.
+    """
+
+    def get_dir_owner(path) -> tuple[int, int] | tuple[None, None]:
+        """
+        Return uid and gid of given directory.
+
+        Parameters
+        ----------
+        path : str
+            Path to the directory.
+
+        Returns
+        -------
+        tuple[int, int] | tuple[None, None]
+            Depending on the fact if the supplied directory exists, the uid and the gid are returned as tuple of ints, a tuple of None otherwise.
+        """
+
         if os.path.isdir(path):
             info = os.stat(path)
             return info.st_uid, info.st_gid
         else:
             return None, None
     
-    def set_dir_owner(path, uid, gid):
-        ''' Set directory's owner recursively if uid and gid both are not None. '''
+    def set_dir_owner(path: str, uid: int, gid: int) -> NoReturn:
+        """
+        Set directory's owner recursively if uid and gid both are not None.
+
+        Parameters
+        ----------
+        path : str
+            Path to the directory.
+        uid : int
+            The user identifier (uid) of the directory.
+        gid : int
+            The group identifier (gid) of the directory.
+
+        Returns
+        -------
+        NoReturn
+        """
+
         if uid and gid:
             os.system(f'chown -R {uid}:{gid} {path}')
 
-    async def run_as_user(username, cmd, args):
-        ''' Run command as dynamic user in username's home directory.
-            cmd is a string. args is a list of strings. '''
+    async def run_as_user(username: str, cmd: str, args: list[str]) -> NoReturn:
+        """
+        Run command as dynamic user in usernames home directory.
+        cmd is a string. args is a list of strings.
+
+        Parameters
+        ----------
+        username : str
+            The user as which to execute a command.
+        cmd : str
+            The command to be executed.
+        args : list[str]
+            Additional arguments for the supplied command.
+
+        Returns
+        -------
+        NoReturn
+        """
+
         systemd_run = ['systemd-run',
                        '--wait',
                        f'--unit=post-auth-hook-{username}',
@@ -102,12 +191,11 @@ async def nbgrader_post_auth(authenticator, handler, authentication):
         
         # activate nbgrader extensions for instructor
         logging.debug('activating nbgrader extensions for instructor')
-        if is_instructor:
-            uid, gid = get_dir_owner(user_home)
-            await run_as_user(username, 'jupyter', ['server', 'extension', 'enable', '--user', 'nbgrader.server_extensions.course_list'])
-            await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', 'nbgrader:course-list'])
-            await run_as_user(username, 'jupyter', ['labextension', 'enable', '--level=user', 'nbgrader:course-list'])
-            set_dir_owner(user_home, uid, gid)
+        uid, gid = get_dir_owner(user_home)
+        await run_as_user(username, 'jupyter', ['server', 'extension', 'enable', '--user', 'nbgrader.server_extensions.course_list'])
+        await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', 'nbgrader:course-list'])
+        await run_as_user(username, 'jupyter', ['labextension', 'enable', '--level=user', 'nbgrader:course-list'])
+        set_dir_owner(user_home, uid, gid)
 
         # add instructor to list
         instructors.append(username)

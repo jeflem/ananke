@@ -1,12 +1,15 @@
 # Configuration file for jupyterhub.
 
+import fcntl
+import json
 import logging
 import subprocess
-import json
-import fcntl
 from glob import glob
 
-c = get_config()
+from ltiauthenticator.lti13.auth import LTI13Authenticator
+from ltiauthenticator.lti13.handlers import LTI13CallbackHandler
+
+c = get_config()  # noqa
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,7 +42,29 @@ c.Spawner.default_url = '/lab'
 
 c.post_auth_hook_callbacks = []
 
-async def post_auth_callback(authenticator, handler, authentication):
+async def post_auth_callback(authenticator: LTI13Authenticator, handler: LTI13CallbackHandler, authentication: dict) -> dict:
+    """
+    Optional hook to run necessary bootstrapping tasks.
+    If any of these tasks returns `True` the JupyterHub will be restarted.
+
+    Parameters
+    ----------
+    authenticator : LTI13Authenticator
+        The JupyterHub LTI 1.3 Authenticator.
+    handler : LTI13CallbackHandler
+        Handles JupyterHub authentication requests responses according to the LTI 1.3 standard.
+    authentication : dict
+        The authentication dict for the user.
+
+    Returns
+    -------
+    dict
+        The (altered) authentication dict for the user.
+
+    Notes
+    -----
+        The username on Debian has to start with a letter, which is why the letter u is prefixed.
+    """
     
     logging.debug('Running post authentication hooks')
     
@@ -63,9 +88,33 @@ c.Authenticator.post_auth_hook = post_auth_callback
 # write LTI data to logs
 #-------------------------------------------------------------------------------
 
-async def log_lti_data(authenticator, handler, authentication):
+async def log_lti_data(authenticator: LTI13Authenticator, handler: LTI13CallbackHandler, authentication: dict) -> bool:
+    """
+    Additional bootstrapping function to log LTI relevant data.
+    This hook will be called within the post_auth_callback() function and will always return `False`.
+    This behaviour is necessary for the check if a restart is needed, see post_auth_callback().
+
+    Parameters
+    ----------
+    authenticator : LTI13Authenticator
+        The JupyterHub LTI 1.3 Authenticator.
+    handler : LTI13CallbackHandler
+        Handles JupyterHub authentication requests responses according to the LTI 1.3 standard.
+    authentication : dict
+        The authentication dict for the user.
+
+    Returns
+    -------
+    bool
+        Always `False`, as no restart of the JupyterHub is required.
+
+    Notes
+    -----
+        The parameters `handler` and `authentication` have to be supplied, even though they are not accessed.
+    """
     
-    logging.debug('Received following LTI data: ' + str(authentication.get('auth_state')))
+    logging.debug(f'Received following LTI data: {authentication.get("auth_state")}')
+
     return False
 
 c.post_auth_hook_callbacks.append(log_lti_data)
@@ -80,7 +129,30 @@ with open(c.user_data_path) as f:
     user_data = json.load(f)
 logging.debug(str(len(user_data)) + ' users in data base')
 
-async def update_user_data(authenticator, handler, authentication):
+async def update_user_data(authenticator: LTI13Authenticator, handler: LTI13CallbackHandler, authentication: dict) -> False:
+    """
+    Additional bootstrapping function to update the user database if necessary.
+    This hook will be called within the post_auth_callback() function and will always return `False`.
+    This behaviour is necessary for the check if a restart is needed, see post_auth_callback().
+
+    Parameters
+    ----------
+    authenticator : LTI13Authenticator
+        The JupyterHub LTI 1.3 Authenticator.
+    handler : LTI13CallbackHandler
+        Handles JupyterHub authentication requests responses according to the LTI 1.3 standard.
+    authentication : dict
+        The authentication dict for the user.
+
+    Returns
+    -------
+    bool
+        Always `False`, as no restart of the JupyterHub is required.
+
+    Notes
+    -----
+        The parameters `handler` and `authentication` have to be supplied, even though they are not accessed.
+    """
     
     username = authentication.get('name')
     logging.debug(f'Looking up user {username} in data base.')

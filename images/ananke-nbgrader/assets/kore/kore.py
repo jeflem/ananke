@@ -1,26 +1,25 @@
+import datetime
+import json
+from jwcrypto.jwk import JWK
+import logging
+import os
+import re
+import secrets
+import subprocess
+import time
+from functools import wraps
+from tempfile import mkdtemp
+
+import jwt
+import requests
 from flask import Flask
+from flask import jsonify as flask_jsonify
+from flask import make_response
+from flask import redirect as flask_redirect
+from flask import render_template
 from flask import request as flask_request
 from flask import session as flask_session
-from flask import jsonify as flask_jsonify
-from flask import redirect as flask_redirect
-from flask import make_response
 from flask_session import Session
-from flask import render_template
-
-from functools import wraps
-import secrets
-import json
-import os
-import logging
-import re
-import time
-from jwcrypto.jwk import JWK
-import requests
-import jwt
-import datetime
-from tempfile import mkdtemp
-import subprocess
-
 from jupyterhub.services.auth import HubOAuth
 from nbgrader.api import Gradebook
 from traitlets.config import Config
@@ -69,7 +68,9 @@ kore_token = os.environ['JUPYTERHUB_API_TOKEN']
 auth = HubOAuth(api_token=kore_token, cache_max_age=60)
 
 def authenticated(f):
-    """Decorator for authenticating with the Hub via OAuth"""
+    """
+    Decorator function for authenticating with the Hub via OAuth.
+    """
 
     @wraps(f)
     def decorated(*args, **kwargs):

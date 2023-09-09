@@ -1,6 +1,7 @@
 # create new key pair for LTI communication
 
 import json
+
 from Crypto.PublicKey import RSA
 from jwcrypto.jwk import JWK
 
