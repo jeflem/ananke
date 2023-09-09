@@ -115,17 +115,27 @@ If the user's lab is running (and lab may run even if the user is logged out) an
 
 See [Dynamic Users with systemd](https://0pointer.net/blog/dynamic-users-with-systemd.html) for more details.
 
-## Deploying Ananke images
+## Release
 
-Ananke images may be deployed in form of tar files. To create such an image tar, run
-```
-podman save -o ananke.tar IMAGE:TAG
-```
+Steps for new Ananke release:
 
-Load an image with
-```
-podman load -i ananke.tar
-```
+1. Disable debug mode if necessary:
+   * `images/ananke-base/assets/jupyterhub_config.py`
+   * `images/ananke-nbgrader/assets/kore/kore.py`
+   * `images/ananke-nbgrader/assets/kore/kore_jhub_config.py` (two times)
+   * `ananke-base-hub/runtime/jupyterhub_config.d/00_base.py`
+   * `ananke-nbgrader-hub/runtime/jupyterhub_config.d/00_base.py`
+2. Disable output of LTI state on Kore home page if necessary:
+   * `images/ananke-nbgrader/assets/kore/templates/home.html.jinja`
+3. Update version string in doc (`doc/src/conf.py`) and render HTML.
+4. Merge `dev` branch into `main` branch.
+5. Create release on GitHub.
+6. Make image tar files:
+   * `podman save -o ananke-base.tar ananke-base`
+   * `gzip -9 ananke-base.tar`
+   * `podman save -o ananke-nbgrader.tar ananke-nbgrader`
+   * `gzip -9 ananke-nbgrader.tar`
+7. Upload tar files to webserver.
 
 ## Links
 
