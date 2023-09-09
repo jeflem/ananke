@@ -7,8 +7,9 @@ import hashlib
 
 def course_id_to_grader_user(course_id):
     
-    h = hashlib.shake_256(course_id.encode())
-    return ('c-' + h.hexdigest(4) + '-' + '-'.join(course_id.split('-')[3:]))[:32]    # Debian usernames are limited to 32 characters
+    return course_id[0:32]
+    #h = hashlib.shake_256(course_id.encode())
+    #return ('c-' + h.hexdigest(4) + '-' + '-'.join(course_id.split('-')[3:]))[:32]    # Debian usernames are limited to 32 characters
 
 
 def make_course_id(lti_state):
@@ -18,21 +19,20 @@ def make_course_id(lti_state):
     resource_link_id = lti_state.get('https://purl.imsglobal.org/spec/lti/claim/resource_link').get('id')
     resource_link_title = lti_state.get('https://purl.imsglobal.org/spec/lti/claim/resource_link').get('title')
     context_title = lti_state.get('https://purl.imsglobal.org/spec/lti/claim/context', {}).get('title')
+
+    h = hashlib.shake_256(f'{deployment_id}-{resource_link_id}'.encode())
+    course_id = 'c-' + h.hexdigest(8)
+    grader_user = course_id_to_grader_user(course_id)
+
     if resource_link_title and context_title:
         course_title = f'{context_title} - {resource_link_title}'
-        course_id = resource_link_title
     elif resource_link_title:
         course_title = resource_link_title
-        course_id = resource_link_title
     elif context_title:
         course_title = context_title
-        course_id = context_title
     else:
         course_title = 'No title available'
-        course_id = 'none'
-    course_title = f'{course_title} (ID {deployment_id}-{resource_link_id})'.replace('\'', '')
-    course_id = re.sub('[^a-z0-9\-]', '', f'c-{deployment_id}-{resource_link_id}-' + course_id.lower().replace(' ', '-'))
-    grader_user = course_id_to_grader_user(course_id)
+    course_title = f'{course_title} ({course_id})'.replace('\'', '')
     
     return course_id, course_title, grader_user
 
