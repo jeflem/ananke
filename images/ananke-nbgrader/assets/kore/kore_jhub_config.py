@@ -200,7 +200,8 @@ async def nbgrader_post_auth(authenticator, handler, authentication):
                 'user': grader_user,
                 'cwd': f'/home/{grader_user}',
                 'api_token': secrets.token_hex(32),
-                'oauth_no_confirm': True
+                'oauth_no_confirm': True,
+                'display': False
             })
             for role in roles:
                 if role.get('name') == 'formgrader-service-role':  # formgrader role exists
