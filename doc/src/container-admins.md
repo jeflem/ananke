@@ -1,6 +1,7 @@
 # For container admins 
 
-Container admins have a regular user account on the host machine. They may access the host machine via SSH to install, configure, start and stop the Podman container running the JupyterHub.
+Container admins have a regular user account on the host machine.
+They may access the host machine via SSH to install, configure, start and stop the Podman container running the JupyterHub.
 
 ```{contents}
 ---
@@ -8,10 +9,10 @@ local: true
 ---
 ```
 
-(ssh)=
+(ssh-login-to-host-machine)=
 ## SSH login to host machine
 
-The host machine (if configured along the lines of [](host-admins)) provides SSH access for container admins with two-factor authentification: password plus cryptographic key.
+The host machine (if configured along the lines of the [instructions for host admins](host-admins.md)) provides SSH access for container admins with two-factor authentication: password plus cryptographic key.
 
 Login to the host machine:
 ```
@@ -19,7 +20,7 @@ ssh -p 986 testhub_user@your-host.your-domain.org
 ```
 where `986` is to be replaced by the host machine's SSH port (ask your host admin for this number).
 
-After first login change your password:
+After the first login, change your password:
 ```
 passwd
 ```
@@ -29,7 +30,8 @@ Logout from the host machine with
 logout
 ```
 
-If you are on Windows you may try [PuTTY](https://www.putty.org/). Newer variants of Windows 10 (and also Windows 11) provide Linux-like SSH.
+If you are on Windows, you may try [PuTTY](https://www.putty.org/).
+Newer variants of Windows 10 (and also Windows 11) provide Linux-like SSH.
 
 (file-transfer)=
 ## File Transfer
@@ -38,32 +40,39 @@ To transfer files to the host machine connect via `sshfs`:
 ```
 sshfs -p 986 testhub_user@your-host.your-domain.org: /your/local/mount/point
 ```
-where `986` is to be replaced by the host machine's SSH port and `/your/local/mount/point` is an empty directory on your local machine (create before first use). Contents of your home directory then should appear in that directory.
+where `986` is to be replaced by the host machine's SSH port and `/your/local/mount/point` is an empty directory on your local machine (create before first use).
+Contents of your home directory then should appear in that directory.
 
 To close the connection run:
 ```
 fusermount -u /your/local/mount/point
 ```
 
-If you are in Windows you may try [WinSCP](https://winscp.net).
+If you are in Windows, you may try [WinSCP](https://winscp.net).
 
 ## Run an Ananke container
 
 ### Container files, images and containers
 
-An image is a blueprint for containers. A *container* is similar to a virtual machine. It's purpose is to run a program in isolation from other programs on the machine. From one image one may create one or more containers.
+An image is a blueprint for containers.
+A *container* is similar to a virtual machine.
+Its purpose is to run a program in isolation from other programs on the machine.
+From one image, one may create one or more containers.
 
 A container file contains all information relevant to Podman to build an image.
 
 The Ananke project's files are split into four separate parts:
-* Directories `images/ananke-base` and `images/ananke-nbgrader` contain all files needed to build Ananke's Podman images (without or with nbgrader). In particular, they contain the container files, named `Containerfile`.
-* Directories `ananke-base-hub` and `ananke-nbgrader-hub` contain everything you need to run an Ananke container (without or with nbgrader). They contain config files as well es subdirectories holding data generated during container runtime.
+* Directories `images/ananke-base` and `images/ananke-nbgrader` contain all files needed to build Ananke's Podman images (without or with nbgrader).
+* In particular, they contain the container files, named `Containerfile`.
+* Directories `ananke-base-hub` and `ananke-nbgrader-hub` contain everything you need to run an Ananke container (without or with nbgrader).
+* They contain config files as well as subdirectories holding data generated during container runtime.
 
-If you want run more than one Ananke container, each container needs a separate copy of the relevant directory (`ananke-base-hub` or `ananke-nbgrader-hub`).
+If you want to run more than one Ananke container, each container needs a separate copy of the relevant directory (`ananke-base-hub` or `ananke-nbgrader-hub`).
 
 ### Basic Podman commands
 
-Podman provides several (sub-)commands to manage images and containers. To see all currently installed images run
+Podman provides several (sub-)commands to manage images and containers.
+To see all currently installed images, run
 ```
 podman image ls
 ```
@@ -91,20 +100,21 @@ podman restart container_label_or_id
 ```
 
 ```{important}
-Above Podman commands are rarely needed for Ananke images and containers because Ananke ships with several shell scripts for standard procedures like image building, running a container, or removing a container. See instructions below.
+Above Podman commands are rarely needed for Ananke images and containers because Ananke ships with several shell scripts for standard procedures like image building, running a container, or removing a container.
+See instructions below.
 ```
 
 ### Install and run the container
 
 To get an Ananke container running proceed as follows (instructions are for Ananke without nbgrader, replace `base` by `nbgrader` wherever it appears to get Ananke with nbgrader):
 
-1. Copy all Ananke files to your `home` directory on the host machine. See [](file-transfer) for details.
+1. Copy all Ananke files to your `home` directory on the host machine. See [File Transfer](#file-transfer) for details.
 2. Build the image by running
    ```
    cd ~/ananke/images/ananke-base
    ./build.sh
    ```
-   **on the host machine** (see [](ssh)). Alternative: if you obtained a tar file containing the image, run
+   **on the host machine** (see [SSH login to host machine](#ssh-login-to-host-machine)). Alternative: if you obtained a tar file containing the image, run
    ```
    podman load -i filename.tar
    ```
@@ -119,9 +129,11 @@ To get an Ananke container running proceed as follows (instructions are for Anan
    ./run.sh
    ```
 
-Now the JupyterHub is running and you should at least get some message produced by JupyterHub when visiting `https://your-domain.org/your_hub_name`. You have to access JupyterHub via some LTI platform (Moodle aso.). **Direct login won't work.** LTI configuration will be described below: [](lti).
+Now the JupyterHub is running, and you should at least get some message produced by JupyterHub when visiting `https://your-domain.org/your_hub_name`.
+You have to access JupyterHub via some LTI platform (Moodle aso.).
+**Direct login won't work.** LTI configuration will be described below: [LTI configuration](#lti-configuration).
 
-(root-shell)=
+(root-access-to-the-container)=
 ### Root access to the container
 
 To work inside the container (checking the logs, for instance) run
@@ -129,26 +141,29 @@ To work inside the container (checking the logs, for instance) run
 cd ~/ananke/ananke-base-hub
 ./shell.sh
 ```
-This opens a shell inside the container. There you are the container's root user.
+This opens a shell inside the container.
+There you are the container's root user.
 
 ### Remove the container
 
 To remove a Podman container created by `run.sh` use `remove.sh`.
 
 ```{important}
-If you remove a container all modifications to files inside the container will be lost. Some exceptions for Ananke based containers will be discussed below.
+If you remove a container all modifications to files inside the container will be lost.
+Some exceptions for Ananke based containers will be discussed below.
 ```
 
 ## Container configuration options
 
-(lti)=
+(lti-configuration)=
 ### LTI configuration
 
 LTI communication between JupyterHub and your learning management system (LMS) has to be configured on both sides.
 
-On hub side LTI configuration is in `runtime/jupyterhub_config.d/30_lms.py`. Rename `30_lms.py.template` to `30_lms.py` and write the URLs provided by your LMS to corresponding lines.
+On hub side LTI configuration is in `runtime/jupyterhub_config.d/30_lms.py`.
+Rename `30_lms.py.template` to `30_lms.py` and write the URLs provided by your LMS to corresponding lines.
 
-For your LMS you need following configuration information (field names are taken from Moodle here and may be slightly different in other LMS):
+For your LMS you need the following configuration information (field names are taken from Moodle here and may be slightly different in other LMS):
 * tool URL: `https://your-domain.org/your_hub_name/`
 * public key type: `Keyset URL`
 * public keyset: `https://your-domain.org/your_hub_name/services/kore/jwks`
@@ -157,11 +172,14 @@ For your LMS you need following configuration information (field names are taken
 * default launch container: `Existing window`
 
 ```{important}
-For security reasons JupyterHub does not allow to be embedded into another website. Thus, in Moodle only `Existing window` works. Even `new window` is not possible due to it's implementation in Moodle via embedding techniques.
+For security reasons JupyterHub does not allow to be embedded into another website.
+Thus, in Moodle only `Existing window` works.
+Even `new window` is not possible due to it's implementation in Moodle via embedding techniques.
 ```
 
 ```{important}
-Don't abuse `30_lms.py` for other configuration purposes than the described LTI configuration. This may lead to unexpected behavior.
+Don't abuse `30_lms.py` for other configuration purposes than the described LTI configuration.
+This may lead to unexpected behavior.
 ```
 
 
@@ -172,7 +190,7 @@ To give a hub user admin privileges inside the hub (see [](hub-admins)) get the 
 c.Authenticator.admin_users.add('hub_admin_user_id')
 ```
 
-If there are more than one hub admin, use one such line per hub admin.
+If there is more than one hub admin, use one such line per hub admin.
 
 ### User server behavior
 
@@ -180,20 +198,24 @@ In `runtime/jupyterhub_config.d/10_servers.py` you may modify JupyterHub's behav
 
 ### Restarting the hub
 
-Configuration changes require restarting JupyterHub to take effect. Restarting the hub does not kill user's JupyterLabs. Thus, the hub can be restarted whenever necessary. Only users currently logging in may experience problems.
+Configuration changes require restarting JupyterHub to take effect.
+Restarting the hub does not kill user's JupyterLabs.
+Thus, the hub can be restarted whenever necessary.
+Only users currently logging in may experience problems.
 
 To restart the hub run
 ```
 systemctl restart jupyterhub
 ```
-**inside the container** (see [](root-shell)).
+**inside the container** (see [Root access to the container](#root-access-to-the-container)).
 
 ## Backups
 
-Hub user's home directories and the hub's configuration are accessible from outside the container. To backup home directories and configuration simply make a copy of the `runtime` directory.
+Hub user's home directories and the hub's configuration are accessible from outside the container.
+To back up home directories and configuration, simply make a copy of the `runtime` directory.
 
 Example backup procedure:
-1. Log in to the host machine via SSH (see [](ssh)).
+1. Log in to the host machine via SSH (see [SSH login to host machine](#ssh-login-to-host-machine)).
 2. Go to the container's directory:
    ```
    cd ananke-base-hub
@@ -202,24 +224,25 @@ Example backup procedure:
    ```
    tar czfv backup.tar.gz ./runtime
    ```
-   (some files aren't readable, but those files only contain runtime information from Jupyter and can be savely ignored).
-4. Move the tar archive to some save place (see [](file-transfer)).
+   (some files aren't readable, but those files only contain runtime information from Jupyter and can be safely ignored).
+4. Move the tar archive to some save place (see [File Transfer](#file-transfer)).
 
 
 ## Modify global Python environment
 
-There are two default Python environments: `jhub` (contains all the Jupyter stuff, do not modify), `python3` (the environment in which notebooks run, install all required packages here): inside the container's root shell (see [](root-shell)) run
+There are two default Python environments: `jhub` (contains all the Jupyter stuff, do not modify), `python3` (the environment in which notebooks run, install all required packages here): inside the container's root shell (see [Root access to the container](#root-access-to-the-container)) run
 ```
 conda install package_name
 ```
 
 ```{important}
-Modification of Python environment is done inside the container. Replacing the container by a new one (even from the same image) resets the Python environment.
+Modification of Python environment is done inside the container.
+Replacing the container by a new one (even from the same image) resets the Python environment.
 ```
 
 ## Additional global Python environments
 
-In the container's root shell run
+In the container's root shell, run
 ```
 conda create -y --name NAME_OF_NEW_ENV
 ```
@@ -233,29 +256,36 @@ python -m ipykernel install --name INTERNAL_NAME_OF_KERNEL --display-name "DISPL
 New environment and kernel are available to all users immediately without restarting the hub or a user's lab.
 
 ```{important}
-Creation of additional global Python environment is done inside the container. Replacing the container by a new one (even from the same image) removes all additional Python environments.
+Creation of additional global Python environment is done inside the container.
+Replacing the container by a new one (even from the same image) removes all additional Python environments.
 ```
 
 ## Log files
 
-To see the container's log files run
+To see the container's log files, run
 ```
 journalctl -r
 ```
-inside the container. The `-r` option shows newest messages first.
+inside the container.
+The `-r` option shows the newest messages first.
 
-There's also a list of all users having visited the hub via LTI. It's a JSON file with hub username, first name, last name, email, LMS username. It's at `/opt/userdata.json`.
+There's also a list of all users having visited the hub via LTI.
+It's a JSON file with hub username, first name, last name, email, LMS username.
+It's at `/opt/userdata.json`.
 
 ## Resource limits
 
-To see resource limits of the containern run
+To see resource limits of the containern, run
 ```
 cat /sys/fs/cgroup/cpu.max
 cat /sys/fs/cgroup/memory.max
 ```
 in the container's root shell.
 
-You may modify the container's resource limits by editing `run.sh` (the script used for starting a container). The argument `-m=8g` limits available memory (8 GB). There are arguments for limiting CPU usage, too. See [Podman documentation](https://docs.podman.io/en/latest/markdown/podman-run.1.html).
+You may modify the container's resource limits by editing `run.sh` (the script used for starting a container).
+The argument `-m=8g` limits available memory (8 GB).
+There are arguments for limiting CPU usage, too.
+See [Podman documentation](https://docs.podman.io/en/latest/markdown/podman-run.1.html).
 
 Per user resource limits can be configured in `runtime/jupyterhub_config.d/10_servers.py`.
 
@@ -277,9 +307,10 @@ conda update --all
 
 ### Update the whole container
 
-Alternatively, you may get newest Ananke files and rebuild image and container. Rebuilding the image will install most current versions of all components.
+Alternatively, you may get the newest Ananke files and rebuild image and container.
+Rebuilding the image will install most current versions of all components.
 
-Remember to backup your user's home directories and modifications you made to the container (Python environments,...).
+Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
 
 ## Tensorflow with GPU support
 
@@ -294,9 +325,10 @@ In the container's root shell run `nvidia-smi` to see whether GPUs are available
 
 ### Install Tensorflow
 
-Tested combinations of several relevant components are listed at [Tensorflow, Build from source, Tested build configurations, Linux, GPU](https://www.tensorflow.org/install/source#gpu). Choose the most current one and replace package versions below accordingly.
+Tested combinations of several relevant components are listed at [Tensorflow, Build from source, Tested build configurations, Linux, GPU](https://www.tensorflow.org/install/source#gpu).
+Choose the most current one and replace package versions below accordingly.
 
-In the container's root shell run
+In the container's root shell, run
 ```
 conda activate python3
 
@@ -319,17 +351,21 @@ Test the installation with
 ```
 python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices())"
 ```
-This should show all availble CPUs and GPUs.
+This should show all available CPUs and GPUs.
 
 ### JupyterLab kernel install
 
-Tensorflow installation above requires the environment variable `LD_LIBRARY_PATH` to be set properly. This is done via a the script `env_vars.sh`, which is run whenever the conda environment `python3` is activated. But: choosing a kernel in JupyterLab does not call `conda activate`. Thus, `LD_LIBRARY_PATH` won't be set properly in JupyterLab and Tensorflow won't work. There are (at least) two ways out:
+The tensorflow installation above requires the environment variable `LD_LIBRARY_PATH` to be set properly.
+This is done via the script `env_vars.sh`, which is run whenever the conda environment `python3` is activated.
+But: choosing a kernel in JupyterLab does not call `conda activate`.
+Thus, `LD_LIBRARY_PATH` won't be set properly in JupyterLab and Tensorflow won't work.
+There are (at least) two ways out:
 * Either run the script in every Jupyter notebook, which uses Tensorflow (via `os.system('/opt/conda/envs/python3/etc/conda/activate.d/env_vars.sh')`), for instance,
 * or use the [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) Jupyter extension to run `conda activate` at kernel selection in JupyterLab.
 
 Here describe the second approach.
 
-To set this up in the container's root shell run
+To set this up in the container's root shell, run
 ```
 conda activate jhub
 
@@ -358,7 +394,8 @@ should show the new kernel for `python3` environment.
 
 ### Install Tensorflow related packages
 
-When installing packages depending on Tensorflow take care to not modify the `tensorflow` package installed above. Prefer `pip` since `tensorflow` has been installed with `pip`.
+When installing packages depending on Tensorflow take care to not modify the `tensorflow` package installed above.
+Prefer `pip` since `tensorflow` has been installed with `pip`.
 
 For KerasTuner run
 ```
@@ -391,9 +428,11 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
 ### WebDAV and other file systems
 
-The JupyterLab extension [jupyter-fs](https://github.com/jpmorganchase/jupyter-fs) allows to add additional file managers based on a wide range of file systems, including WebDAV. WebDAV provides access to Nextcloud accounts, for instance.
+The JupyterLab extension [jupyter-fs](https://github.com/jpmorganchase/jupyter-fs) allows adding additional file managers based on a wide range of file systems, including WebDAV.
+WebDAV provides access to Nextcloud accounts, for instance.
 
-Installation is not straight-forward (at the time of writing, July 2023). In your container's root shell run
+Installation is not straight-forward (at the time of writing, July 2023).
+In your container's root shell, run
 ```
 conda activate jhub
 pip install jupyter-fs fs.webdavfs
@@ -429,13 +468,14 @@ return "{root}{path}".format(root=unquote(self.webdav.root), path=urn.path())
 
 Restart the hub with `systemctl restart jupyterhub` and all single-user servers (File, Hub Control Panel, Stop, Start).
 
-Configuration of file systems is covered in [](file-transfer-users).
+Configuration of file systems is covered [here](hub-users.md#file-transfer-hub-users).
 
 ### Shared directories
 
-If your hub users need to share files, either because you don't wont them to upload and store identical copies of large data sets to their home directories or your users's want to send files to other users, you can set this up as follows:
+If your hub users need to share files, either because you don't want them to upload and store identical copies of large data sets to their home directories or your users, want to send files to other users, you can set this up as follows:
 
-Create a directory `data` somewhere in your home directory on the host machine. Create a `datasets` subdirectory with read permission for all users and a `share` subdirectory with write permission for all users.
+Create a directory `data` somewhere in your home directory on the host machine.
+Create a `datasets` subdirectory with read permission for all users and a `share` subdirectory with write permission for all users.
 ```
 cd ~
 mkdir container-data
@@ -463,7 +503,8 @@ c.SystemdSpawner.readwrite_paths.append('/data/share')
 to your container's `runtime/jupyterhub_config.d/10_servers.py`.
 Then restart JupyterHub with `systemctl restart jupyterhub`.
 
-If you use jupyter-fs, you may add a file browser for the `data` directory to all users' JuypterLabs. Simply add
+If you use jupyter-fs, you may add a file browser for the `data` directory to all users' JupyterLabs.
+Simply add
 ```
 c.Jupyterfs.resources = [
     {
@@ -476,7 +517,8 @@ to `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 
 ### JupyterLab real-time collaboration
 
-The [`jupyterlab-collaboration`](https://github.com/jupyterlab/jupyter-collaboration) extension provides real-time collaboration for working with notebooks. Several users share one JupyterLab session and instantly see other user's edits and cell execution results.
+The [`jupyterlab-collaboration`](https://github.com/jupyterlab/jupyter-collaboration) extension provides real-time collaboration for working with notebooks.
+Several users share one JupyterLab session and instantly see another user's edits and cell execution results.
 
 #### Base install
 
@@ -558,4 +600,4 @@ Then restart the hub with `systemctl restart jupyterhub`.
 
 #### Usage
 
-Usage of the collaboration feature is described in [](collaboration).
+Usage of the collaboration feature is described in [JupyterLab real-time collaboration](hub-users.md#jupyterlab-real-time-collaboration).

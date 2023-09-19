@@ -10,8 +10,8 @@ version = ''
 release = '0.2'
 
 extensions = ['myst_parser']
+myst_heading_anchors = 4
 
 html_static_path = ['_static']
 
 html_theme = 'sphinx_book_theme'
-
