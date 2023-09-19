@@ -185,7 +185,7 @@ This may lead to unexpected behavior.
 
 ### Hub admins
 
-To give a hub user admin privileges inside the hub (see [](hub-admins)) get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `runtime/jupyterhub_config.d/20_users.py` (rename `20_users.py.template`):
+To give a hub user admin privileges inside the hub (see [here](hub-admins.md)), get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `runtime/jupyterhub_config.d/20_users.py` (rename `20_users.py.template`):
 ```
 c.Authenticator.admin_users.add('hub_admin_user_id')
 ```

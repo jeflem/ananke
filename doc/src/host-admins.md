@@ -1197,7 +1197,7 @@ To prevent a container from filling the host machine's disk, we use separate vir
 
 The container admin's file system's image file will be a sparse file.
 Thus, it requires much less disk space than it's size suggests.
-See [](quota-check) for commands to check container admins' true disk usage.
+See [Disk quota checks and extension](#disk-quota-checks-and-extension) for commands to check container admins' true disk usage.
 ```
 
 ```{warning}
@@ -1400,7 +1400,7 @@ iostat -N --human --pretty
 ```
 This prints CPU and disk usage statistics.
 
-(quota-check)=
+(disk-quota-checks-and-extension)=
 ### Disk quota checks and extension
 
 List disk usage with

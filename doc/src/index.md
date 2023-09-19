@@ -31,7 +31,7 @@ The Ananke project provides the following container images:
 ## Where to go from here?
 
 This documentation of the Ananke project aims at a wide audience including server administrators as well as instructors and students.
-Read [](what-read) to find out what kind of user you are.
+Read [this introduction](what-read.md) to find out what kind of user you are.
 Then go on to the corresponding chapter targeting your role and needs.
 
 For source code see [Ananke's GitHub repo](https://github.com/jeflem/ananke).
