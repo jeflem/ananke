@@ -1,13 +1,14 @@
-FROM docker.io/library/debian@sha256:f2150eba68619015058b26d50e47f9fba81213d1cb81633be7928c830f72d180
+FROM docker.io/library/debian@sha256:22cc4de537485807b7efe6f4c942d7460c4482852f49434f9c022c044c545a90
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TERM=linux
 
 ARG JUPYTERHUB_VERSION=4.0.2
-ARG JUPYTERLAB_VERSION=4.0.4
-ARG NOTEBOOK_VERSION=7.0.2
+ARG JUPYTERLAB_VERSION=4.0.7
+ARG NOTEBOOK_VERSION=7.0.6
 ARG LTIAUTHENTICATOR_VERSION=1.6.1
 ARG SYSTEMDSPAWNER_VERSION=1.0.1
+ARG PYTHON_VERSION=3.11.6
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -23,7 +24,6 @@ RUN apt-get update && \
     systemd-container && \
     rm -rf /var/lib/apt/lists/*
 
-# install conda, creating envs, installing JupyterHub and additional packages & install kernel
 # add conda repo key
 WORKDIR /tmp
 RUN curl -o conda.asc https://repo.anaconda.com/pkgs/misc/gpgkeys/anaconda.asc && \
@@ -32,7 +32,7 @@ RUN curl -o conda.asc https://repo.anaconda.com/pkgs/misc/gpgkeys/anaconda.asc &
     rm conda.asc &&  \
     rm conda.gpg
 
-# check keys fingerprint
+# check conda repo key's fingerprint
 RUN gpg --keyring /usr/share/keyrings/conda-archive-keyring.gpg --no-default-keyring --fingerprint 34161F5BF5EB1D4BFBBB8F0A8AEB4F8B29D82806
 
 # add conda repo
@@ -46,60 +46,54 @@ RUN apt-get update && \
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda update -n base -c anaconda -y conda"
 
+# make conda-forge the default channel
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda config --prepend channels conda-forge"
+    
 # create conda envs
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda create -n jhub -y; \
     conda create -n python3 -y"
 
 # install conda packages
-# Note for line 'conda install -c conda-forge notebook=6.5.3;': fix for issues resulting from released notebook version 7 (may be removed in future)
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    conda install -c conda-forge -y \
+    conda install -y \
     jupyterhub=$JUPYTERHUB_VERSION \
     jupyterlab=$JUPYTERLAB_VERSION \
     notebook=$NOTEBOOK_VERSION \
-    pycurl"
+    pycurl \
+    python=$PYTHON_VERSION"
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda activate python3; \
+    conda install -y \
+    ipykernel \
+    python=$PYTHON_VERSION"
 
 # install pip packages
-# Note for line 'pip install pyopenssl cryptography --upgrade"': fix for issue with missing OpenSSL library (may be removed in future)
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
     pip install \
+    jupyterhub-idle-culler \
     jupyterhub-ltiauthenticator==$LTIAUTHENTICATOR_VERSION \
     jupyterhub-systemdspawner==$SYSTEMDSPAWNER_VERSION \
-    jupyterhub-idle-culler \
-    nbgitpuller; \
-    pip install pyopenssl cryptography --upgrade"
+    nbgitpuller"
 
-# install kernel
+# install IPython kernel for python3 env
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate python3; \
-    conda install -c conda-forge -y ipykernel; \
     python -m ipykernel install --prefix=/opt/conda/envs/jhub/ --name 'python3' --display-name 'Python 3 (default)'"
 
-# make dir for JupyterHub config file
+# make dir for JupyterHub config files and copy files
 RUN mkdir -p /opt/conda/envs/jhub/etc/jupyterhub
-
-# copy config files
 COPY ./assets/jupyterhub_config.py /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.py
 COPY ./assets/jupyterhub.service /opt/conda/envs/jhub/etc/systemd/jupyterhub.service
-COPY ./assets/boot.sh /opt/boot.sh
-RUN chmod 700 /opt/boot.sh
-COPY ./assets/boot_script.service /etc/systemd/system/boot_script.service
 
 # create systemd service for JupyterHub
 RUN ln -s /opt/conda/envs/jhub/etc/systemd/jupyterhub.service /etc/systemd/system/jupyterhub.service
 RUN systemctl enable jupyterhub.service
 
-# clean package caches
-RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
-    conda clean -p -t" && \
-    apt-get clean
-
-# disable root login (should be disabled by default, just to be sure...)
-RUN passwd -l root
-
+# make python3 the default conda env for all terminals
 RUN echo "PS1=\"\w$ \"" >> /etc/bash.bashrc && \
     echo "source /opt/conda/etc/profile.d/conda.sh" >> /etc/bash.bashrc && \
     echo "conda activate python3" >> /etc/bash.bashrc
@@ -110,8 +104,19 @@ RUN touch user_data.json && \
     echo "{}" >> user_data.json && \
     chmod 600 user_data.json
 
-# systemd service for boot script (set timezone,...)
+# copy boot script and create systemd service for boot script
+COPY ./assets/boot.sh /opt/boot.sh
+RUN chmod 700 /opt/boot.sh
+COPY ./assets/boot_script.service /etc/systemd/system/boot_script.service
 RUN systemctl enable boot_script.service
+
+# clean package caches
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda clean -p -t" && \
+    apt-get clean
+
+# disable root login (should be disabled by default, just to be sure...)
+RUN passwd -l root
 
 WORKDIR /
 

@@ -160,8 +160,19 @@ Some exceptions for Ananke based containers will be discussed below.
 
 LTI communication between JupyterHub and your learning management system (LMS) has to be configured on both sides.
 
+#### JupyterHub
+
 On hub side LTI configuration is in `runtime/jupyterhub_config.d/30_lms.py`.
 Rename `30_lms.py.template` to `30_lms.py` and write the URLs provided by your LMS to corresponding lines.
+
+```{important}
+Note that the value for `c.LTI13Authenticator.client_id` has to be a list of strings even if only one client ID is present.
+```
+
+Don't abuse `30_lms.py` for other configuration purposes than the described LTI configuration.
+This may lead to unexpected behavior.
+
+#### LMS
 
 For your LMS you need the following configuration information (field names are taken from Moodle here and may be slightly different in other LMS):
 * tool URL: `https://your-domain.org/your_hub_name/`
@@ -176,12 +187,6 @@ For security reasons JupyterHub does not allow to be embedded into another websi
 Thus, in Moodle only `Existing window` works.
 Even `new window` is not possible due to it's implementation in Moodle via embedding techniques.
 ```
-
-```{important}
-Don't abuse `30_lms.py` for other configuration purposes than the described LTI configuration.
-This may lead to unexpected behavior.
-```
-
 
 ### Hub admins
 
