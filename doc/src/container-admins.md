@@ -411,13 +411,17 @@ python3 -m pip install keras-tuner
 
 ## Useful optional features
 
+### Base packages
+
+To install [NumPy](https://numpy.org/), [Pandas](https://pandas.pydata.org/), [Matplotlib](https://matplotlib.org/), [Seaborn](https://seaborn.pydata.org/), [Plotly](https://plotly.com/python/) run `/opt/install/base.sh` in the container's root shell.
+
+You have to restart all user servers to make Matplotlib and Plotly work.
+
+To get interactive Matplotlib output use the cell magic `%matplotlib widget`. To deactivate interactive output use `%matplotlib inline`.
+
 ### MyST markdown rendering
 
-To make JupyterLab render [MyST markdown](https://mystmd.org/) install [jupyterlab-myst](https://github.com/executablebooks/jupyterlab-myst):
-```
-conda activate jhub
-conda install -c conda-forge jupyterlab-myst
-```
+To make JupyterLab render [MyST markdown](https://mystmd.org/) run `/opt/install/myst.sh` in the container's root shell and restart all user servers.
 
 ### Interactive Matplotlib output
 
