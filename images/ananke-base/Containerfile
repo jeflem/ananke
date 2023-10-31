@@ -61,6 +61,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda install -y \
     jupyterhub=$JUPYTERHUB_VERSION \
     jupyterlab=$JUPYTERLAB_VERSION \
+    nb_conda_kernels \
     notebook=$NOTEBOOK_VERSION \
     pycurl \
     python=$PYTHON_VERSION"
@@ -79,14 +80,23 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     jupyterhub-systemdspawner==$SYSTEMDSPAWNER_VERSION \
     nbgitpuller"
 
-# install IPython kernel for python3 env
+# fix nb_conda_kernels install (remove unused outdated config file),
+# modify display name of python3 env's kernel,
+# disable jhub env's kernel,
+# update kernel list for JupyterLab
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    rm /opt/conda/envs/jhub/etc/jupyter/jupyter_config.json; \
     conda activate python3; \
-    python -m ipykernel install --prefix=/opt/conda/envs/jhub/ --name 'python3' --display-name 'Python 3 (default)'"
+    python -m ipykernel install --prefix=/opt/conda/envs/python3/ --display-name 'Python 3 (all users)'; \
+    conda activate jhub; \
+    jupyter kernelspec remove -y python3; \
+    python -m nb_conda_kernels list \
+                               --CondaKernelSpecManager.kernelspec_path='--sys-prefix' \
+                               --CondaKernelSpecManager.name_format='{display_name}'"
 
-# make dir for JupyterHub config files and copy files
-RUN mkdir -p /opt/conda/envs/jhub/etc/jupyterhub
+# copy JupyterHub config files
 COPY ./assets/jupyterhub_config.py /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.py
+COPY ./assets/jupyter_config.py /opt/conda/envs/jhub/etc/jupyter/jupyter_config.py
 COPY ./assets/jupyterhub.service /opt/conda/envs/jhub/etc/systemd/jupyterhub.service
 
 # create systemd service for JupyterHub

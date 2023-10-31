@@ -49,6 +49,10 @@ Thus, hub users shouldn't recognize that their accounts are created dynamically.
 Container admins are unprivileged users on the host system.
 Thus, they should not have access to another container admin's containers.
 
+## Conda environments
+
+Starting with 0.3 Ananke uses [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) to make IPython kernels from different conda environments available in Jupyter. The advantage compared to usual kernel management via `ipykernel install` is that kernels installed by `nb_conda_kernels` automatically run `conda activate` at start-up. This is necessary for some packages (TensorFlow, Plotly) to have access to relevant environment variables. With standard kernel management there is no `conda activate` at start-up.
+
 ## Container structure
 
 ### `systemd`

@@ -56,17 +56,23 @@ Details on working with conda may be found in [conda's documentation](https://co
 
 #### New environment from scratch
 
-In JupyterLab, open a terminal and run the following command:
-```
-conda create -y --name NAME_OF_NEW_ENV
-```
-To make the new Python environment available as kernel in JupyterLab run:
-```
-conda activate NAME_OF_NEW_ENV
-conda install -y ipykernel
-python -m ipykernel install --user --name INTERNAL_NAME_OF_KERNEL --display-name "DISPLAYED NAME OF KERNEL"
-```
-The kernel will be available in your JupyterLab (reload the launcher tab).
+In JupyterLab, open a terminal and proceed as follows:
+1. Create a new conda environment and install the `ipykernel` package to the new environment.
+   ```
+   conda create -y --name NAME_OF_NEW_ENV ipykernel
+   ```
+2. (optional) Rename the new environment's Python kernel. Default name is `Python 3 (ipykernel)`.
+   ```
+   conda activate NAME_OF_NEW_ENV
+   python -m ipykernel install --sys-prefix --display-name 'NEW DISPLAY NAME OF KERNEL'
+   ```
+3. Update Jupyter's kernel list.
+   ```
+   conda activate jhub
+   python -m nb_conda_kernels list
+   ```
+
+The kernel of the new environment will be available in your JupyterLab after a few seconds.
 
 Install packages via:
 ```
@@ -76,29 +82,27 @@ conda install PACKAGE_NAME
 
 #### Clone an environment
 
-In JupyterLab, open a terminal and run the following command:
+Get a list of available environments with
+```
+conda env list
+```
+in a terminal. The default environment is `python3`. This is a good starting point for cloning.
+
+Then proceed as described above for new environments, but in step 1 use
 ```
 conda create --name NAME_OF_NEW_ENV --clone NAME_OF_EXISTING_ENV
 ```
-Then
-```
-conda activate NAME_OF_NEW_ENV
-python -m ipykernel install --name INTERNAL_NAME_OF_KERNEL --display-name "DISPLAYED NAME OF KERNEL" --user
-```
-
-Package installation works as described above.
 
 #### Remove an environment
 
-To remove a local environment, first remove the kernel: open a terminal and run
-```
-conda activate jhub
-jupyter kernelspec list
-jupyter kernelspec remove INTERNAL_NAME_OF_KERNEL
-```
-Then remove the environment with
+To remove an environment create by you open a terminal and run
 ```
 conda remove --name NAME_OF_ENV --all
+```
+Then update Jupyter's kernel list:
+```
+conda activate jhub
+python -m nb_conda_kernels list
 ```
 
 (file-transfer-hub-users)=
