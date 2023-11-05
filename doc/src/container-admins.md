@@ -428,44 +428,15 @@ To make JupyterLab render [MyST markdown](https://mystmd.org/) run `/opt/install
 The JupyterLab extension [jupyter-fs](https://github.com/jpmorganchase/jupyter-fs) allows adding additional file managers based on a wide range of file systems, including WebDAV.
 WebDAV provides access to Nextcloud accounts, for instance.
 
-Installation is not straight-forward (at the time of writing, July 2023).
-In your container's root shell, run
-```
-conda activate jhub
-pip install jupyter-fs fs.webdavfs
-```
-Then create the file `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py` with content
-```
-import jupyterfs.metamanager
+To install jupyter-fs run `/opt/install/jupyterfs.sh` in the container's root shell and restart all user servers.
 
-c = get_config()
-
-c.ServerApp.contents_manager_class = jupyterfs.metamanager.MetaManager
+```{note}
+Files cannot be copied or moved between jupyterfs file browsers and JupyterLab's standard file browser. Thus, the install script will add a jupyterfs file browser to all users' JupyterLabs showing a user's home directory. To copy/move files from a user-defined WebDAV or other source the files have to be pasted in the jupyterfs home file browser, not in the standard file browser.
 ```
 
-In `/opt/conda/envs/jhub/lib/python3.11/site-packages/jupyterfs/fsmanager.py` replace
-```
-return self._pyfilesystem_instance.exists(path)
-```
-by
-```
-return not self._pyfilesystem_instance.exists(path)
-```
-(or install `jupyter-fs` from current `main` branch).
+To add further default file browsers for all users edit `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 
-In `/opt/conda/envs/jhub/lib/python3.11/site-packages/webdav3/client.py` replace
-```
-return "{root}{path}".format(root=self.webdav.root, path=urn.path())
-```
-by
-```
-return "{root}{path}".format(root=unquote(self.webdav.root), path=urn.path())
-```
-(or install `webdav3` package from current `develop` branch).
-
-Restart the hub with `systemctl restart jupyterhub` and all single-user servers (File, Hub Control Panel, Stop, Start).
-
-Configuration of file systems is covered [here](hub-users.md#file-transfer-hub-users).
+See [](hub-users:file-transfer) for configuration of user-defined file systems.
 
 ### Shared directories
 

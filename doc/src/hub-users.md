@@ -105,8 +105,8 @@ conda activate jhub
 python -m nb_conda_kernels list
 ```
 
-(file-transfer-hub-users)=
-## File transfer hub users
+(hub-users:file-transfer)=
+## File transfer
 
 If the jupyter-fs extension is available in your JupyterLab, you may set up access to external file systems like cloud storage or Windows shares.
 
@@ -123,11 +123,6 @@ In the auth list choose 'ask'.
 Each resource you specify in the settings yields an additional file browser (tree symbols in the left vertical toolbar).
 Files may be copied between different jupyter-fs resources, but not between jupyter-fs and JupyterLab's original file browser.
 Thus, it's a good idea to always have a jupyter-fs resource for your home directory.
-```
-
-```{note}
-At the time of writing (July 2023) jupyter-fs does not provide support for copying directories.
-Copy operation will **fail silently** (there will be a message in your Browsers JavaScript console).
 ```
 
 (jupyterlab-real-time-collaboration)=
