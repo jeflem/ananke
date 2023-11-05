@@ -423,18 +423,6 @@ To get interactive Matplotlib output use the cell magic `%matplotlib widget`. To
 
 To make JupyterLab render [MyST markdown](https://mystmd.org/) run `/opt/install/myst.sh` in the container's root shell and restart all user servers.
 
-### Interactive Matplotlib output
-
-To make Matplotlib animations and other interactive output based on `%matplotlib widget` work, run
-```
-conda activate python3
-conda install -c conda-forge matplotlib ipympl
-
-conda activate jhub
-jupyter labextension install jupyter-matplotlib
-jupyter labextension install @jupyter-widgets/jupyterlab-manager
-```
-
 ### WebDAV and other file systems
 
 The JupyterLab extension [jupyter-fs](https://github.com/jpmorganchase/jupyter-fs) allows adding additional file managers based on a wide range of file systems, including WebDAV.
