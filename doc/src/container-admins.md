@@ -516,3 +516,7 @@ Usage of the collaboration feature is described in [JupyterLab RTC for hub users
 
 To remove a collaboration room modify `80_rtc.py`, and remove the room's user account inside the container: `userdel rtc-ROOM-NAME`.
 This does not remove any files create during corresponding collaboration sessions. To remove files, too, either use `userdel -r rtc-ROOM-NAME` instead or remove `/home/rtc-ROOM-NAME` manually.
+
+### Language server protocols (LSP)
+
+LSP support allows for code completion, automatic code formatting and several other useful features. To install LSP support for JupyterLab run `/opt/install/lsp.sh` in the container's root shell and restart the hub as well as all user servers.
