@@ -17,6 +17,8 @@ pip install git+https://github.com/jeflem/jupyter-fs.git@ananke_0.3
 # WebDAV support for jupyterfs
 pip install fs.webdavfs
 
-# jupyterfs configuration
-# note https://github.com/jpmorganchase/jupyter-fs/issues/180
-cp /opt/install/jupyter_server_config.py /opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py
+# config file
+cp /opt/install/jupyter_server_config_jupyterfs.py /opt/conda/envs/jhub/etc/jupyter/jupyter_server_config_jupyterfs.py
+touch /opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py
+chmod 644 /opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py
+echo "load_subconfig('/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config_jupyterfs.py')" >> /opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py
