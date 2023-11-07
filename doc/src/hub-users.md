@@ -105,7 +105,7 @@ conda activate jhub
 python -m nb_conda_kernels list
 ```
 
-(hub-users:file-transfer)=
+(hub-users-file-transfer)=
 ## File transfer
 
 If the jupyter-fs extension is available in your JupyterLab, you may set up access to external file systems like cloud storage or Windows shares.
@@ -128,11 +128,18 @@ Thus, it's a good idea to always have a jupyter-fs resource for your home direct
 (jupyterlab-real-time-collaboration)=
 ## JupyterLab real-time collaboration
 
-If your JupyterHub provides real-time collaboration, click 'File' and 'Hub Control Panel' in your JupyterLab's menu.
+If your JupyterHub provides real-time collaboration (RTC), click 'File' and 'Hub Control Panel' in your JupyterLab's menu.
 In the top bar, click 'Services' and choose a collaboration room.
 Inside such a collaboration room all users see all other user's edits and cell executions.
 
 ```{note}
-If your hub supports collaboration your files will be autosaved every second (even in your lab, not only in collaboration rooms).
-Thus, there's no need for manual saving.
+In collaboration rooms files will be autosaved every second. Thus, there's no need for manual saving.
 ```
+
+You may also share your personal JupyterLab session with other users. But be careful! Other users with access to your Lab session have read and write access to all your files! To enable RTC for your Lab run
+```
+jupyter labextension disable --level=user @jupyter/collaboration-extension
+jupyter labextension enable --level=user @jupyter/collaboration-extension
+```
+(both lines!) in a terminal. Then restart your server ('File', 'Hub Control Panel', 'Stop My Server', 'Start My Server').
+In the upper right corner you should see a share link button. Everyone who has this link may join your Lab session.

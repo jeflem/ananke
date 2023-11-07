@@ -436,7 +436,7 @@ Files cannot be copied or moved between jupyterfs file browsers and JupyterLab's
 
 To add further default file browsers for all users edit `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 
-See [](hub-users:file-transfer) for configuration of user-defined file systems.
+See [File transfer for hub users](hub-users.md#hub-users-file-transfer) for configuration of user-defined file systems.
 
 ### Shared directories
 
@@ -486,86 +486,33 @@ to `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 ### JupyterLab real-time collaboration
 
 The [`jupyterlab-collaboration`](https://github.com/jupyterlab/jupyter-collaboration) extension provides real-time collaboration for working with notebooks.
-Several users share one JupyterLab session and instantly see another user's edits and cell execution results.
+Several users share one JupyterLab session and instantly see other user's edits and cell execution results.
 
-#### Base install
+#### Install
 
-Install the collaboration extension via
-```
-conda activate jhub
-pip install jupyter-collaboration
-```
+Install the collaboration extension by running `/opt/install/rtc.sh` in the container's root shell.
 
-#### Public collaboration rooms
+Rename the template `08_rtc.py.template` in `runtime/jupyterhub_config.d/` (in your container's working directory on the host machine) to `80_rtc.py` and define your public and private collaboration rooms in that file.
 
-To set up JupyterLabs shared by all hub users create user accounts inside the container for all labs:
-```
-useradd --create-home public-collab-1-user --shell=/bin/bash
-usermod -L public-collab-1-user
-
-useradd --create-home public-collab-2-user --shell=/bin/bash
-usermod -L public-collab-2-user
-```
-Then create or extend the file `runtime/jupyterhub_config.d/80_collab.py` in your container's directory with content
-```
-c = get_config()  # only once in file
-
-public_rooms = ['public-collab-1', 'public-collab-2']
-
-for idx, room in enumerate(public_rooms):
-    port = 8500 + idx
-    c.JupyterHub.services.append({
-        'name': f'{room}-room',
-        'url': f'http://127.0.0.1:{port}',
-        'command': ['jupyterhub-singleuser', '--KernelSpecManager.ensure_native_kernel=False'],
-        'user': f'{room}-user',
-        'cwd': f'/home/{room}-user',
-        'oauth_no_confirm': True
-    })
-c.JupyterHub.load_roles.append({
-    'name': 'user',
-    'scopes': ['self'] + [f'access:services!service={room}-room' for room in public_rooms],
-})
-```
 Then restart the hub with `systemctl restart jupyterhub`.
 
-#### Private collaboration rooms
+````{note}
+For each collaboration room there is a user account inside the container. All files created during collaboration sessions are stored in `/home/name-of-room` inside the container. To simplify backup of files from collaboration sessions you may want to make the container's `home` directory available outside the container. For this purpose add
+```
+--mount=type=bind,source=runtime/home,destination=/home \
+```
+to your container's `run.sh` script. This is only necessary for Ankane base image. Ananke nbgrader image already has this line.
+````
 
-To set up JupyterLabs shared by only some hub users create user accounts inside the container for all labs:
+```{note}
+The collaboration extension is disabled by default for all hub users. But users may enable the extension on their own. See [JupyterLab RTC for hub users](hub-users.md#jupyterlab-real-time-collaboration).
 ```
-useradd --create-home private-collab-1-user --shell=/bin/bash
-usermod -L private-collab-1-user
-
-useradd --create-home private-collab-2-user --shell=/bin/bash
-usermod -L private-collab-2-user
-```
-Then create or extend the file `runtime/jupyterhub_config.d/80_collab.py` in your container's directory with content
-```
-c = get_config()  # only once in file
-
-private_rooms = {
-    'private-collab-1': ['username1', 'username2', 'username3'],
-    'private-collab-2': ['username4', 'username5']
-}
-    
-for idx, room in enumerate(private_rooms):
-    port = 8600 + idx
-    c.JupyterHub.services.append({
-        'name': f'{room}-room',
-        'url': f'http://127.0.0.1:{port}',
-        'command': ['jupyterhub-singleuser', '--KernelSpecManager.ensure_native_kernel=False'],
-        'user': f'{room}-user',
-        'cwd': f'/home/{room}-user',
-        'oauth_no_confirm': True
-    })
-    c.JupyterHub.load_roles.append({
-        'name': f'{room}-role',
-        'scopes': [f'access:services!service={room}-room'],
-        'users': private_rooms[room],
-    })
-```
-Then restart the hub with `systemctl restart jupyterhub`.
 
 #### Usage
 
-Usage of the collaboration feature is described in [JupyterLab real-time collaboration](hub-users.md#jupyterlab-real-time-collaboration).
+Usage of the collaboration feature is described in [JupyterLab RTC for hub users](hub-users.md#jupyterlab-real-time-collaboration).
+
+#### Remove a collaboration room
+
+To remove a collaboration room modify `80_rtc.py`, and remove the room's user account inside the container: `userdel rtc-ROOM-NAME`.
+This does not remove any files create during corresponding collaboration sessions. To remove files, too, either use `userdel -r rtc-ROOM-NAME` instead or remove `/home/rtc-ROOM-NAME` manually.
