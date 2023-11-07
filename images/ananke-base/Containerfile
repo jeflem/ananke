@@ -111,7 +111,8 @@ RUN echo "PS1=\"\w$ \"" >> /etc/bash.bashrc && \
 # copy install scripts for optional python packages    
 COPY ./assets/install /opt/install
 RUN chmod 755 /opt/install
-RUN chmod 744 /opt/install/*
+RUN chmod 644 /opt/install/*
+RUN chmod 744 /opt/install/*.sh
     
 # initialize user_data.json
 WORKDIR /opt
