@@ -1224,8 +1224,7 @@ to `/etc/fstab` and run
 sudo systemctl daemon-reload
 sudo mount /home/$CONT_ADMIN
 sudo adduser $CONT_ADMIN
-sudo cp -r /etc/skel/.
-/home/$CONT_ADMIN/
+sudo cp -r /etc/skel/. /home/$CONT_ADMIN/
 sudo chown -R $CONT_ADMIN:$CONT_ADMIN /home/$CONT_ADMIN
 sudo chmod -R go-rwx /home/$CONT_ADMIN
 ```
