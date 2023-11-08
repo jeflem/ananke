@@ -125,7 +125,6 @@ Files may be copied between different jupyter-fs resources, but not between jupy
 Thus, it's a good idea to always have a jupyter-fs resource for your home directory.
 ```
 
-(jupyterlab-real-time-collaboration)=
 ## JupyterLab real-time collaboration
 
 If your JupyterHub provides real-time collaboration (RTC), click 'File' and 'Hub Control Panel' in your JupyterLab's menu.
@@ -143,3 +142,22 @@ jupyter labextension enable --level=user @jupyter/collaboration-extension
 ```
 (both lines!) in a terminal. Then restart your server ('File', 'Hub Control Panel', 'Stop My Server', 'Start My Server').
 In the upper right corner you should see a share link button. Everyone who has this link may join your Lab session.
+
+## TensorFlow and GPUs
+
+If you JupyterHub provides GPU access via TensorFlow you may want (or have) to restrict your TensorFlow commands to a subset of available GPUs. Else GPUs may be blocked for other users.
+
+To get a list of available GPUs and their current load open a terminal and run `nvidia-smi`.
+
+To select one or more GPUs for your code to run on use the following code snipped at the top of your Jupyter notebook:
+```python
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices('GPU')
+print(gpus)
+
+# new cell
+
+gpus = gpus[0]  # or gpus = gpus[1:3], for instance
+tf.config.set_visible_devices(gpus, 'GPU')
+```

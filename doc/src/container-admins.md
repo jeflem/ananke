@@ -317,98 +317,6 @@ Rebuilding the image will install most current versions of all components.
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
 
-## Tensorflow with GPU support
-
-### Test Podman GPU support
-
-If GPU support for Podman is available on your host machine, append
-```
---device nvidia.com/gpu=all
-```
-to `podman run` in your container's `run.sh`.
-In the container's root shell run `nvidia-smi` to see whether GPUs are available.
-
-### Install Tensorflow
-
-Tested combinations of several relevant components are listed at [Tensorflow, Build from source, Tested build configurations, Linux, GPU](https://www.tensorflow.org/install/source#gpu).
-Choose the most current one and replace package versions below accordingly.
-
-In the container's root shell, run
-```
-conda activate python3
-
-conda install -c conda-forge cudatoolkit=11.8.0
-python3 -m pip install nvidia-cudnn-cu11==8.6.0.163 tensorflow==2.12.*
-mkdir -p /opt/conda/envs/python3/etc/conda/activate.d
-```
-Then create the file `/opt/conda/envs/python3/etc/conda/activate.d/env_vars.sh` with content
-```
-CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}/usr/lib/x86_64-linux-gnu:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
-```
-and re-activate the environment:
-```
-conda activate jhub
-conda activate python3
-```
-
-Test the installation with
-```
-python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices())"
-```
-This should show all available CPUs and GPUs.
-
-### JupyterLab kernel install
-
-The tensorflow installation above requires the environment variable `LD_LIBRARY_PATH` to be set properly.
-This is done via the script `env_vars.sh`, which is run whenever the conda environment `python3` is activated.
-But: choosing a kernel in JupyterLab does not call `conda activate`.
-Thus, `LD_LIBRARY_PATH` won't be set properly in JupyterLab and Tensorflow won't work.
-There are (at least) two ways out:
-* Either run the script in every Jupyter notebook, which uses Tensorflow (via `os.system('/opt/conda/envs/python3/etc/conda/activate.d/env_vars.sh')`), for instance,
-* or use the [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) Jupyter extension to run `conda activate` at kernel selection in JupyterLab.
-
-Here describe the second approach.
-
-To set this up in the container's root shell, run
-```
-conda activate jhub
-
-jupyter kernelspec list
-jupyter kernelspec remove python3
-```
-Then
-```
-conda install -c conda-forge nb_conda_kernels
-```
-and in `/opt/conda/envs/jhub/etc/jupyter/jupyter_config.json` remove the line
-```
-    "kernel_spec_manager_class": "nb_conda_kernels.CondaKernelSpecManager"
-```
-
-Run
-```
-python -m nb_conda_kernels list --CondaKernelSpecManager.kernelspec_path="--sys-prefix" --CondaKernelSpecManager.name_format="{language} (env {environment})"
-```
-to generate and install kernels for all Conda environments with `ipykernel` package installed.
-Now
-```
-jupyter kernelspec list
-```
-should show the new kernel for `python3` environment.
-
-### Install Tensorflow related packages
-
-When installing packages depending on Tensorflow take care to not modify the `tensorflow` package installed above.
-Prefer `pip` since `tensorflow` has been installed with `pip`.
-
-For KerasTuner run
-```
-conda activate python3
-
-python3 -m pip install keras-tuner
-```
-
 ## Useful optional features
 
 ### Base packages
@@ -436,7 +344,7 @@ Files cannot be copied or moved between jupyterfs file browsers and JupyterLab's
 
 To add further default file browsers for all users edit `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 
-See [File transfer for hub users](hub-users.md#hub-users-file-transfer) for configuration of user-defined file systems.
+See [File transfer for hub users](hub-users.md#file-transfer) for configuration of user-defined file systems.
 
 ### Shared directories
 
@@ -520,3 +428,26 @@ This does not remove any files create during corresponding collaboration session
 ### Language server protocols (LSP)
 
 LSP support allows for code completion, automatic code formatting and several other useful features. To install LSP support for JupyterLab run `/opt/install/lsp.sh` in the container's root shell and restart the hub as well as all user servers.
+
+### TensorFlow with GPU support
+
+If the host machine has got one or more GPUs and Podman is configured to provide GPU access inside containers, then TensorFlow should be installed with GPU support. Have a look at [GPU support](host-admins.md#gpu-support) in the documentation for host admins and/or ask your host admin for details on GPU availability.
+
+#### Test Podman GPU support
+
+If GPU support for Podman is available on your host machine, add the line
+```
+--device nvidia.com/gpu=all \
+```
+below `podman create` in your container's `run.sh`.
+In the container's root shell run `nvidia-smi` to see whether and how many GPUs are available inside the container.
+
+#### Install Tensorflow
+
+To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell. Note that this will downgrade Python to version 3.10 to resolve package conflicts.
+
+The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
+
+#### Assign GPUs to users
+
+Every hub user has access to all GPUs. How to confine a user's TensorFlow commands to a subset of GPUs is described in [TensorFlow and GPUs](hub-users.md#tensorflow-and-gpus).
