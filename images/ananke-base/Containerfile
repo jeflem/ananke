@@ -108,6 +108,12 @@ RUN echo "PS1=\"\w$ \"" >> /etc/bash.bashrc && \
     echo "source /opt/conda/etc/profile.d/conda.sh" >> /etc/bash.bashrc && \
     echo "conda activate python3" >> /etc/bash.bashrc
 
+# copy install scripts for optional python packages    
+COPY ./assets/install /opt/install
+RUN chmod 755 /opt/install
+RUN chmod 644 /opt/install/*
+RUN chmod 744 /opt/install/*.sh
+    
 # initialize user_data.json
 WORKDIR /opt
 RUN touch user_data.json && \

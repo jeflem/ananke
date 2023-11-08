@@ -1437,6 +1437,7 @@ to kill them.
 
 Features described below may be relevant to some users only.
 
+(host-admins-gpu)=
 ### GPU support
 
 If the host machine's GPUs shall be accessible inside Podman containers, the steps below should be a good starting point.

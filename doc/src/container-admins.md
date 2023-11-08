@@ -317,163 +317,34 @@ Rebuilding the image will install most current versions of all components.
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
 
-## Tensorflow with GPU support
-
-### Test Podman GPU support
-
-If GPU support for Podman is available on your host machine, append
-```
---device nvidia.com/gpu=all
-```
-to `podman run` in your container's `run.sh`.
-In the container's root shell run `nvidia-smi` to see whether GPUs are available.
-
-### Install Tensorflow
-
-Tested combinations of several relevant components are listed at [Tensorflow, Build from source, Tested build configurations, Linux, GPU](https://www.tensorflow.org/install/source#gpu).
-Choose the most current one and replace package versions below accordingly.
-
-In the container's root shell, run
-```
-conda activate python3
-
-conda install -c conda-forge cudatoolkit=11.8.0
-python3 -m pip install nvidia-cudnn-cu11==8.6.0.163 tensorflow==2.12.*
-mkdir -p /opt/conda/envs/python3/etc/conda/activate.d
-```
-Then create the file `/opt/conda/envs/python3/etc/conda/activate.d/env_vars.sh` with content
-```
-CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}/usr/lib/x86_64-linux-gnu:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
-```
-and re-activate the environment:
-```
-conda activate jhub
-conda activate python3
-```
-
-Test the installation with
-```
-python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices())"
-```
-This should show all available CPUs and GPUs.
-
-### JupyterLab kernel install
-
-The tensorflow installation above requires the environment variable `LD_LIBRARY_PATH` to be set properly.
-This is done via the script `env_vars.sh`, which is run whenever the conda environment `python3` is activated.
-But: choosing a kernel in JupyterLab does not call `conda activate`.
-Thus, `LD_LIBRARY_PATH` won't be set properly in JupyterLab and Tensorflow won't work.
-There are (at least) two ways out:
-* Either run the script in every Jupyter notebook, which uses Tensorflow (via `os.system('/opt/conda/envs/python3/etc/conda/activate.d/env_vars.sh')`), for instance,
-* or use the [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) Jupyter extension to run `conda activate` at kernel selection in JupyterLab.
-
-Here describe the second approach.
-
-To set this up in the container's root shell, run
-```
-conda activate jhub
-
-jupyter kernelspec list
-jupyter kernelspec remove python3
-```
-Then
-```
-conda install -c conda-forge nb_conda_kernels
-```
-and in `/opt/conda/envs/jhub/etc/jupyter/jupyter_config.json` remove the line
-```
-    "kernel_spec_manager_class": "nb_conda_kernels.CondaKernelSpecManager"
-```
-
-Run
-```
-python -m nb_conda_kernels list --CondaKernelSpecManager.kernelspec_path="--sys-prefix" --CondaKernelSpecManager.name_format="{language} (env {environment})"
-```
-to generate and install kernels for all Conda environments with `ipykernel` package installed.
-Now
-```
-jupyter kernelspec list
-```
-should show the new kernel for `python3` environment.
-
-### Install Tensorflow related packages
-
-When installing packages depending on Tensorflow take care to not modify the `tensorflow` package installed above.
-Prefer `pip` since `tensorflow` has been installed with `pip`.
-
-For KerasTuner run
-```
-conda activate python3
-
-python3 -m pip install keras-tuner
-```
-
 ## Useful optional features
+
+### Base packages
+
+To install [NumPy](https://numpy.org/), [Pandas](https://pandas.pydata.org/), [Matplotlib](https://matplotlib.org/), [Seaborn](https://seaborn.pydata.org/), [Plotly](https://plotly.com/python/) run `/opt/install/base.sh` in the container's root shell.
+
+You have to restart all user servers to make Matplotlib and Plotly work.
+
+To get interactive Matplotlib output use the cell magic `%matplotlib widget`. To deactivate interactive output use `%matplotlib inline`.
 
 ### MyST markdown rendering
 
-To make JupyterLab render [MyST markdown](https://mystmd.org/) install [jupyterlab-myst](https://github.com/executablebooks/jupyterlab-myst):
-```
-conda activate jhub
-conda install -c conda-forge jupyterlab-myst
-```
-
-### Interactive Matplotlib output
-
-To make Matplotlib animations and other interactive output based on `%matplotlib widget` work, run
-```
-conda activate python3
-conda install -c conda-forge matplotlib ipympl
-
-conda activate jhub
-jupyter labextension install jupyter-matplotlib
-jupyter labextension install @jupyter-widgets/jupyterlab-manager
-```
+To make JupyterLab render [MyST markdown](https://mystmd.org/) run `/opt/install/myst.sh` in the container's root shell and restart all user servers.
 
 ### WebDAV and other file systems
 
 The JupyterLab extension [jupyter-fs](https://github.com/jpmorganchase/jupyter-fs) allows adding additional file managers based on a wide range of file systems, including WebDAV.
 WebDAV provides access to Nextcloud accounts, for instance.
 
-Installation is not straight-forward (at the time of writing, July 2023).
-In your container's root shell, run
-```
-conda activate jhub
-pip install jupyter-fs fs.webdavfs
-```
-Then create the file `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py` with content
-```
-import jupyterfs.metamanager
+To install jupyter-fs run `/opt/install/jupyterfs.sh` in the container's root shell and restart all user servers.
 
-c = get_config()
-
-c.ServerApp.contents_manager_class = jupyterfs.metamanager.MetaManager
+```{note}
+Files cannot be copied or moved between jupyterfs file browsers and JupyterLab's standard file browser. Thus, the install script will add a jupyterfs file browser to all users' JupyterLabs showing a user's home directory. To copy/move files from a user-defined WebDAV or other source the files have to be pasted in the jupyterfs home file browser, not in the standard file browser.
 ```
 
-In `/opt/conda/envs/jhub/lib/python3.11/site-packages/jupyterfs/fsmanager.py` replace
-```
-return self._pyfilesystem_instance.exists(path)
-```
-by
-```
-return not self._pyfilesystem_instance.exists(path)
-```
-(or install `jupyter-fs` from current `main` branch).
+To add further default file browsers for all users edit `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 
-In `/opt/conda/envs/jhub/lib/python3.11/site-packages/webdav3/client.py` replace
-```
-return "{root}{path}".format(root=self.webdav.root, path=urn.path())
-```
-by
-```
-return "{root}{path}".format(root=unquote(self.webdav.root), path=urn.path())
-```
-(or install `webdav3` package from current `develop` branch).
-
-Restart the hub with `systemctl restart jupyterhub` and all single-user servers (File, Hub Control Panel, Stop, Start).
-
-Configuration of file systems is covered [here](hub-users.md#file-transfer-hub-users).
+See [File transfer for hub users](hub-users.md#file-transfer) for configuration of user-defined file systems.
 
 ### Shared directories
 
@@ -523,86 +394,60 @@ to `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
 ### JupyterLab real-time collaboration
 
 The [`jupyterlab-collaboration`](https://github.com/jupyterlab/jupyter-collaboration) extension provides real-time collaboration for working with notebooks.
-Several users share one JupyterLab session and instantly see another user's edits and cell execution results.
+Several users share one JupyterLab session and instantly see other user's edits and cell execution results.
 
-#### Base install
+#### Install
 
-Install the collaboration extension via
-```
-conda activate jhub
-pip install jupyter-collaboration
-```
+Install the collaboration extension by running `/opt/install/rtc.sh` in the container's root shell.
 
-#### Public collaboration rooms
+Rename the template `08_rtc.py.template` in `runtime/jupyterhub_config.d/` (in your container's working directory on the host machine) to `80_rtc.py` and define your public and private collaboration rooms in that file.
 
-To set up JupyterLabs shared by all hub users create user accounts inside the container for all labs:
-```
-useradd --create-home public-collab-1-user --shell=/bin/bash
-usermod -L public-collab-1-user
-
-useradd --create-home public-collab-2-user --shell=/bin/bash
-usermod -L public-collab-2-user
-```
-Then create or extend the file `runtime/jupyterhub_config.d/80_collab.py` in your container's directory with content
-```
-c = get_config()  # only once in file
-
-public_rooms = ['public-collab-1', 'public-collab-2']
-
-for idx, room in enumerate(public_rooms):
-    port = 8500 + idx
-    c.JupyterHub.services.append({
-        'name': f'{room}-room',
-        'url': f'http://127.0.0.1:{port}',
-        'command': ['jupyterhub-singleuser', '--KernelSpecManager.ensure_native_kernel=False'],
-        'user': f'{room}-user',
-        'cwd': f'/home/{room}-user',
-        'oauth_no_confirm': True
-    })
-c.JupyterHub.load_roles.append({
-    'name': 'user',
-    'scopes': ['self'] + [f'access:services!service={room}-room' for room in public_rooms],
-})
-```
 Then restart the hub with `systemctl restart jupyterhub`.
 
-#### Private collaboration rooms
+````{note}
+For each collaboration room there is a user account inside the container. All files created during collaboration sessions are stored in `/home/name-of-room` inside the container. To simplify backup of files from collaboration sessions you may want to make the container's `home` directory available outside the container. For this purpose add
+```
+--mount=type=bind,source=runtime/home,destination=/home \
+```
+to your container's `run.sh` script. This is only necessary for Ankane base image. Ananke nbgrader image already has this line.
+````
 
-To set up JupyterLabs shared by only some hub users create user accounts inside the container for all labs:
+```{note}
+The collaboration extension is disabled by default for all hub users. But users may enable the extension on their own. See [JupyterLab RTC for hub users](hub-users.md#jupyterlab-real-time-collaboration).
 ```
-useradd --create-home private-collab-1-user --shell=/bin/bash
-usermod -L private-collab-1-user
-
-useradd --create-home private-collab-2-user --shell=/bin/bash
-usermod -L private-collab-2-user
-```
-Then create or extend the file `runtime/jupyterhub_config.d/80_collab.py` in your container's directory with content
-```
-c = get_config()  # only once in file
-
-private_rooms = {
-    'private-collab-1': ['username1', 'username2', 'username3'],
-    'private-collab-2': ['username4', 'username5']
-}
-    
-for idx, room in enumerate(private_rooms):
-    port = 8600 + idx
-    c.JupyterHub.services.append({
-        'name': f'{room}-room',
-        'url': f'http://127.0.0.1:{port}',
-        'command': ['jupyterhub-singleuser', '--KernelSpecManager.ensure_native_kernel=False'],
-        'user': f'{room}-user',
-        'cwd': f'/home/{room}-user',
-        'oauth_no_confirm': True
-    })
-    c.JupyterHub.load_roles.append({
-        'name': f'{room}-role',
-        'scopes': [f'access:services!service={room}-room'],
-        'users': private_rooms[room],
-    })
-```
-Then restart the hub with `systemctl restart jupyterhub`.
 
 #### Usage
 
-Usage of the collaboration feature is described in [JupyterLab real-time collaboration](hub-users.md#jupyterlab-real-time-collaboration).
+Usage of the collaboration feature is described in [JupyterLab RTC for hub users](hub-users.md#jupyterlab-real-time-collaboration).
+
+#### Remove a collaboration room
+
+To remove a collaboration room modify `80_rtc.py`, and remove the room's user account inside the container: `userdel rtc-ROOM-NAME`.
+This does not remove any files create during corresponding collaboration sessions. To remove files, too, either use `userdel -r rtc-ROOM-NAME` instead or remove `/home/rtc-ROOM-NAME` manually.
+
+### Language server protocols (LSP)
+
+LSP support allows for code completion, automatic code formatting and several other useful features. To install LSP support for JupyterLab run `/opt/install/lsp.sh` in the container's root shell and restart the hub as well as all user servers.
+
+### TensorFlow with GPU support
+
+If the host machine has got one or more GPUs and Podman is configured to provide GPU access inside containers, then TensorFlow should be installed with GPU support. Have a look at [GPU support](host-admins.md#gpu-support) in the documentation for host admins and/or ask your host admin for details on GPU availability.
+
+#### Test Podman GPU support
+
+If GPU support for Podman is available on your host machine, add the line
+```
+--device nvidia.com/gpu=all \
+```
+below `podman create` in your container's `run.sh`.
+In the container's root shell run `nvidia-smi` to see whether and how many GPUs are available inside the container.
+
+#### Install Tensorflow
+
+To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell. Note that this will downgrade Python to version 3.10 to resolve package conflicts.
+
+The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
+
+#### Assign GPUs to users
+
+Every hub user has access to all GPUs. How to confine a user's TensorFlow commands to a subset of GPUs is described in [TensorFlow and GPUs](hub-users.md#tensorflow-and-gpus).

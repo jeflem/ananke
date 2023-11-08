@@ -11,6 +11,8 @@
   * Python 3.11.6 (was 3.11.4)
 * Change to JupyterHub's LTI config due to a bug in LTIAuthenticator/Traitlets (see [GitHub issue](https://github.com/jupyterhub/ltiauthenticator/issues/177) for details). **Maybe you have to modifiy your `30_lms.conf`. The value for `c.LTI13Authenticator.client_id` now always has to be a list!**
 * Use [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) for kernel management. Commands for creating/cloning/removing local conda environments have slightly changed, see hub users doc.
+* Add install scripts for optional features (base packages, MyST markdown rendering, WebDAV support, real-time collaboration).
+* Simplify configuration of collaboration rooms.
 
 ## Ananke 0.2
 
