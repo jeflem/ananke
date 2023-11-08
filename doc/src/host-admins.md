@@ -1159,6 +1159,8 @@ server {
         root /var/www/html;
         index index.html index.htm index.nginx-debian.html;
 
+        client_max_body_size 10M;
+        
         location / {
                 try_files $uri $uri/ =404;
         }
@@ -1176,6 +1178,10 @@ sudo systemctl restart nginx
 ```
 The `nginx -t` makes `nginx` check its configuration.
 Run the last line only if the check result is okay.
+
+```{hint}
+The `client_max_body_size 10M;` line in `/etc/nginx/sites-available/some_name` restricts the size of HTTP file uploads (JupyterLab upload button, for instance) to the server to 10 MB. Default value is 1 MB.
+```
 
 ### Podman
 
