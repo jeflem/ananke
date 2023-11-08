@@ -128,7 +128,9 @@ RUN systemctl enable boot_script.service
 
 # clean package caches
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
-    conda clean -p -t" && \
+    conda activate python3; \
+    conda clean -p -t; \
+    pip cache purge" && \
     apt-get clean
 
 # disable root login (should be disabled by default, just to be sure...)

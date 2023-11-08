@@ -56,7 +56,9 @@ RUN echo "cd /opt/kore" >> /opt/boot.sh && \
 
 # clean package caches
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
-    conda clean -p -t"
+    conda activate python3; \
+    conda clean -p -t; \
+    pip cache purge"
 
 WORKDIR /
 
