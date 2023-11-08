@@ -13,6 +13,8 @@
 * Use [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) for kernel management. Commands for creating/cloning/removing local conda environments have slightly changed, see hub users doc.
 * Add install scripts for optional features (base packages, MyST markdown rendering, WebDAV support, real-time collaboration).
 * Simplify configuration of collaboration rooms.
+* Container admin doc has new section on language server protocol (LSP) support.
+* Conda uses `conda-forge` channel by default.
 
 ## Ananke 0.2
 
