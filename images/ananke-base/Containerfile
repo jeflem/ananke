@@ -17,6 +17,7 @@ RUN apt-get update && \
     ca-certificates \
     git \
     gpg \
+    htop \
     less \
     libnss-systemd \
     nano \

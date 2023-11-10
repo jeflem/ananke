@@ -161,3 +161,7 @@ print(gpus)
 gpus = gpus[0]  # or gpus = gpus[1:3], for instance
 tf.config.set_visible_devices(gpus, 'GPU')
 ```
+
+## System load
+
+To get system load information open a terminal and run `htop`. To close `htop` press Q.

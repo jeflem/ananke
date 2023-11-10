@@ -15,6 +15,9 @@
 * Simplify configuration of collaboration rooms.
 * Container admin doc has new section on language server protocol (LSP) support.
 * Conda uses `conda-forge` channel by default.
+* Nbgrader feedbacks no longer remove output of hidden tests (but code of hidden tests is still removed). See instructors doc for corresponding config options.
+* System load info with `htop` based on the container's resource limits is available inside containers.
+* Several minor improvements to doc.
 
 ## Ananke 0.2
 
