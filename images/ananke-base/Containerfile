@@ -17,7 +17,6 @@ RUN apt-get update && \
     ca-certificates \
     git \
     gpg \
-    htop \
     less \
     libnss-systemd \
     nano \
@@ -126,6 +125,9 @@ COPY ./assets/boot.sh /opt/boot.sh
 RUN chmod 700 /opt/boot.sh
 COPY ./assets/boot_script.service /etc/systemd/system/boot_script.service
 RUN systemctl enable boot_script.service
+
+# if htop is installed in initial apt section, then image size increase by 1.4 GB for unknown reason
+RUN apt-get install -y htop
 
 # clean package caches
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
