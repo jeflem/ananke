@@ -248,21 +248,26 @@ Replacing the container by a new one (even from the same image) resets the Pytho
 
 ## Additional global Python environments
 
-In the container's root shell, run
-```
-conda create -y --name NAME_OF_NEW_ENV
-```
-Then
-```
-conda activate NAME_OF_NEW_ENV
-conda install -y ipykernel
-python -m ipykernel install --name INTERNAL_NAME_OF_KERNEL --display-name "DISPLAYED NAME OF KERNEL"
-```
+To create another conda environment for all users next to the default `python3` environment in the container's root shell proceed as follows:
+1. Create a new conda environment and install the `ipykernel` package to the new environment.
+   ```
+   conda create -y --name NAME_OF_NEW_ENV ipykernel
+   ```
+2. (optional) Rename the new environment's Python kernel. Default name is `Python 3 (ipykernel)`.
+   ```
+   conda activate NAME_OF_NEW_ENV
+   python -m ipykernel install --sys-prefix --display-name 'NEW DISPLAY NAME OF KERNEL'
+   ```
+3. Update Jupyter's kernel list.
+   ```
+   conda activate jhub
+   python -m nb_conda_kernels list --CondaKernelSpecManager.kernelspec_path='--sys-prefix' --CondaKernelSpecManager.env_filter=None
+   ```
 
-New environment and kernel are available to all users immediately without restarting the hub or a user's lab.
+The new environment's kernel appears in all users' JupyterLabs after a few seconds without restarting the hub or user servers.
 
 ```{important}
-Creation of additional global Python environment is done inside the container.
+Creation of an additional global Python environment is done inside the container.
 Replacing the container by a new one (even from the same image) removes all additional Python environments.
 ```
 
