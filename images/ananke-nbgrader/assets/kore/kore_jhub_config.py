@@ -27,7 +27,7 @@ c = get_config()  # noqa
 remove_hidden = True
 
 # Remove tracebacks of hidden tests from feedback? (default value for new courses)
-remove_hidden_trace = True
+remove_hidden_trace = False
  
 # initialize logging
 logging.basicConfig(

@@ -46,6 +46,12 @@ Even if you see the JupyterLab GUI wait another 5 seconds and ignore cumbersome 
 The hub is restarting in the background, which takes a while.
 ```
 
+Nbgrader provides two configuration options for feedback generation. In the course's Lab open a terminal and run `nano .jupyter/nbgrader_config.py`. A console based text editor will open showing a few lines of Python code. Do not change anything here except for (un)commenting following two lines:
+* If `'nbgrader.preprocessors.ClearHiddenTests',` is active (not commented out), then students won't see the code of hidden tests in their feedback files. Else you will disclose your hidden tests. Note that this option does not (!) remove output of hidden tests.
+* If `'nbgrader.preprocessors.Execute'` is active (not commented out), then the students' notebooks will be reexecuted. If you have removed code of hidden tests with above option, then reexecution will remove output of hidden tests, too (including tracebacks). Whether this is a good idea depends on your test and feedback design, because reexecution will remove any outputs (feedback!) from hidden tests, too.
+
+Close the editor with Ctrl-C, then Y, then return. Close the terminal by typing `logout`.
+
 ## Kore
 
 The Kore service on the one hand sends nbgrader's grades to the LMS.
