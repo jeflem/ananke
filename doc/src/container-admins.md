@@ -150,8 +150,9 @@ To remove a Podman container created by `run.sh` use `remove.sh`.
 
 ```{important}
 If you remove a container all modifications to files inside the container will be lost.
-Some exceptions for Ananke based containers will be discussed below.
 ```
+
+Removing a container leaves all files in `ananke/ananke-base-hub/runtime` untouched. Especially, hub users' home directories will still be there. To remove such home directories (some or all) you need host admin privileges you do not have, because hub users' files are not owned by your account on the host machine. The only way to get rid of hub user files is to ask the host admin for removal or to run a container and remove files from inside the container. Hub users' home directories are located in `/var/lib/private/` inside the container.
 
 ## Container configuration options
 
