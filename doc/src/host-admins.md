@@ -1293,6 +1293,42 @@ Provide the location (`testhub`) and the port (`8000` in `proxy_pass` line) to c
 
 For each container on the machine use different location and different port.
 
+### Enlarge container admin's home dir
+
+If the initial maximum size of a container admin's home directory turns out to be too small, you may increase the size limit by, say, 5 GB. Proceed as follows:
+1. Tell the containter admin to stop the container by running
+   ```
+   systemctl --user stop container-ananke-base-hub.service
+   ```
+   in the **container admin's shell** (SSH). Here `container-ananke-base-hub.service` is the systemd service for the container defined in the containers start-up script `run.sh`.
+2. Identify processes accessing the container admin's home directory:
+   ```
+   sudo fuser -mv /home/testhub_user
+   ```
+   Then kill all processes listed there:
+   ```
+   sudo kill PID_OF_PROCESS
+   ```
+3. Unmount the container admin's home directory:
+   ```
+   sudo umount /home/testhub_user
+   ```
+4. Enlarge image file and file system:
+   ```
+   sudo truncate -s +5G /home/testhub_user.img
+   sudo e2fsck -f /home/testhub_user.img
+   sudo resize2fs /home/testhub_user.img
+   ```
+5. Mount the home directory:
+   ```
+   sudo mount /home/testhub_user
+   ```
+6. Tell the containter admin to start its container by running
+   ```
+   systemctl --user start container-ananke-base-hub.service
+   ```
+   in the **container admin's shell** (SSH).
+
 ## Regular maintenance work
 
 At least weekly we should check the system for problems und install updates.
