@@ -52,6 +52,10 @@ Nbgrader provides two configuration options for feedback generation. In the cour
 
 Close the editor with Ctrl-C, then Y, then return. Close the terminal by typing `logout`.
 
+```{note}
+When collecting submissions with the formgrader, nbgrader will complain about possible cheating attempts in the log output due to unexpected file ownerships. This warning can be savely ignored as long as no student tries cheating ;-) The warning is caused by Ananke's management of user accounts. Developers plan to tackle this problem in a future release.
+```
+
 ## Kore
 
 The Kore service on the one hand sends nbgrader's grades to the LMS.
