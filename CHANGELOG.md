@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## Ananke 0.3
 
 * Fixed typos and broken links in doc.
 * Update all packages:

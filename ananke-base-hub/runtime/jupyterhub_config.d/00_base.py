@@ -6,4 +6,4 @@ c = get_config()  # noqa
 c.JupyterHub.base_url = '/'
 
 # log level
-c.Application.log_level = 'DEBUG'
+c.Application.log_level = 'INFO'
