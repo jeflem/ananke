@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+* Podman image for Moodle to simplify testing for developers (partially based on work by [Carl Kuhligk](https://github.com/CarlKuhligk))
+
 ## Ananke 0.3
 
 * Fixed typos and broken links in doc.

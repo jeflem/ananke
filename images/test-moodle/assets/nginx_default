@@ -1,0 +1,26 @@
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        server_name _;
+
+        absolute_redirect off;
+
+        rewrite ^/(.*\.php)(/)(.*)$ /$1?file=/$3 last;
+        
+        location / {
+                index index.php index.html index.htm;
+        }
+        
+        location ~ \.php$ {
+                fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_param PATH_INFO $fastcgi_path_info;
+                fastcgi_pass unix:/run/php/php-fpm.sock;
+                fastcgi_index index.php;
+                include fastcgi_params;
+        }
+}
+
+ 

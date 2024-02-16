@@ -1,0 +1,12 @@
+[Unit]
+Description=Run script at startup
+After=mysql.service
+
+[Service]
+Type=simple
+RemainAfterExit=yes
+ExecStart=/opt/boot.sh
+TimeoutStartSec=0
+
+[Install]
+WantedBy=default.target

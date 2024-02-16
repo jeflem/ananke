@@ -72,14 +72,21 @@ It cannot be in `/home` because dynamic users have no access to `/home` (the hom
 
 ## Local testing with LMS
 
-For local testing, one may use Moodle in a Podman container and Ananke containers directly, without a reverse proxy.
+The Ananke project ships with a Podman image for Moodle.
+```{warning}
+The Moodle Podman image is for local testing only. Never (!!!) use it on an internet facing server. It's by no means secure!
+```
 
+### Networking configuration
+
+For local testing run two Podman containers, Moodle and Ananke.
+No reverse proxy is required.
 To get network communication between containers running don't use `localhost` or `127.0.0.1`, because `localhost` inside a container refers to the container's `localhost`.
 Instead, create a new IP address (outside any container) for `localhost` and use only this new address:
 ```
 sudo ip addr add 192.168.178.28 dev lo
 ```
-This address will be removed on reboot
+This address will be removed on reboot.
 To remove it manually run
 ```
 sudo ip addr del 192.168.178.28 dev lo
@@ -88,15 +95,22 @@ sudo ip addr del 192.168.178.28 dev lo
 Rootless (that is, run by an unprivileged user) Podman containers do not have an IP address.
 Communication with the container has to use Podman's port forwarding.
 ```
-Moodle then is at `192.168.178.28:9090` and JupyterHub is at `192.168.178.28:8000`, for instance.
+Moodle then is at `192.168.178.28:9090` and JupyterHub is at `192.168.178.28:8000`, for instance. Ports are specified in corresponding `run.sh` scripts.
 
-Where to place the new IP address:
-* in `docker-compose.yaml` of Moodle image (`MOODLE_DOMAIN: 192.168.178.28` twice),
-* in `/opt/moodle_docker/moodle/config.php` (`$CFG->wwwroot = 'http://192.168.178.28:9090';`),
-* in tool's and platform's LTI configuration URLs (`192.168.178.28:9090` or `192.168.178.28:8000`).
+### First start of Moodle
 
-In `docker-compose.yaml` the `port` argument for nginx should be `0.0.0.0:9090:80`.
-This directs all requests coming in via port 9090 to nginx in the container, independently of the IP address (even `localhost` should work).
+Start the Moodle container with `run.sh`. Then enter the container's shell with `shell.sh` und run `/opt/init_moodle.sh`. This creates the Moodle data base and basic Moodle configuration. The script will ask you for your Moodle container's URL. With above network configuration use `http://192.168.178.28:9090`.
+
+In your webbrowser open `http://192.168.178.28:9090/moodle`. Log in as user `admin` with password `Admin123.`. Answer all questions (email addresses do not matter, because mail is not configured in Moodle). The `admin` user is the only exiting user. You may add other user for testing.
+```{important}
+Although the container is running at `http://192.168.178.28:9090` Moodle's URL is `http://192.168.178.28:9090/moodle`.
+```
+
+### Persistent data
+
+All data created by Moodle at runtime (users, courses, grades,...) will be stored in `test-moodle/runtime` on the host machine. If you destroy the container und start a fresh one, everything will still be available to the new container. Running `init_moodle.sh` again is NOT required and may result in errors and corrupted data.
+
+To get rid of Moodle's data and start with a fresh Moodle install, delete the contents of `test-moodle/runtime/moodle_data` and `test-moodle/runtime/mariadb_data` before you create the container.
 
 ## Arguments to `podman run`
 

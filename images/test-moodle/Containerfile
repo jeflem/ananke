@@ -1,0 +1,78 @@
+FROM docker.io/library/debian@sha256:22cc4de537485807b7efe6f4c942d7460c4482852f49434f9c022c044c545a90
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TERM=linux
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    cron \
+    curl \
+    gpg \
+    less \
+    libnss-systemd \
+    mariadb-server \
+    nano \
+    nginx \
+    php-common \
+    php-fpm \
+    php-cli \
+    php-ctype \
+    php-curl \
+    php-dom \
+    php-gd \
+    php-iconv \
+    php-intl \
+    php-mbstring \
+    php-mysql \
+    php-simplexml \
+    php-xml \
+    php-zip \
+    systemd \
+    systemd-container && \
+    rm -rf /var/lib/apt/lists/*
+
+# setup nginx
+COPY ./assets/nginx_default /etc/nginx/sites-available/default
+
+# setup PHP
+RUN sed -i 's\;max_input_vars = 1000\max_input_vars = 5000\g' /etc/php/8.2/cli/php.ini && \
+    sed -i 's\;max_input_vars = 1000\max_input_vars = 5000\g' /etc/php/8.2/fpm/php.ini
+
+# move MariaDB data to different directory
+# (boot script will copy that to mounted volume at first boot)
+RUN mv /var/lib/mysql /var/lib/mysql_backup
+
+# download and unzip Moodle
+RUN mkdir /opt/moodledata
+RUN cd /var/www/html && \
+    curl -o moodle.tgz https://packaging.moodle.org/stable403/moodle-4.3.3.tgz && \
+    tar -xvzf moodle.tgz && \
+    rm moodle.tgz && \
+    chmod -R 755 /var/www/html/moodle
+
+# setup cron    
+COPY ./assets/crontab /etc/crontab
+
+# copy Moodle init script
+COPY ./assets/init_moodle.sh /opt/init_moodle.sh
+RUN chmod 700 /opt/init_moodle.sh
+    
+# copy boot script and create systemd service for boot script
+COPY ./assets/boot.sh /opt/boot.sh
+RUN chmod 700 /opt/boot.sh
+COPY ./assets/boot_script.service /etc/systemd/system/boot_script.service
+RUN systemctl enable boot_script.service
+
+# clean package caches
+RUN apt-get clean
+
+# disable root login (should be disabled by default, just to be sure...)
+RUN passwd -l root
+
+WORKDIR /
+
+EXPOSE 8000
+
+ENTRYPOINT ["/lib/systemd/systemd"]

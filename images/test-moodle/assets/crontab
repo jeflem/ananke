@@ -1,0 +1,2 @@
+* * * * * root /usr/bin/php /var/www/html/moodle/admin/cli/cron.php > /dev/null 2> /opt/moodledata/cron_error.log
+ 
