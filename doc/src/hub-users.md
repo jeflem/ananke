@@ -165,3 +165,12 @@ tf.config.set_visible_devices(gpus, 'GPU')
 ## System load
 
 To get system load information open a terminal and run `htop`. To close `htop` press Q.
+
+## Autocompletion
+
+If [Jupyter LSP](https://github.com/jupyter-lsp/jupyterlab-lsp) is available on your JupyterHub, you should open a terminal in JupyterLab and run
+```
+cd ~
+ln -s / .lsp_symlink
+```
+once. This makes more detailed package information available to Jupyter LSP.

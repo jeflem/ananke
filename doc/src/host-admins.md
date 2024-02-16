@@ -1064,6 +1064,27 @@ sudo systemctl restart auditd
 
 Logs are written to `/var/log/audit/audit.log` and may be inspected with [`ausearch`](https://man7.org/linux/man-pages/man8/ausearch.8.html) and [`aureport`](https://man7.org/linux/man-pages/man8/aureport.8.html).
 
+#### Resource limits
+
+To define memory and CPU usage limits for all container admins create the file `/etc/systemd/system/user-.slice.d/50-memory.conf` with content
+```
+[Slice]
+MemoryMax=20G
+CPUQuota=200%
+```
+and run `sudo systemctl daemon-reload`. Memory limit is in GB and 200% CPU quota corresponds to two CPU cores.
+
+#### OOM killer configuration
+
+With default settings for out-of-memory (OOM) handling in rare situtations the system loses SSH connectivity. For instance, spawning lots of (short-lived) Python processes eating up all memory, the OOM killer starts to kill important (long-lived) networking processes, because the OOM score for Python processes is relatively low. Preventing the Linux kernel from committing more memory than available (for performance reasons) should solve this problem. To do this, run
+```
+sudo sysctl vm.overcommit_memory=2
+sudo sysctl vm.overcommit_ratio
+```
+```{warning}
+Consider this solution experimental. The authors of this document do not fully understand the details here, but tested suggested commands on a production system. See [How to Adjust Linux Out-Of-Memory Killer Settings for PostgreSQL](https://www.percona.com/blog/out-of-memory-killer-or-savior/) for some background information.
+```
+
 ### Reverse proxy
 
 The host machine will provide (next to SSH) only one service to the outside world: an HTTP server.

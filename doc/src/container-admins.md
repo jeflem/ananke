@@ -215,6 +215,10 @@ systemctl restart jupyterhub
 ```
 **inside the container** (see [Root access to the container](#root-access-to-the-container)).
 
+### Time zone
+
+After start-up the container's time zone is set to `Europe/Berlin`. To modify the time zone run `timedatectl list-timezones` and then set the time zone with `timedatectl set-timezone TIME_ZONE_FROM_LIST`.
+
 ## Backups
 
 Hub user's home directories and the hub's configuration are accessible from outside the container.
