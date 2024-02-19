@@ -6,13 +6,15 @@ FROM ananke-base
 # install nbgrader
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.3"
+    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.4; \
+    pip cache purge"
 #    pip install git+https://github.com/jupyter/nbgrader.git@v$NBGRADER_VERSION"
 
 # install additional packages
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    conda install -y flask flask-session jwcrypto pycryptodome gunicorn"
+    conda install -y flask flask-session jwcrypto pycryptodome gunicorn; \
+    conda clean -afy"
 
 # copy config files
 COPY ./assets/nbgrader_config.py /opt/conda/envs/jhub/etc/jupyter/nbgrader_config.py
@@ -53,12 +55,6 @@ RUN echo "cd /opt/kore" >> /opt/boot.sh && \
     echo "conda activate jhub" >> /opt/boot.sh && \
     echo "python make_keys.py" >> /opt/boot.sh && \
     echo "chmod 600 keys/lti_key" >> /opt/boot.sh
-
-# clean package caches
-RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
-    conda activate python3; \
-    conda clean -p -t; \
-    pip cache purge"
 
 WORKDIR /
 

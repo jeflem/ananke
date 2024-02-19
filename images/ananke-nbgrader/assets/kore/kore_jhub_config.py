@@ -284,7 +284,7 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             services.append({
                 'name': course_id,
                 'url': f'http://127.0.0.1:{port}',
-                'command': ['jupyterhub-singleuser', f'--group=formgrade-{course_id}'],# '--debug'],
+                'command': ['jupyterhub-singleuser', f'--group=formgrade-{course_id}', '--KernelSpecManager.ensure_native_kernel=False'],# '--debug'],
                 'user': grader_user,
                 'cwd': f'/home/{grader_user}',
                 'api_token': secrets.token_hex(32),

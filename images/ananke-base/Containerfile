@@ -1,14 +1,14 @@
-FROM docker.io/library/debian@sha256:22cc4de537485807b7efe6f4c942d7460c4482852f49434f9c022c044c545a90
+FROM docker.io/library/debian@sha256:fc27237003ad8ffa4608590057eed4e1db8ce6098434b5ecda23f533a5b12e56
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TERM=linux
 
 ARG JUPYTERHUB_VERSION=4.0.2
-ARG JUPYTERLAB_VERSION=4.0.7
-ARG NOTEBOOK_VERSION=7.0.6
-ARG LTIAUTHENTICATOR_VERSION=1.6.1
+ARG JUPYTERLAB_VERSION=4.1.1
+ARG NOTEBOOK_VERSION=7.1.0
+ARG LTIAUTHENTICATOR_VERSION=1.6.2
 ARG SYSTEMDSPAWNER_VERSION=1.0.1
-ARG PYTHON_VERSION=3.11.6
+ARG PYTHON_VERSION=3.11.8
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -17,6 +17,7 @@ RUN apt-get update && \
     ca-certificates \
     git \
     gpg \
+    htop \
     less \
     libnss-systemd \
     nano \
@@ -40,11 +41,13 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/conda-archive-keyring.gp
 
 # install conda
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends conda
+    apt-get install -y --no-install-recommends conda && \
+    rm -rf /var/lib/apt/lists/*
 
 # update conda
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
-    conda update -n base -c anaconda -y conda"
+    conda update -n base -c anaconda -y conda; \
+    conda clean -afy"
 
 # make conda-forge the default channel
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
@@ -53,7 +56,8 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
 # create conda envs
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda create -n jhub -y; \
-    conda create -n python3 -y"
+    conda create -n python3 -y; \
+    conda clean -afy"
 
 # install conda packages
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
@@ -64,12 +68,14 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     nb_conda_kernels \
     notebook=$NOTEBOOK_VERSION \
     pycurl \
-    python=$PYTHON_VERSION"
+    python=$PYTHON_VERSION; \
+    conda clean -afy"
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate python3; \
     conda install -y \
     ipykernel \
-    python=$PYTHON_VERSION"
+    python=$PYTHON_VERSION; \
+    conda clean -afy"
 
 # install pip packages
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
@@ -78,7 +84,8 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     jupyterhub-idle-culler \
     jupyterhub-ltiauthenticator==$LTIAUTHENTICATOR_VERSION \
     jupyterhub-systemdspawner==$SYSTEMDSPAWNER_VERSION \
-    nbgitpuller"
+    nbgitpuller; \
+    pip cache purge"
 
 # fix nb_conda_kernels install (remove unused outdated config file),
 # modify display name of python3 env's kernel,
@@ -125,16 +132,6 @@ COPY ./assets/boot.sh /opt/boot.sh
 RUN chmod 700 /opt/boot.sh
 COPY ./assets/boot_script.service /etc/systemd/system/boot_script.service
 RUN systemctl enable boot_script.service
-
-# if htop is installed in initial apt section, then image size increase by 1.4 GB for unknown reason
-RUN apt-get install -y htop
-
-# clean package caches
-RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
-    conda activate python3; \
-    conda clean -p -t; \
-    pip cache purge" && \
-    apt-get clean
 
 # disable root login (should be disabled by default, just to be sure...)
 RUN passwd -l root

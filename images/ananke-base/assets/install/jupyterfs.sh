@@ -12,7 +12,8 @@ pip install git+https://github.com/ezhov-evgeny/webdav-client-python-3.git@98c23
 
 # install jupyter-fs from fork that does not use async defs
 # cf. https://github.com/jpmorganchase/jupyter-fs/issues/181
-pip install git+https://github.com/jeflem/jupyter-fs.git@ananke_0.3
+# PR still pending: https://github.com/jpmorganchase/jupyter-fs/pull/186
+pip install git+https://github.com/jeflem/jupyter-fs.git@ananke_0.4
 
 # WebDAV support for jupyterfs
 pip install fs.webdavfs

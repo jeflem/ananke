@@ -19,7 +19,9 @@ for idx, room in enumerate(public_rtc_rooms):
                     source /opt/conda/etc/profile.d/conda.sh; \
                     conda activate jhub; \
                     jupyter labextension disable --level=user @jupyter/collaboration-extension; \
-                    jupyter labextension enable --level=user @jupyter/collaboration-extension"')
+                    jupyter labextension enable --level=user @jupyter/collaboration-extension; \
+                    jupyter labextension disable --level=user nbgrader:assignment-list; \
+                    jupyter labextension disable --level=user nbgrader:validate-assignment"')
 
     # create JHub service for room
     port = 8500 + idx

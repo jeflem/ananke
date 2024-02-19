@@ -378,8 +378,8 @@ Mount this directory into the container by appending
 ```
 in the container's `run.sh`.
 ```{note}
-After modifying `run.sh` you have to recreate your container if it already exists, that is, stop the container, remove it, and then run `run.sh`.
-At the time of writing (July 2023) Podman does not support adding mounts to running containers.
+After modifying `run.sh` you have to recreate your container if it already exists, that is, run `remove.sh` and then run `run.sh` again.
+At the time of writing (February 2024) Podman does not support adding mounts to running containers.
 ```
 
 Make the `share` directory writable inside the container by adding

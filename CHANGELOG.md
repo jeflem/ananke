@@ -2,13 +2,22 @@
 
 ## Next release
 
+* Bugfixes:
+  * Disable Jupyter's default kernel (cf. [issue 24](https://github.com/jeflem/ananke/issues/24)).
+  * Disable Nbgrader menu in collaboration rooms (cf. [issue 23](https://github.com/jeflem/ananke/issues/23))
+* Update all packages:
+  * JupyterHub 4.0.2 (as before)
+  * JupyterLab 4.1.1 (was 4.0.7)
+  * Nbgrader 0.9.1 (as before)
+  * Notebook 7.1.0 (was 7.0.6)
+  * Python 3.11.8 (was 3.11.6)
 * Podman image for Moodle to simplify testing for developers (partially based on work by [Carl Kuhligk](https://github.com/CarlKuhligk))
 
 ## Ananke 0.3
 
 * Fixed typos and broken links in doc.
 * Update all packages:
-  * JupyterHub 4.0.4 (as before)
+  * JupyterHub 4.0.2 (as before)
   * JupyterLab 4.0.7 (was 4.0.4)
   * Nbgrader 0.9.1 (as before)
   * Notebook 7.0.6 (was 7.0.2)
