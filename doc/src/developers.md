@@ -99,12 +99,20 @@ Moodle then is at `192.168.178.28:9090` and JupyterHub is at `192.168.178.28:800
 
 ### First start of Moodle
 
-Start the Moodle container with `run.sh`. Then enter the container's shell with `shell.sh` und run `/opt/init_moodle.sh`. This creates the Moodle data base and basic Moodle configuration. The script will ask you for your Moodle container's URL. With above network configuration use `http://192.168.178.28:9090`.
+Build the image by running `build.sh` in `images/test-moodle`.
 
-In your webbrowser open `http://192.168.178.28:9090/moodle`. Log in as user `admin` with password `Admin123.`. Answer all questions (email addresses do not matter, because mail is not configured in Moodle). The `admin` user is the only exiting user. You may add other user for testing.
+Start the Moodle container with `run.sh` in `test-moodle` directory. Then enter the container's shell with `shell.sh` und run `/opt/init_moodle.sh`. This creates the Moodle data base and basic Moodle configuration. The script will ask you for your Moodle container's URL. With above network configuration use `http://192.168.178.28:9090`.
+
+In your webbrowser open `http://192.168.178.28:9090/moodle`. Log in as user `admin` with password `Admin123.`. Answer all questions (email addresses do not matter, because mail is not configured in Moodle). The `admin` user is the only existing user. You may add other user for testing.
 ```{important}
 Although the container is running at `http://192.168.178.28:9090` Moodle's URL is `http://192.168.178.28:9090/moodle`.
 ```
+
+### Moodle security settings
+
+Moodle has a black list for hosts and a white list for hosts. Moodle only sends requests to URLs matching both lists. This is especially important for LTI communication in test environments with non-standard ports and requests to `localhost` and friends. For instance, hosts `192.168.*.*` are black listed by default.
+
+Log in to Moodle as `admin`. Go to 'Site Administration', 'General', 'Security', 'HTTP Security'. Remove your IP pattern from the hosts black list and add your JupyterHub port to the ports white list.
 
 ### Persistent data
 
