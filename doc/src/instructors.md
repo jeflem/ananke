@@ -27,6 +27,8 @@ If you want to provide data to your hub users or if hub user shall have access t
 
 ## Nbgrader
 
+### Basic usage
+
 To create and manage nbgrader assignments in your JupyterLab session click 'Nbgrader', 'Course List'.
 In the list, click your course.
 A new JupyterLab session opens.
@@ -46,15 +48,33 @@ Even if you see the JupyterLab GUI wait another 5 seconds and ignore cumbersome 
 The hub is restarting in the background, which takes a while.
 ```
 
+```{note}
+When collecting submissions with the formgrader, nbgrader will complain about possible cheating attempts in the log output due to unexpected file ownerships. This warning can be savely ignored as long as no student tries cheating ;-) The warning is caused by Ananke's management of user accounts. Developers plan to tackle this problem in a future release.
+```
+
+### Feedback configuration
+
 Nbgrader provides two configuration options for feedback generation. In the course's Lab open a terminal and run `nano .jupyter/nbgrader_config.py`. A console based text editor will open showing a few lines of Python code. Do not change anything here except for (un)commenting following two lines:
 * If `'nbgrader.preprocessors.ClearHiddenTests',` is active (not commented out), then students won't see the code of hidden tests in their feedback files. Else you will disclose your hidden tests. Note that this option does not (!) remove output of hidden tests.
 * If `'nbgrader.preprocessors.Execute'` is active (not commented out), then the students' notebooks will be reexecuted. If you have removed code of hidden tests with above option, then reexecution will remove output of hidden tests, too (including tracebacks). Whether this is a good idea depends on your test and feedback design, because reexecution will remove any outputs (feedback!) from hidden tests, too.
 
 Close the editor with Ctrl-C, then Y, then return. Close the terminal by typing `logout`.
 
-```{note}
-When collecting submissions with the formgrader, nbgrader will complain about possible cheating attempts in the log output due to unexpected file ownerships. This warning can be savely ignored as long as no student tries cheating ;-) The warning is caused by Ananke's management of user accounts. Developers plan to tackle this problem in a future release.
+### Further configuration
+
+To use custom delimiters for your sample solution add following lines to the formgrader user's `.jupyter/nbgrader_config.py` (cf. above):
+```python
+c.ClearSolutions.begin_solution_delimeter = "BEGIN MY SOLUTION"
+c.ClearSolutions.end_solution_delimeter = "END MY SOLUTION"
 ```
+
+Code cells to be filled by the student contain `raise NotImplementedError` by default. You may place different code there by adding
+```python
+c.ClearSolutions.code_stub = {
+    "python": "YOUR_DEFAULT_CODE_FOR_STUDENT_CELLS"
+}
+```
+to `.jupyter/nbgrader_config.py`.
 
 ## Kore
 
