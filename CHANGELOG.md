@@ -1,7 +1,8 @@
 # Changelog
 
-## Next release
+## Ananke 0.4
 
+* Minor additions and corrections to doc.
 * Bugfixes:
   * Disable Jupyter's default kernel (cf. [issue 24](https://github.com/jeflem/ananke/issues/24)).
   * Disable Nbgrader menu in collaboration rooms (cf. [issue 23](https://github.com/jeflem/ananke/issues/23))

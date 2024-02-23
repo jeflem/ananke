@@ -392,14 +392,18 @@ Then restart JupyterHub with `systemctl restart jupyterhub`.
 If you use jupyter-fs, you may add a file browser for the `data` directory to all users' JupyterLabs.
 Simply add
 ```
-c.Jupyterfs.resources = [
     {
         'name': 'data',
         'url': 'osfs:///data/'
     },
+```
+to the block
+```
+c.Jupyterfs.resources = [
+    ...
 ]
 ```
-to `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
+in `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config_jupyterfs.py`.
 
 ### JupyterLab real-time collaboration
 
