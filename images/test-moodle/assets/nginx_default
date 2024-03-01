@@ -7,13 +7,11 @@ server {
 
         absolute_redirect off;
 
-        rewrite ^/(.*\.php)(/)(.*)$ /$1?file=/$3 last;
-        
         location / {
                 index index.php index.html index.htm;
         }
-        
-        location ~ \.php$ {
+
+        location ~ ^(.+\.php)(.*)$ {
                 fastcgi_split_path_info ^(.+\.php)(/.+)$;
                 fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
                 fastcgi_param PATH_INFO $fastcgi_path_info;
@@ -22,5 +20,3 @@ server {
                 include fastcgi_params;
         }
 }
-
- 

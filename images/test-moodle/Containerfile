@@ -1,4 +1,4 @@
-FROM docker.io/library/debian@sha256:22cc4de537485807b7efe6f4c942d7460c4482852f49434f9c022c044c545a90
+FROM docker.io/library/debian@sha256:fc27237003ad8ffa4608590057eed4e1db8ce6098434b5ecda23f533a5b12e56
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TERM=linux
@@ -64,9 +64,6 @@ COPY ./assets/boot.sh /opt/boot.sh
 RUN chmod 700 /opt/boot.sh
 COPY ./assets/boot_script.service /etc/systemd/system/boot_script.service
 RUN systemctl enable boot_script.service
-
-# clean package caches
-RUN apt-get clean
 
 # disable root login (should be disabled by default, just to be sure...)
 RUN passwd -l root

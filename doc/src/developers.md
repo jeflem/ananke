@@ -139,6 +139,17 @@ You may add other users for testing.
 Although the container is running at `http://192.168.178.28:9090` Moodle's URL is `http://192.168.178.28:9090/moodle`.
 ```
 
+### Moodle security settings
+
+Moodle has a black list for hosts and a white list for hosts.
+Moodle only sends requests to URLs matching both lists.
+This is especially important for LTI communication in test environments with non-standard ports and requests to `localhost` and friends.
+For instance, hosts `192.168.*.*` are black listed by default.
+
+Log in to Moodle as `admin`.
+Go to 'Site Administration', 'General', 'Security', 'HTTP Security'.
+Remove your IP pattern from the hosts black list and add your JupyterHub port to the ports white list.
+
 (lti-tool-configuration-moodle)=
 ### LTI tool configuration (Moodle)
 
