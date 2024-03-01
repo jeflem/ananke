@@ -51,7 +51,10 @@ Thus, they should not have access to another container admin's containers.
 
 ## Conda environments
 
-Starting with 0.3 Ananke uses [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) to make IPython kernels from different conda environments available in Jupyter. The advantage compared to usual kernel management via `ipykernel install` is that kernels installed by `nb_conda_kernels` automatically run `conda activate` at start-up. This is necessary for some packages (TensorFlow, Plotly) to have access to relevant environment variables. With standard kernel management there is no `conda activate` at start-up.
+Starting with 0.3 Ananke uses [`nb_conda_kernels`](https://github.com/Anaconda-Platform/nb_conda_kernels) to make IPython kernels from different conda environments available in Jupyter.
+The advantage compared to usual kernel management via `ipykernel install` is that kernels installed by `nb_conda_kernels` automatically run `conda activate` at start-up.
+This is necessary for some packages (TensorFlow, Plotly) to have access to relevant environment variables.
+With standard kernel management there is no `conda activate` at start-up.
 
 ## Container structure
 
@@ -74,12 +77,29 @@ It cannot be in `/home` because dynamic users have no access to `/home` (the hom
 
 The Ananke project ships with a Podman image for Moodle.
 ```{warning}
-The Moodle Podman image is for local testing only. Never (!!!) use it on an internet facing server. It's by no means secure!
+The Moodle Podman image is for local testing only.
+Never (!!!) use it on an internet facing server.
+It's by no means secure!
 ```
 
+### Workflow
+
+The following list shall guide you through the proper setup.
+See the corresponding sections of individual steps.
+
+* Build both images with the corresponding `build.sh` scripts as needed.
+* Adjust host configuration, see [Networking configuration](#networking-configuration).
+* Start and configure Moodle, see [First start of Moodle](#first-start-of-moodle).
+* Prepare `External Tool`, see [LTI tool configuration (Moodle)](#lti-tool-configuration-moodle).
+* Change LTI tool visibility (tick `Show in activity chooser` at course view > `More` > `LTI External tools`).
+* Follow [Example Ananke configuration for local testing with Moodle](#example-ananke-configuration-for-local-testing-with-moodle).
+* Start Ananke container with `run.sh`.
+
+
+(networking-configuration)=
 ### Networking configuration
 
-For local testing run two Podman containers, Moodle and Ananke.
+For local testing, you have to run both Podman containers, Moodle and Ananke.
 No reverse proxy is required.
 To get network communication between containers running don't use `localhost` or `127.0.0.1`, because `localhost` inside a container refers to the container's `localhost`.
 Instead, create a new IP address (outside any container) for `localhost` and use only this new address:
@@ -87,7 +107,7 @@ Instead, create a new IP address (outside any container) for `localhost` and use
 sudo ip addr add 192.168.178.28 dev lo
 ```
 This address will be removed on reboot.
-To remove it manually run
+To remove it manually, run
 ```
 sudo ip addr del 192.168.178.28 dev lo
 ```
@@ -95,22 +115,88 @@ sudo ip addr del 192.168.178.28 dev lo
 Rootless (that is, run by an unprivileged user) Podman containers do not have an IP address.
 Communication with the container has to use Podman's port forwarding.
 ```
-Moodle then is at `192.168.178.28:9090` and JupyterHub is at `192.168.178.28:8000`, for instance. Ports are specified in corresponding `run.sh` scripts.
+Moodle then is at `192.168.178.28:9090` and JupyterHub is at `192.168.178.28:8000`, for instance.
+Ports are specified in `config.sh` and `run.sh` scripts for Ananke and Moodle respectively.
 
+If the host machine is using SELinux run `sudo setenforce Permissive` otherwise there will be permission errors.
+
+(first-start-of-moodle)=
 ### First start of Moodle
 
-Start the Moodle container with `run.sh`. Then enter the container's shell with `shell.sh` und run `/opt/init_moodle.sh`. This creates the Moodle data base and basic Moodle configuration. The script will ask you for your Moodle container's URL. With above network configuration use `http://192.168.178.28:9090`.
+Start the Moodle container with `run.sh`.
+Then enter the container's shell with `shell.sh` und run `/opt/init_moodle.sh`.
+This creates the Moodle database and basic Moodle configuration.
+The script will ask you for your Moodle container's URL.
+With the above network configuration use `http://192.168.178.28:9090`.
 
-In your webbrowser open `http://192.168.178.28:9090/moodle`. Log in as user `admin` with password `Admin123.`. Answer all questions (email addresses do not matter, because mail is not configured in Moodle). The `admin` user is the only exiting user. You may add other user for testing.
+In your webbrowser open `http://192.168.178.28:9090/moodle`.
+Log in as user `admin` with password `Admin123.`.
+Answer all questions asked.
+Even though the email addresses have to be entered, they serve no purpose because mail is not configured and so the addresses may be selected at will.
+The `admin` user is the only exiting user.
+You may add other users for testing.
 ```{important}
 Although the container is running at `http://192.168.178.28:9090` Moodle's URL is `http://192.168.178.28:9090/moodle`.
 ```
 
+(lti-tool-configuration-moodle)=
+### LTI tool configuration (Moodle)
+
+To access the JupyterHub in the Moodle course context, it must be configured as an external tool.
+This may be done at `Site administration` > `Plugins` > `Manage tools` > `configure a tool manually`.
+
+Tool settings:
+* `Tool URL` - URL of the `JupyterHub` as described above.
+* `LTI version` - LTI 1.3
+* `Public key type` - Keyset URL
+* `Public keyset` - `http://192.168.178.28:8000/services/kore/jwks` (alter base URL as needed)
+* `Initiate login URL` - `http://192.168.178.28:8000/hub/lti13/oauth_login` (alter base URL as needed)
+* `Redirection URI(s)` - `http://192.168.178.28:8000/hub/lti13/oauth_callback` (alter base URL as needed)
+* `Default launch container` - New window
+
 ### Persistent data
 
-All data created by Moodle at runtime (users, courses, grades,...) will be stored in `test-moodle/runtime` on the host machine. If you destroy the container und start a fresh one, everything will still be available to the new container. Running `init_moodle.sh` again is NOT required and may result in errors and corrupted data.
+All data created by Moodle at runtime (users, courses, grades, ...) will be stored in `test-moodle/runtime` on the host machine.
+If you destroy the container und start a fresh one, everything will still be available to the new container.
+Running `init_moodle.sh` again is NOT required and may result in errors and corrupted data.
 
-To get rid of Moodle's data and start with a fresh Moodle install, delete the contents of `test-moodle/runtime/moodle_data` and `test-moodle/runtime/mariadb_data` before you create the container.
+To get rid of Moodle's data and start with a fresh Moodle installation, delete the contents of `test-moodle/runtime/moodle_data` and `test-moodle/runtime/mariadb_data` before you create the container.
+
+(example-ananke-configuration-for-local-testing-with-moodle)=
+### Example Ananke configuration for local testing with Moodle
+
+Before starting the container of Ananke make sure to add / alter the `20_users.py` and `30_lms.py` files.
+Exemplary configurations may look like:
+
+```python
+# 20_users.py
+
+c = get_config()  # noqa
+
+# username(s) of hub admin(s)
+# (login to the hub and look at the URL to get your username)
+c.Authenticator.admin_users.add('u123')
+```
+
+and
+
+```python
+# 30_lms.py
+
+c = get_config()  # noqa
+
+# configuration data provided by your LMS
+base_url = 'http://192.168.178.28:9090/moodle'
+c.LTI13Authenticator.client_id = ['SomeRandomString']
+c.LTI13Authenticator.issuer = base_url
+c.LTI13Authenticator.authorize_url = f'{base_url}/mod/lti/auth.php'
+c.LTI13Authenticator.jwks_endpoint = f'{base_url}/mod/lti/certs.php'
+c.LTI13Authenticator.access_token_url = f'{base_url}/mod/lti/token.php'
+```
+
+Here are some notes to fill in the correct values:
+* `admin_users` - The ID may be extracted from Moodle's URL. The URL might look something like this: yoursite.com/user/profile.php?id=123, where "123" is your user ID. Remember to prefix the ID with the letter 'u'.
+* All values for `30_lms.py` may be seen within the `Tool configuration details`. These are available from the list symbol (left to the cog symbol) of the tool (`Site administration` > `Plugins` > `Manage tools`).
 
 ## Arguments to `podman run`
 
@@ -146,7 +232,9 @@ If Podman throws errors try to install packages `runc` and `crun` manually.
 
 If `systemd` runs a command as dynamic user it takes the (possibly existing) state directory (dynamic user's home) and recursively sets its ownership to the dynamically created uid:gid value.
 
-If the user's lab is running (and the lab may run even if the user is logged out) and we want to run a command within the user's home directory (to alter the user's Jupyter configuration, for instance), we have to remember and then reset original ownership. Both commands (lab and some config command) run as different dynamic users with identical home directory. The command issued last (config command) determines ownership of a user's home and may prevent the longer running command (lab) from accessing user's files! Lab having no (write) access to files in home makes files non-editable for the user in the lab session.
+If the user's lab is running (and the lab may run even if the user is logged out) and we want to run a command within the user's home directory (to alter the user's Jupyter configuration, for instance), we have to remember and then reset original ownership.
+Both commands (lab and some config command) run as different dynamic users with identical home directory.
+The command issued last (config command) determines ownership of a user's home and may prevent the longer running command (lab) from accessing user's files! Lab having no (write) access to files in home makes files non-editable for the user in the lab session.
 
 See [Dynamic Users with systemd](https://0pointer.net/blog/dynamic-users-with-systemd.html) for more details.
 
