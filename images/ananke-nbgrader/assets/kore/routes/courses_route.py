@@ -331,6 +331,8 @@ def courses():
 
         return Response(response=json.dumps({'message': 'Selected course reset successfully!'}), status=200)
 
+    # TODO: Change code so that deletion of course is done by a list of available courses where the user has permissions for.
+    #  This will make it possible to delete courses where the corresponding course on LMS side was deleted already.
     if flask_request.method == 'DELETE':
         try:
             user_name = flask_request.json['user']
