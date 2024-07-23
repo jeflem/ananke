@@ -154,17 +154,17 @@ sudo apt install debootstrap
 
 Before we run `debootstrap` we have to mount the file systems for the new system:
 ```
-sudo  mkdir /mnt/debinst
-sudo  mount /dev/vg_main/lv_root /mnt/debinst
+sudo mkdir /mnt/debinst
+sudo mount /dev/vg_main/lv_root /mnt/debinst
 
-sudo  mkdir /mnt/debinst/var
-sudo  mount /dev/vg_main/lv_var /mnt/debinst/var
+sudo mkdir /mnt/debinst/var
+sudo mount /dev/vg_main/lv_var /mnt/debinst/var
 
-sudo  mkdir /mnt/debinst/tmp
-sudo  mount /dev/vg_main/lv_tmp /mnt/debinst/tmp
+sudo mkdir /mnt/debinst/tmp
+sudo mount /dev/vg_main/lv_tmp /mnt/debinst/tmp
 
-sudo  mkdir /mnt/debinst/home
-sudo  mount /dev/vg_main/lv_home /mnt/debinst/home
+sudo mkdir /mnt/debinst/home
+sudo mount /dev/vg_main/lv_home /mnt/debinst/home
 
 sudo swapon /dev/vg_main/lv_swap
 ```
@@ -328,7 +328,8 @@ After=network-online.target
 
 #### User account
 
-The new system needs a user account\nWe adhere to the `sudo` variant, that is, there will be no root user.
+The new system needs a user account.
+We adhere to the `sudo` variant, that is, there will be no root user.
 **In the `chroot` environment** create a user via
 ```
 adduser some_username
@@ -962,7 +963,7 @@ Test run Tripwire with
 cd ~
 sudo tripwire --check -r report.twr
 ```
-If Tripwire found modified files and modifications are okay (!), add modifications to the Tripwire database:
+If Tripwire found modified files and the modifications are okay (!), add these modifications to the Tripwire database:
 ```
 sudo tripwire --update -a -r report.twr
 ```
@@ -1099,7 +1100,7 @@ Install `nginx`:
 ```
 sudo apt install nginx
 ```
-Then tell the firewall to accept incoming requests on ports 80 (HTTP) and 443 (HTTPS): in `/etc/nftables.conf` replace your SSH port (e.g., 986) by `{986, 80, 443}` ad run
+Then tell the firewall to accept incoming requests on ports 80 (HTTP) and 443 (HTTPS): in `/etc/nftables.conf` replace your SSH port (e.g., 986) by `{986, 80, 443}` and run
 ```
 sudo nft -f /etc/nftables.conf
 ```
