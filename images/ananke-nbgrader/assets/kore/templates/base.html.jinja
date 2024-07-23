@@ -4,15 +4,68 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Kore service for LTI communication between nbgrader and learning management systems" />
-        <style>
-            body {
-                font-family: sans-serif;
-            }
-        </style>
-        <title>Kore Service</title>
-    </head>
-    <body>
-        {% block content %}
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        {% include 'style.html.jinja' %}
+
+        {% block head %}
         {% endblock %}
+
+        <style>
+            {% block style %}
+            {% endblock %}
+        </style>
+
+        <title>
+            Kore Service
+        </title>
+    </head>
+
+    <header>
+        <h1>
+            Kore
+        </h1>
+
+        <h2>
+            ~ service for LTI communication between nbgrader and learning management systems ~
+        </h2>
+
+        <hr>
+    </header>
+
+    <body>
+        {% block body %}
+        {% endblock %}
+
+        <!-- This is used for filling pages if content is to small to fill a whole page. -->
+        <article> </article>
     </body>
+
+    <!-- Footer containing general information. -->
+    <footer>
+        <hr>
+
+        <!-- Unordered list containing links to GitHub. -->
+        <ul>
+            <li>
+                <a href="https://gauss.fh-zwickau.de/ananke/doc/index.html" target="_blank">Ananke documentation</a>
+            </li>
+
+            <li>
+                |
+            </li>
+
+            <li>
+                <a href="https://github.com/jeflem/ananke" target="_blank">Ananke on GitHub</a>
+            </li>
+
+            <li>
+                |
+            </li>
+
+            <li>
+                Kore extension on GitHub
+            </li>
+        </ul>
+    </footer>
 </html>
