@@ -1345,7 +1345,7 @@ If the initial maximum size of a container admin's home directory turns out to b
    ```
    sudo mount /home/testhub_user
    ```
-6. Tell the containter admin to start its container by running
+6. Tell the container admin to start its container by running
    ```
    systemctl --user start container-ananke-base-hub.service
    ```
