@@ -562,7 +562,9 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         #  The following two code lines have to be deleted to apply the fix.
         # Activate kore extension for student.
         logging.debug(f'Activating kore extensions for user: {username}.')
+        uid, gid = get_dir_owner(path=user_home)
         await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', 'kore-extension'])
+        set_dir_owner(path=user_home, uid=uid, gid=gid)
 
         # Add student to nbgrader database.
         with Gradebook(f'sqlite:////home/{grader_user}/course_data/gradebook.db') as gb:
