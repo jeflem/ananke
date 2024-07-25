@@ -236,6 +236,13 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         await run_as_user(username, 'jupyter', ['labextension', 'enable', '--level=user', 'nbgrader:course-list'])
         set_dir_owner(path=user_home, uid=uid, gid=gid)
 
+        # TODO: This is part 1/2 to be changed, when jupyterlab issue #15574 is fixed.
+        #  Where the kore-extension is enabled for eligible instructor users instead of disabling it for every student (see part 2/2 below).
+        #  Remove the comments in front of the following two code lines to apply the fix.
+        # Activate kore extension for user.
+        # logging.debug(f'Activating kore extensions for user: {username}.')
+        # await run_as_user(username, 'jupyter', ['labextension', 'enable', '--level=user', 'kore-extension'])
+
         # Add the user to the instructor list and write altered database to file.
         instructors.append(username)
 
@@ -550,6 +557,12 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
 
     # Add student to course.
     if grader_exists and not is_instructor:
+
+        # TODO: This is part 2/2 to be changed, when jupyterlab issue #15574 is fixed.
+        #  The following two code lines have to be deleted to apply the fix.
+        # Activate kore extension for student.
+        logging.debug(f'Activating kore extensions for user: {username}.')
+        await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', 'kore-extension'])
 
         # Add student to nbgrader database.
         with Gradebook(f'sqlite:////home/{grader_user}/course_data/gradebook.db') as gb:
