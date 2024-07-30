@@ -46,13 +46,11 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
 COPY ./assets/kore /opt/kore
 RUN chmod -R go-rwx /opt/kore
 
-# install kore-extension and activate globally
-# this will be changed to `deactivate` later, when jupyterlab issue #15574 is fixed
-# to do this add `jupyter labextension disable --level=sys_prefix kore-extension` to the following command, which will disable it globally
-# also change `kore_jhub_config.py`
+# install kore-extension and disable globally
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    pip install /opt/kore/kore_extension-0.1.0-py3-none-any.whl"
+    pip install /opt/kore/kore_extension-0.1.0-py3-none-any.whl; \
+    jupyter labextension disable --level=sys_prefix kore-extension"
 
 # extend boot script to create LTI keys
 RUN echo "cd /opt/kore" >> /opt/boot.sh && \
