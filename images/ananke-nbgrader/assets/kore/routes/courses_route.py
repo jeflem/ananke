@@ -20,6 +20,7 @@ courses_bp = Blueprint('courses', __name__)
 
 # Defining subroute(s) for courses filtering. Available subroutes are:
 # - active: Listing all active/running courses. Currently used for course backup, reset and deletion.
+# TODO do i need a /courses/has-notebooks route?
 @courses_bp.route('/courses/active', methods=['GET'])
 def active_courses():
     config_loader = current_app.config['CONFIG_LOADER']
