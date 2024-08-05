@@ -52,7 +52,6 @@ for directory in os.listdir(home_directory_root):
     if os.path.isdir(directory_path):
         try:
             pwd.getpwnam(directory)
-
         except KeyError:
             try:
                 logging.debug(f'Executing: useradd --shell=/bin/bash {directory}')
@@ -63,7 +62,6 @@ for directory in os.listdir(home_directory_root):
 
                 logging.debug(f'chown -R {directory}:{directory} {directory_path}')
                 run(['chown', '-R', f'{directory}:{directory}', directory_path], check=True)
-
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
 
@@ -75,27 +73,17 @@ instructors = []
 try:
     with open(file=instructors_database_path, mode='r') as instructors_database:
         instructors = json.load(instructors_database)
-
 except FileNotFoundError:
     logging.info('Instructors data base not found. A new one will be created in the nbgrader_post_auth callback.')
-
 except PermissionError:
-    logging.debug('Instructor data base not readable!')
-
-    try:
-        logging.debug('Trying to change permission of instructor data base.')
-        logging.debug(f'Executing chmod 600 {instructors_database_path}')
-        run(['chmod', '600', instructors_database_path], check=True)
-
-        with open(file=instructors_database_path, mode='r') as instructors_database:
-            instructors = json.load(instructors_database)
-
-    except CalledProcessError:
-        logging.error('Command cannot be executed!')
-
+    logging.debug(f'Instructor data base not readable: {instructors_database_path}')
+    run(['chmod', '600', instructors_database_path], check=True)
+    with open(file=instructors_database_path, mode='r') as instructors_database:
+        instructors = json.load(instructors_database)
+except CalledProcessError:
+    logging.error('Command cannot be executed!')
 except OSError:
     logging.error('Instructor data base can not be opened! Continuing with an empty list.')
-
 except json.JSONDecodeError:
     logging.error('Instructor data base can not be parsed! Continuing with an empty list.')
 
@@ -250,7 +238,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             try:
                 logging.debug(f'Executing chmod 600 {instructors_database_path}')
                 run(['chmod', '600', instructors_database_path], check=True)
-
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
 
@@ -263,29 +250,17 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
 
             logging.debug(f'Executing chmod 600 {lti_file_path}')
             run(['chmod', '600', lti_file_path], check=True)
-
         except FileNotFoundError:
             logging.error('LTI file not found and cannot be created!')
-
         except PermissionError:
             logging.debug('LTI file not readable!')
-
-            try:
-                logging.debug('Trying to change permission of LTI file.')
-                logging.debug(f'Executing chmod 600 {lti_file_path}')
-                run(['chmod', '600', lti_file_path], check=True)
-
-                with open(lti_file_path, mode='w') as lti_file:
-                    json.dump(auth_state, lti_file, ensure_ascii=False, indent=4)
-
-            except CalledProcessError:
-                logging.error('Command cannot be executed!')
-
-        except OSError:
-            logging.error('LTI file cannot be opened!')
-
+            run(['chmod', '600', lti_file_path], check=True)
+            with open(lti_file_path, mode='w') as lti_file:
+                json.dump(auth_state, lti_file, ensure_ascii=False, indent=4)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
+        except OSError:
+            logging.error('LTI file cannot be opened!')
 
     # Generate course title and id.
     course_id, course_title, course_title_short, grader_user = make_course_id(lti_state=auth_state)
@@ -306,7 +281,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             run(['useradd', '--create-home', '--shell=/bin/bash', grader_user], check=True)
             logging.debug(f'Executing usermod -L {grader_user}')
             run(['usermod', '-L', grader_user], check=True)
-
         except CalledProcessError:
             logging.error('Command cannot be executed!')
 
@@ -331,7 +305,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'enable', '--level=user', 'nbgrader:create-assignment'], check=True)
             logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension disable --level=user nbgrader:validate-assignment')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'disable', '--level=user', 'nbgrader:validate-assignment'], check=True)
-
         except CalledProcessError:
             logging.error('Command cannot be executed!')
 
@@ -358,7 +331,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         try:
             logging.debug(f'Executing mkdir /home/{grader_user}/course_data')
             run(['mkdir', f'/home/{grader_user}/course_data'], check=True)
-
         except CalledProcessError:
             logging.error('Command cannot be executed!')
 
@@ -372,7 +344,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             run(['chown', '-R', f'{grader_user}:{grader_user}', f'/home/{grader_user}'], check=True)
             logging.debug(f'Executing chmod -R go-rwx /home/{grader_user}')
             run(['chmod', '-R', 'go-rwx', f'/home/{grader_user}'], check=True)
-
         except CalledProcessError:
             logging.error('Command cannot be executed!')
 
@@ -401,22 +372,13 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             logging.error('Info file not found and cannot be created!')
         except PermissionError:
             logging.debug('Info file not readable!')
-
-            try:
-                logging.debug('Trying to change permission of info file.')
-                run(['chmod', '600', info_file_path], check=True)
-
-                with open(info_file_path, 'w', encoding='utf-8') as info_file:
-                    json.dump(info, info_file, ensure_ascii=False, indent=4)
-
-            except CalledProcessError:
-                logging.error('Command cannot be executed!')
-
-        except OSError:
-            logging.error('Info file cannot be opened!')
-
+            run(['chmod', '600', info_file_path], check=True)
+            with open(info_file_path, 'w', encoding='utf-8') as info_file:
+                json.dump(info, info_file, ensure_ascii=False, indent=4)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
+        except OSError:
+            logging.error('Info file cannot be opened!')
 
     # Create grader service if necessary.
     if is_instructor:
@@ -496,17 +458,11 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             logging.error('Configuration file for nbgrader not found!')
         except PermissionError:
             logging.debug('Configuration file for nbgrader not readable!')
-
-            try:
-                logging.debug('Trying to change permission of configuration file for nbgrader.')
-                logging.debug(f'Executing chmod 600 {nbgrader_config_path}')
-                run(['chmod', '600', nbgrader_config_path], check=True)
-
-                with open(file=nbgrader_config_path, mode='r') as nbgrader_config_file:
-                    content = nbgrader_config_file.read()
-
-            except CalledProcessError:
-                logging.error('Command cannot be executed!')
+            run(['chmod', '600', nbgrader_config_path], check=True)
+            with open(file=nbgrader_config_path, mode='r') as nbgrader_config_file:
+                content = nbgrader_config_file.read()
+        except CalledProcessError:
+            logging.error('Command cannot be executed!')
         except OSError:
             logging.error('Info file cannot be opened!')
 
@@ -531,20 +487,13 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             logging.error('Configuration file for nbgrader not found and cannot be created!')
         except PermissionError:
             logging.debug('Configuration file for nbgrader not readable!')
-
-            try:
-                logging.debug('Trying to change permission of configuration file for nbgrader.')
-                logging.debug(f'Executing chmod 600 {nbgrader_config_path}')
-                run(['chmod', '600', nbgrader_config_path], check=True)
-
-                with open(file=nbgrader_config_path, mode='w') as nbgrader_config_file:
-                    nbgrader_config_file.write(pre)
-                    nbgrader_config_file.write(f'c.NbGrader.course_titles = {str(mapping)}')
-                    nbgrader_config_file.write(post)
-
-            except CalledProcessError:
-                logging.error('Command cannot be executed!')
-
+            run(['chmod', '600', nbgrader_config_path], check=True)
+            with open(file=nbgrader_config_path, mode='w') as nbgrader_config_file:
+                nbgrader_config_file.write(pre)
+                nbgrader_config_file.write(f'c.NbGrader.course_titles = {str(mapping)}')
+                nbgrader_config_file.write(post)
+        except CalledProcessError:
+            logging.error('Command cannot be executed!')
         except OSError:
             logging.error('Info file cannot be opened!')
 

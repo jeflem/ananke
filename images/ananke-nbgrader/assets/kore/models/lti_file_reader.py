@@ -29,22 +29,18 @@ class LTIFileReader:
                 # Read content of file and set boolean value to True if reading is successful.
                 self.lti_state = json.load(file)
                 self.read_success = True
-
         except FileNotFoundError:
             logging.error(f'LTI state file for user {self.user_name} not found!')
             self.error_response = Response(response=json.dumps({'message': 'FileNotFoundError'}), status=404)
             self.preflight_error = 'LTI file for current user could not be found. Contact administrator or see logs for more details.'
-
         except PermissionError:
             logging.error(f'LTI state file for user {self.user_name} not readable!')
             self.error_response = Response(response=json.dumps({'message': 'PermissionError'}), status=400)
             self.preflight_error = 'LTI file for current user could not be read. Contact administrator or see logs for more details.'
-
         except ValueError:
             logging.error(f'LTI state file is not a JSON!')
             self.error_response = Response(response=json.dumps({'message': 'ValueError'}), status=400)
             self.preflight_error = 'LTI file for current user is not a JSON file. Contact administrator or see logs for more details.'
-
         except OSError:
             logging.error(f'LTI state file for user {self.user_name} can not be opened!')
             self.error_response = Response(response=json.dumps({'message': 'OSError'}), status=500)

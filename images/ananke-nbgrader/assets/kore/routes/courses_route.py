@@ -80,7 +80,6 @@ def courses():
             try:
                 logging.debug(f'Executing: mkdir -p {source_folder}')
                 run(['mkdir', '-p', source_folder], check=True)
-
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
                 return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
@@ -101,7 +100,6 @@ def courses():
                 run(['cp', '-r', src, dst], check=True)
                 logging.debug(f'Executing: chown -R {grader_user}:{grader_user} {dst}')
                 run(['chown', '-R', f'{grader_user}:{grader_user}', dst], check=True)
-
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
                 return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
@@ -137,7 +135,6 @@ def courses():
         try:
             user_name = flask_request.json['user']
             logging.debug(f'User: {user_name}')
-
         except KeyError:
             logging.error('Request key is not in form!')
             return Response(response=json.dumps({'message': 'KeyError'}), status=500)
@@ -164,39 +161,35 @@ def courses():
         # Remove students from courses nbgrader group.
         base_url = get_hub_base_url(lti_state)
         logging.debug(f'Removing all students from nbgrader group of course {course_id}.')
-        # TODO add check=True
-        # TODO add a custom error?
-        run(['systemd-run', 'curl',
-             '-H', 'Content-Type: application/json',
-             '-H', 'Accept: application/json',
-             '-H', f'Authorization: token {kore_token}',
-             '-X', 'DELETE',
-             '-d', '{"users":' + json.dumps(usernames) + '}',
-             f'http://127.0.0.1:8081/{base_url}hub/api/groups/nbgrader-{course_id}/users'])
+        try:
+            run(['systemd-run', 'curl',
+                 '-H', 'Content-Type: application/json',
+                 '-H', 'Accept: application/json',
+                 '-H', f'Authorization: token {kore_token}',
+                 '-X', 'DELETE',
+                 '-d', '{"users":' + json.dumps(usernames) + '}',
+                 f'http://127.0.0.1:8081/{base_url}hub/api/groups/nbgrader-{course_id}/users'], check=True)
+        except CalledProcessError:
+            logging.error('Command cannot be executed!')
+            return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 
         # Clean up the nbgrader exchange directory.
         try:
-            logging.debug(f'Executing: rm -rf /opt/nbgrader_exchange/{course_id}/')
             run(['rm', '-rf', f'/opt/nbgrader_exchange/{course_id}/'], check=True)
-
         except CalledProcessError:
             logging.error('Command cannot be executed!')
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 
         # Clean up course directory.
         try:
-            logging.debug(f'Executing: rm /home/{grader_user}/course_data/gradebook.db')
-            run(['rm', f'/home/{grader_user}/course_data/gradebook.db'], check=True)
-
+            run(['rm', f'{path}/gradebook.db'], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 
         for directory in ['autograded', 'feedback', 'release', 'submitted']:
             try:
-                logging.debug(f'Executing: rm -rf /home/{grader_user}/course_data/{directory}/')
-                run(['rm', '-rf', f'/home/{grader_user}/course_data/{directory}/'], check=True)
-
+                run(['rm', '-rf', f'{path}/{directory}/'], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
                 return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
