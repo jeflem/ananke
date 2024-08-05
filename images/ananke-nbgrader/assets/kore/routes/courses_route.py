@@ -198,27 +198,25 @@ def courses():
 
         return Response(response=json.dumps({'message': 'Selected course reset successfully!'}), status=200)
 
-    # TODO: Change code so that deletion of course is done by a list of available courses where the user has permissions for.
-    #  This will make it possible to delete courses where the corresponding course on LMS side was deleted already.
+    # Delete a course.
     if flask_request.method == 'DELETE':
         try:
             user_name = flask_request.json['user']
-            logging.debug(f'User: {user_name}')
+            path = flask_request.json['path'].removesuffix('/')
         except KeyError:
             logging.error('Request key is not in form!')
             return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
-        logging.info(f'User {user_name} is deleting current course.')
+        logging.info(f'User {user_name} is deleting course ({path}).')
 
-        # Read and parse JSON file containing LTI data of current user.
-        lti_file_reader: LTIFileReader = LTIFileReader(user_name=user_name, file_path=f'runtime/lti_{user_name}.json')
-        lti_file_reader.read_file()
-        lti_file_reader.extract_values()
-
-        if lti_file_reader.read_success and lti_file_reader.parse_success:
-            course_id, course_title, grader_user = lti_file_reader.course_id, lti_file_reader.course_title, lti_file_reader.grader_user
-        else:
-            return lti_file_reader.error_response
+        # Read `info.json` file.
+        try:
+            info = load_info(f'{path}/info.json')
+            course_id = info['id']
+            grader_user = info['grader_user']
+        except KeyError:
+            logging.error('Request key is not in info file!')
+            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
         # Get user's courses and corresponding information.
         try:
