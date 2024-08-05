@@ -109,37 +109,23 @@ def courses():
         return Response(response=json.dumps({'message': 'Selected course copied successfully! \n'
                                                         'Please refresh the webpage (Formgrader) to see the imported course.'}), status=200)
 
+    # Backup a course.
     if flask_request.method == 'PUT':
         try:
-            user_name = flask_request.json['user']
-            logging.debug(f'User: {user_name}')
-
-        except BadRequestKeyError:
+            user_name, src, name = flask_request.json['user'], flask_request.json['path'].removesuffix('/'), flask_request.json['name']
         except KeyError:
             logging.error('Request key is not in form!')
             return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
-        # Read and parse JSON file containing LTI data of current user.
-        lti_file_reader: LTIFileReader = LTIFileReader(user_name=user_name, file_path=f'runtime/lti_{user_name}.json')
-        lti_file_reader.read_file()
-        lti_file_reader.extract_values()
+        logging.info(f'User {user_name} is backing up course ({src}).')
 
-        if lti_file_reader.read_success and lti_file_reader.parse_success:
-            course_id, course_title, grader_user = lti_file_reader.course_id, lti_file_reader.course_title, lti_file_reader.grader_user
-        else:
-            return lti_file_reader.error_response
+        actual_date_time = time.strftime(date_time_format)
+        dst = f'/var/lib/private/{user_name}/{name}_{actual_date_time}/'
 
-        # Backup of current course.
-        actual_time = time.strftime(date_time_format)
-        src = f'/home/{grader_user}/course_data/'
-        dst = f'/var/lib/private/{user_name}/{course_title.removesuffix(f" ({course_id})")} ({actual_time})/'
-
+        # TODO should the gradebook be copied?
         try:
-            logging.debug(f'Executing: cp -r {src} {dst}')
             run(['cp', '-r', src, dst], check=True)
-            logging.debug(f'Executing: chown -R {user_name}:{user_name} {dst}')
             run(['chown', '-R', f'{user_name}:{user_name}', dst], check=True)
-
         except CalledProcessError:
             logging.error('Command cannot be executed!')
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
