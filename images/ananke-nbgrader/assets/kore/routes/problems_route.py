@@ -179,9 +179,7 @@ def problems():
         # Check if the folder for imported problems exists.
         if not os.path.isdir(f'/home/{grader_user}/course_data/source/imported_problems/'):
             try:
-                logging.debug(f'Executing: mkdir -p /home/{grader_user}/course_data/source/imported_problems/')
                 run(['mkdir', '-p', f'/home/{grader_user}/course_data/source/imported_problems/'], check=True)
-                logging.debug(f'Executing: chown {grader_user}:{grader_user} /home/{grader_user}/course_data/source/imported_problems/')
                 run(['chown', f'{grader_user}:{grader_user}', f'/home/{grader_user}/course_data/source/imported_problems/'], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
@@ -192,9 +190,7 @@ def problems():
         dst = f'/home/{grader_user}/course_data/source/imported_problems/{problem_name} ({actual_time}).ipynb'
 
         try:
-            logging.debug(f'Executing: cp {path} {dst}')
             run(['cp', f'{path}', dst], check=True)
-            logging.debug(f'Executing: chown {grader_user}:{grader_user} {dst}')
             run(['chown', f'{grader_user}:{grader_user}', dst], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')

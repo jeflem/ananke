@@ -54,13 +54,8 @@ for directory in os.listdir(home_directory_root):
             pwd.getpwnam(directory)
         except KeyError:
             try:
-                logging.debug(f'Executing: useradd --shell=/bin/bash {directory}')
                 run(['useradd', '--shell=/bin/bash', directory], check=True)
-
-                logging.debug(f'usermod -L {directory}')
                 run(['usermod', '-L', directory], check=True)
-
-                logging.debug(f'chown -R {directory}:{directory} {directory_path}')
                 run(['chown', '-R', f'{directory}:{directory}', directory_path], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
@@ -236,7 +231,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             fcntl.flock(instructors_database, fcntl.LOCK_UN)
 
             try:
-                logging.debug(f'Executing chmod 600 {instructors_database_path}')
                 run(['chmod', '600', instructors_database_path], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
@@ -247,8 +241,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         try:
             with open(lti_file_path, mode='w') as lti_file:
                 json.dump(auth_state, lti_file, ensure_ascii=False, indent=4)
-
-            logging.debug(f'Executing chmod 600 {lti_file_path}')
             run(['chmod', '600', lti_file_path], check=True)
         except FileNotFoundError:
             logging.error('LTI file not found and cannot be created!')
@@ -277,33 +269,22 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
 
         # Add non-existing user to system.
         try:
-            logging.debug(f'Executing useradd --create-home --shell=/bin/bash {grader_user}')
             run(['useradd', '--create-home', '--shell=/bin/bash', grader_user], check=True)
-            logging.debug(f'Executing usermod -L {grader_user}')
             run(['usermod', '-L', grader_user], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
 
         # Activate nbgrader extensions for current user.
         try:
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter server extension enable --user nbgrader.server_extensions.formgrader')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'enable', '--user', 'nbgrader.server_extensions.formgrader'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter server extension disable --user nbgrader.server_extensions.assignment_list')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user nbgrader.server_extensions.assignment_list'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter server extension disable --user nbgrader.server_extensions.validate_assignment')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user', 'nbgrader.server_extensions.validate_assignment'], check=True)
 
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension disable --level=user nbgrader:formgrader')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'disable', '--level=user', 'nbgrader:formgrader'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension enable --level=user nbgrader:formgrader')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'enable', '--level=user', 'nbgrader:formgrader'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension disable --level=user nbgrader:assignment-list')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'disable', '--level=user', 'nbgrader:assignment-list'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension disable --level=user nbgrader:create-assignment')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'disable', '--level=user', 'nbgrader:create-assignment'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension enable --level=user nbgrader:create-assignment')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'enable', '--level=user', 'nbgrader:create-assignment'], check=True)
-            logging.debug(f'Executing runuser -u {grader_user} -- jupyter labextension disable --level=user nbgrader:validate-assignment')
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'disable', '--level=user', 'nbgrader:validate-assignment'], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
@@ -329,7 +310,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             f.write(config_content)
 
         try:
-            logging.debug(f'Executing mkdir /home/{grader_user}/course_data')
             run(['mkdir', f'/home/{grader_user}/course_data'], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
@@ -340,9 +320,7 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
 
         # Change ownership and permissions.
         try:
-            logging.debug(f'Executing chown -R {grader_user}:{grader_user} /home/{grader_user}')
             run(['chown', '-R', f'{grader_user}:{grader_user}', f'/home/{grader_user}'], check=True)
-            logging.debug(f'Executing chmod -R go-rwx /home/{grader_user}')
             run(['chmod', '-R', 'go-rwx', f'/home/{grader_user}'], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')

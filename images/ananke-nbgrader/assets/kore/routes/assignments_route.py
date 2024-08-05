@@ -189,16 +189,13 @@ def assignments():
 
         if not os.path.isdir(source_folder):
             try:
-                logging.debug(f'Executing: mkdir -p {source_folder}')
                 run(['mkdir', '-p', source_folder], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
                 return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 
         try:
-            logging.debug(f'Executing: cp -r {path}/ {dst}')
             run(['cp', '-r', f'{path}/', dst], check=True)
-            logging.debug(f'Executing: chown -R {grader_user}:{grader_user} {dst}')
             run(['chown', '-R', f'{grader_user}:{grader_user}', dst], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')

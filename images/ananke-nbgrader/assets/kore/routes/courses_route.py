@@ -78,7 +78,6 @@ def courses():
         source_folder = f'/home/{grader_user}/course_data/source/'
         if not os.path.isdir(source_folder):
             try:
-                logging.debug(f'Executing: mkdir -p {source_folder}')
                 run(['mkdir', '-p', source_folder], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
@@ -96,9 +95,7 @@ def courses():
             dst = f'/home/{grader_user}/course_data/source/{assignment_name} ({actual_time})/'
 
             try:
-                logging.debug(f'Executing: cp -r {src} {dst}')
                 run(['cp', '-r', src, dst], check=True)
-                logging.debug(f'Executing: chown -R {grader_user}:{grader_user} {dst}')
                 run(['chown', '-R', f'{grader_user}:{grader_user}', dst], check=True)
             except CalledProcessError:
                 logging.error('Command cannot be executed!')
