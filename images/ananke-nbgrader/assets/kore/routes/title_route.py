@@ -3,7 +3,6 @@ import logging
 
 from flask import Blueprint, Response
 from flask import request as flask_request
-from werkzeug.exceptions import BadRequestKeyError
 
 from models.lti_file_reader import LTIFileReader
 
@@ -15,9 +14,9 @@ def title():
     try:
         user_name = flask_request.args.get('user')
         logging.debug(f'User: {user_name}')
-    except BadRequestKeyError:
+    except KeyError:
         logging.error('Request key is not in form!')
-        return Response(response=json.dumps({'message': 'BadRequestKeyError'}), status=500)
+        return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
     logging.info(f'User {user_name} is accessing title of courses.')
 
