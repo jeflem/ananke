@@ -128,35 +128,45 @@ def courses():
 
         return Response(response=json.dumps({'message': 'Selected course backed up successfully!'}), status=200)
 
+    # Reset a course.
     if flask_request.method == 'PATCH':
         try:
             user_name = flask_request.json['user']
+            path = flask_request.json['path'].removesuffix('/')
             logging.debug(f'User: {user_name}')
         except KeyError:
             logging.error('Request key is not in form!')
             return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
-        logging.info(f'User {user_name} is resetting current course.')
+        # Read `info.json` file.
+        try:
+            info = load_info(f'{path}/info.json')
+            course_id = info['id']
+            base_url = info['target_link_uri']
+        except KeyError:
+            logging.error('Request key is not in info file!')
+            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
-        # Read and parse JSON file containing LTI data of current user.
-        lti_file_reader: LTIFileReader = LTIFileReader(user_name=user_name, file_path=f'runtime/lti_{user_name}.json')
-        lti_file_reader.read_file()
-        lti_file_reader.extract_values()
-
-        if lti_file_reader.read_success and lti_file_reader.parse_success:
-            lti_state = lti_file_reader.lti_state
-            course_id, course_title, grader_user = lti_file_reader.course_id, lti_file_reader.course_title, lti_file_reader.grader_user
-        else:
-            return lti_file_reader.error_response
+        logging.info(f'User {user_name} is resetting course ({path}).')
 
         # Remove students from gradebook.
-        with Gradebook(f'sqlite:////home/{grader_user}/course_data/gradebook.db') as gb:
-            usernames = [student.id for student in gb.students]
-            for username in usernames:
-                gb.remove_student(username)
+        try:
+            with Gradebook(f'sqlite:///{path}/gradebook.db') as gb:
+                usernames = [student.id for student in gb.students]
+                # TODO: Do we need to go into each students account and delete the fetched assignments?
+                for username in usernames:
+                    gb.remove_student(username)
+        except FileNotFoundError:
+            logging.error('Database not found!')
+            return Response(response=json.dumps({'message': 'FileNotFoundError'}), status=500)
+        except PermissionError:
+            logging.error('Database can not be altered!')
+            return Response(response=json.dumps({'message': 'PermissionError'}), status=500)
+        except KeyError:
+            logging.error('Invalid key for database supplied!')
+            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
         # Remove students from courses nbgrader group.
-        base_url = get_hub_base_url(lti_state)
         logging.debug(f'Removing all students from nbgrader group of course {course_id}.')
         try:
             run(['systemd-run', 'curl',
@@ -180,16 +190,11 @@ def courses():
         # Clean up course directory.
         try:
             run(['rm', f'{path}/gradebook.db'], check=True)
+            for directory in ['autograded', 'feedback', 'release', 'source', 'submitted']:
+                run(['rm', '-rf', f'{path}/{directory}/'], check=True)
         except CalledProcessError:
             logging.error('Command cannot be executed!')
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
-
-        for directory in ['autograded', 'feedback', 'release', 'submitted']:
-            try:
-                run(['rm', '-rf', f'{path}/{directory}/'], check=True)
-            except CalledProcessError:
-                logging.error('Command cannot be executed!')
-                return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 
         return Response(response=json.dumps({'message': 'Selected course reset successfully!'}), status=200)
 
