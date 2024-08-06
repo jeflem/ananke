@@ -359,7 +359,7 @@ def generate_unique_course_names(active_paths: List[str], backed_up_paths: Optio
     # Generate backed-up course names if provided.
     backed_up_names = []
     if backed_up_paths:
-        backed_up_names = [f"{path.split('/')[-2]} (Backup)" for path in backed_up_paths]
+        backed_up_names = [f"{path.split('/')[-1]} (Backup)" for path in backed_up_paths]
         logging.debug(f'Backed up course names: {backed_up_names}')
 
     # Combine and ensure uniqueness.
