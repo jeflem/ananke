@@ -15,3 +15,9 @@ class Subset(Enum):
     ALL = auto()
     ACTIVE = auto()
     OTHER = auto()
+
+
+class Content(Enum):
+    COURSES = 'courses'
+    ASSIGNMENTS = 'assignments'
+    PROBLEMS = 'problems'
