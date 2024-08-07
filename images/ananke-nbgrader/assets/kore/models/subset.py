@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class Subset(Enum):
@@ -12,6 +12,6 @@ class Subset(Enum):
     - `OTHER`: Represents the subset indicating a list of all courses except the one the user is currently
 
     """
-    ALL = 'all'
-    ACTIVE = 'active'
-    OTHER = 'other'
+    ALL = auto()
+    ACTIVE = auto()
+    OTHER = auto()
