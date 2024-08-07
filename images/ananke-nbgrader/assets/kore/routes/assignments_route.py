@@ -26,6 +26,7 @@ def assignments():
         except ValueError:
             return Response(response=json.dumps({'message': 'ValueError'}), status=500)
 
+    # Copy an assignment.
     if flask_request.method == 'POST':
         try:
             src = flask_request.json['fromPath'].removesuffix('/')
