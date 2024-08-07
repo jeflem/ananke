@@ -433,7 +433,7 @@ def generate_unique_names(content: Content, active_paths: List[str], backed_up_p
         A list of unique, human-readable names for the content. Names are formatted based on the content type and
         are ensured to be unique, with duplicates being distinguished by appending counts.
     """
-    # Generate active course names.
+
     active_names = []
     for active_path in active_paths:
         user_name = active_path.split('/')[2]
@@ -452,7 +452,6 @@ def generate_unique_names(content: Content, active_paths: List[str], backed_up_p
         except (FileNotFoundError, PermissionError, CalledProcessError, OSError):
             raise
 
-    # Generate backed-up course names if provided.
     backed_up_names = []
     if backed_up_paths:
         if content == Content.COURSES:
@@ -464,7 +463,6 @@ def generate_unique_names(content: Content, active_paths: List[str], backed_up_p
         else:
             raise ValueError(f'Invalid content type: {content}. Must be `Content.COURSES`, `Content.ASSIGNMENTS`, or `Content.PROBLEMS`.')
 
-    # Combine and ensure uniqueness.
     unique_names = []
     for content_names in [active_names, backed_up_names] if backed_up_paths else [active_names]:
         unique_array, unique_count = np.unique(content_names, return_counts=True)
@@ -476,5 +474,5 @@ def generate_unique_names(content: Content, active_paths: List[str], backed_up_p
         content_names = [name.replace('_', ' ') for name in content_names]
         unique_names.extend(content_names)
 
-    logging.debug(f'Unique course names: {unique_names}')
+    logging.debug(f'Unique {content.value} names: {unique_names}')
     return unique_names
