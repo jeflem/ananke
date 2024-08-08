@@ -12,7 +12,6 @@ from routes.courses_route import courses_bp
 from routes.grades_route import grades_bp
 from routes.home_route import home, home_bp, authenticated
 from routes.problems_route import problems_bp
-from routes.title_route import title_bp
 from routes.utils_routes import utils_bp
 
 logging.basicConfig(
@@ -51,7 +50,6 @@ config_loader.store_in_app_context()
 
 # Register blueprints with the app.
 home_bp.before_request(authenticated(home, app.config['KORE_TOKEN']))
-app.register_blueprint(title_bp, url_prefix=prefix)
 app.register_blueprint(home_bp, url_prefix=prefix)
 app.register_blueprint(grades_bp, url_prefix=prefix)
 app.register_blueprint(courses_bp, url_prefix=prefix)
