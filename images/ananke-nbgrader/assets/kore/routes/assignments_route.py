@@ -1,12 +1,12 @@
 import json
 import logging
 import time
-from pathlib import Path
 from subprocess import run, CalledProcessError
 
 from flask import Blueprint, Response, current_app
 from flask import request as flask_request
 
+from exceptions import InfoFileError
 from misc.utils import get_list, load_info
 from models.enums import Content
 
@@ -32,14 +32,20 @@ def assignments():
         try:
             src = flask_request.json['fromPath'].removesuffix('/')
             dst = flask_request.json['toPath'].removesuffix('/')
-            dst = f'{dst}/source/'
         except KeyError:
             logging.error('Request key is not in form!')
             return Response(response=json.dumps({'message': 'KeyError'}), status=500)
 
-        info = load_info(f'{Path(src).parents[1]}/info.json')
-        grader_user = info['grader_user']
+        # Read `info.json` file.
+        try:
+            info = load_info(f'{dst}/info.json')
+            grader_user = info['grader_user']
+        except KeyError:
+            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
+        except InfoFileError:
+            return Response(response=json.dumps({'message': 'InfoFileError'}), status=500)
 
+        dst = f'{dst}/source/'
         try:
             tmp = f'{src}_{time.strftime(date_time_format)}'
             run(['cp', '-r', src, tmp], check=True)
