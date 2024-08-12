@@ -1,4 +1,4 @@
-FROM docker.io/library/debian@sha256:fc27237003ad8ffa4608590057eed4e1db8ce6098434b5ecda23f533a5b12e56
+FROM docker.io/library/debian@sha256:45f2e735295654f13e3be10da2a6892c708f71a71be845818f6058982761a6d3
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TERM=linux
@@ -47,7 +47,7 @@ RUN mv /var/lib/mysql /var/lib/mysql_backup
 # download and unzip Moodle
 RUN mkdir /opt/moodledata
 RUN cd /var/www/html && \
-    curl -o moodle.tgz https://packaging.moodle.org/stable403/moodle-4.3.3.tgz && \
+    curl -o moodle.tgz https://packaging.moodle.org/stable404/moodle-4.4.2.tgz && \
     tar -xvzf moodle.tgz && \
     rm moodle.tgz && \
     chmod -R 755 /var/www/html/moodle
