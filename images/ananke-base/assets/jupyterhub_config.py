@@ -30,6 +30,7 @@ c.JupyterHub.db_url = 'sqlite:///opt/conda/envs/jhub/etc/jupyterhub/jupyterhub.s
 c.ConfigurableHTTPProxy.pid_file = '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub-proxy.pid'
 
 c.Authenticator.admin_users = set()
+c.Authenticator.allow_all = True
 
 c.JupyterHub.authenticator_class = 'ltiauthenticator.lti13.auth.LTI13Authenticator'
 
