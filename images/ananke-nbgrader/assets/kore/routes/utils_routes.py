@@ -1,6 +1,6 @@
 import json
 
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app, Response
 from flask import jsonify as flask_jsonify
 from flask import make_response
 from flask import redirect as flask_redirect
@@ -8,9 +8,25 @@ from flask import request as flask_request
 from flask import session as flask_session
 from jupyterhub.services.auth import HubOAuth
 
+from exceptions import ConfigFileError
+from misc.utils import load_config
+
 utils_bp = Blueprint('utils', __name__)
 
 
+@utils_bp.route('/config', methods=['GET'])
+def config():
+    # Retrieve full course list (active and backed up ones).
+    if flask_request.method == 'GET':
+        # TODO: Add check if user is admin?
+        try:
+            config_data = load_config(path='/opt/kore/config/config.json')
+            return Response(response=json.dumps(config_data), status=200)
+        except ConfigFileError:
+            return Response(response=json.dumps({'message': 'ConfigFileError'}), status=500)
+
+
+# TODO: Refactor routes?
 @utils_bp.route('/oauth_callback')
 def oauth_callback():
     prefix = current_app.config['PREFIX']
