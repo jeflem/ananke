@@ -101,6 +101,7 @@ def courses():
 
         try:
             run(['cp', '-r', src, dst], check=True)
+            run(['rm', f'{dst}info.json'], check=True)
             run(['chown', '-R', f'{user_name}:{user_name}', dst], check=True)
         except CalledProcessError:
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
