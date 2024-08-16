@@ -8,7 +8,7 @@ conda activate python3
 conda install -y python=3.10
 
 # install
-pip install tensorflow[and-cuda]==2.14
+pip install tensorflow[and-cuda]==2.17.0
 pip install keras_tuner
 
 # test
