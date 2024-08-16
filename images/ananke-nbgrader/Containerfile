@@ -1,12 +1,12 @@
 FROM ananke-base
 
 # official nbgrader releases not used until https://github.com/jupyter/nbgrader/pull/1797 gets merged 
-#ARG NBGRADER_VERSION=0.9.1
+#ARG NBGRADER_VERSION=0.9.3
 
 # install nbgrader
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.4; \
+    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.5; \
     pip cache purge"
 #    pip install git+https://github.com/jupyter/nbgrader.git@v$NBGRADER_VERSION"
 
@@ -35,14 +35,17 @@ RUN touch /opt/conda/envs/jhub/share/jupyter/nbgrader.log && \
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
     jupyter server extension disable --sys-prefix nbgrader.server_extensions.formgrader; \
-    jupyter labextension disable --level=sys_prefix nbgrader:formgrader; \
+    jupyter labextension disable --level=sys_prefix @jupyter/nbgrader:formgrader; \
+    jupyter labextension lock --level=sys_prefix @jupyter/nbgrader:formgrader; \
     jupyter server extension disable --sys-prefix nbgrader.server_extensions.course_list; \
-    jupyter labextension disable --level=sys_prefix nbgrader:course-list; \
-    jupyter labextension disable --level=sys_prefix nbgrader:create-assignment"
+    jupyter labextension disable --level=sys_prefix @jupyter/nbgrader:course-list; \
+    jupyter labextension lock --level=sys_prefix @jupyter/nbgrader:course-list; \
+    jupyter labextension disable --level=sys_prefix @jupyter/nbgrader:create-assignment; \
+    jupyter labextension lock --level=sys_prefix @jupyter/nbgrader:create-assignment"
 #jupyter server extension disable --sys-prefix nbgrader.server_extensions.assignment_list
-#jupyter labextension disable --level=sys_prefix nbgrader:assignment-list
+#jupyter labextension disable --level=sys_prefix @jupyter/nbgrader:assignment-list
 #jupyter server extension disable --sys-prefix nbgrader.server_extensions.validate_assignment
-#jupyter labextension disable --level=sys_prefix nbgrader:validate-assignment
+#jupyter labextension disable --level=sys_prefix @jupyter/nbgrader:validate-assignment
 
 # copy Kore
 COPY ./assets/kore /opt/kore

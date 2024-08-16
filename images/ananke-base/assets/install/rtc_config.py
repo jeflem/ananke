@@ -14,14 +14,21 @@ for idx, room in enumerate(public_rtc_rooms):
         os.system(f'useradd --create-home --shell=/bin/bash {username}')
         os.system(f'usermod -L {username}')
         os.system(f'chown -R {username}:{username} /home/{username}')
+        os.system('jupyter labextension unlock @jupyter/nbgrader:assignment-list')
+        os.system('jupyter labextension unlock @jupyter/nbgrader:validate-assignment')
+        os.system('jupyter labextension unlock @jupyter/nbgrader:nbgrader:menu')
         os.system(f'su - {username} -c \
                     "export JUPYTER_PREFER_ENV_PATH=0; \
                     source /opt/conda/etc/profile.d/conda.sh; \
                     conda activate jhub; \
                     jupyter labextension disable --level=user @jupyter/collaboration-extension; \
                     jupyter labextension enable --level=user @jupyter/collaboration-extension; \
-                    jupyter labextension disable --level=user nbgrader:assignment-list; \
-                    jupyter labextension disable --level=user nbgrader:validate-assignment"')
+                    jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
+                    jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
+                    jupyter labextension disable --level=user @jupyter/nbgrader:menu"')
+        os.system('jupyter labextension lock @jupyter/nbgrader:assignment-list')
+        os.system('jupyter labextension lock @jupyter/nbgrader:validate-assignment')
+        os.system('jupyter labextension lock @jupyter/nbgrader:nbgrader:menu')
 
     # create JHub service for room
     port = 8500 + idx
@@ -51,12 +58,21 @@ for idx, room in enumerate(private_rtc_rooms):
         os.system(f'useradd --create-home --shell=/bin/bash {username}')
         os.system(f'usermod -L {username}')
         os.system(f'chown -R {username}:{username} /home/{username}')
+        os.system('jupyter labextension unlock @jupyter/nbgrader:assignment-list')
+        os.system('jupyter labextension unlock @jupyter/nbgrader:validate-assignment')
+        os.system('jupyter labextension unlock @jupyter/nbgrader:nbgrader:menu')
         os.system(f'su - {username} -c \
                     "export JUPYTER_PREFER_ENV_PATH=0; \
                     source /opt/conda/etc/profile.d/conda.sh; \
                     conda activate jhub; \
                     jupyter labextension disable --level=user @jupyter/collaboration-extension; \
-                    jupyter labextension enable --level=user @jupyter/collaboration-extension"')
+                    jupyter labextension enable --level=user @jupyter/collaboration-extension; \
+                    jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
+                    jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
+                    jupyter labextension disable --level=user @jupyter/nbgrader:menu"')
+        os.system('jupyter labextension lock @jupyter/nbgrader:assignment-list')
+        os.system('jupyter labextension lock @jupyter/nbgrader:validate-assignment')
+        os.system('jupyter labextension lock @jupyter/nbgrader:nbgrader:menu')
 
     # create JHub service for room
     port = 8600 + idx
