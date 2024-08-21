@@ -337,7 +337,9 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             'title': course_title,
             'title_short': course_title_short,
             'grader_user': grader_user,
-            'target_link_uri': target_link_uri
+            'target_link_uri': target_link_uri,
+            'aud': auth_state['aud'],
+            'lineitem': auth_state['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint']['lineitem']
         }
 
         try:
