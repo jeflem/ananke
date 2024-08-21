@@ -6,7 +6,8 @@ FROM ananke-base
 # install nbgrader
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.3"
+    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.3; \
+    pip install git+https://github.com/marcwit/kore-extension.git"
 #    pip install git+https://github.com/jupyter/nbgrader.git@v$NBGRADER_VERSION"
 
 # install additional packages
