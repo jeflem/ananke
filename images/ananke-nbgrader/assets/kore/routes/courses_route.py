@@ -73,9 +73,7 @@ def courses():
         try:
             info = load_info(f'{dst}/info.json')
             grader_user = info['grader_user']
-        except KeyError:
-            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
-        except InfoFileError:
+        except (KeyError, InfoFileError):
             return Response(response=json.dumps({'message': 'InfoFileError'}), status=500)
 
         assignments = [
@@ -136,9 +134,7 @@ def courses():
             info = load_info(f'{path}/info.json')
             course_id = info['id']
             base_url = info['target_link_uri']
-        except KeyError:
-            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
-        except InfoFileError:
+        except (KeyError, InfoFileError):
             return Response(response=json.dumps({'message': 'InfoFileError'}), status=500)
 
         # Clean up gradebook, course directories and files.
@@ -164,9 +160,7 @@ def courses():
             info = load_info(f'{path}/info.json')
             course_id = info['id']
             grader_user = info['grader_user']
-        except KeyError:
-            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
-        except InfoFileError:
+        except (KeyError, InfoFileError):
             return Response(response=json.dumps({'message': 'InfoFileError'}), status=500)
 
         # Get user's courses and corresponding information.

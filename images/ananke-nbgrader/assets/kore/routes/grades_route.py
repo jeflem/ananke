@@ -157,14 +157,8 @@ def grades():
                 response.raise_for_status()
                 if response.status_code == 200:
                     logging.debug(f'Score(s) for student with ID {student_id} successfully send!')
-            except HTTPError:
-                logging.error(f'Posting grades to LMS for student with ID {student_id} ended in HTTPError!')
-                return Response(response=json.dumps({'message': 'HTTPError'}), status=500)
-            except ConnectionError:
-                logging.error(f'Posting grades to LMS for student with ID {student_id} ended in ConnectionError!')
-                return Response(response=json.dumps({'message': 'ConnectionError'}), status=500)
-            except RequestException:
-                logging.error(f'Posting grades to LMS for student with ID {student_id} ended in RequestException!')
-                return Response(response=json.dumps({'message': 'RequestException'}), status=500)
+            except (HTTPError, ConnectionError, RequestException):
+                logging.error('Error while trying to send grades to LMS')
+                return Response(response=json.dumps({'message': 'SendGradesError'}), status=500)
 
         return Response(response=json.dumps({'message': 'Grades send successfully!'}), status=200)
