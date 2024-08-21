@@ -277,7 +277,7 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         # Activate nbgrader extensions for current user.
         try:
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'enable', '--user', 'nbgrader.server_extensions.formgrader'], check=True)
-            run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user nbgrader.server_extensions.assignment_list'], check=True)
+            run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user', 'nbgrader.server_extensions.assignment_list'], check=True)
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user', 'nbgrader.server_extensions.validate_assignment'], check=True)
 
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'labextension', 'disable', '--level=user', 'nbgrader:formgrader'], check=True)
