@@ -62,7 +62,7 @@ async function getContent(context, onLoad = false) {
         dropdownElement.disabled = true;
         importButton.disabled = true;
 
-        if (data.message === 'NoContentFound' && !onLoad) {
+        if (data.message === 'NoContentError' && !onLoad) {
             toasts.push({
                 title: 'Info',
                 content: `No content found while retrieving list of ${context}. Contact administrator or see logs for more details.`,
@@ -70,7 +70,7 @@ async function getContent(context, onLoad = false) {
                 style: 'verified'
             });
         }
-        if (data.message !== 'NoContentFound' && !onLoad) {
+        if (data.message !== 'NoContentError' && !onLoad) {
             toasts.push({
                 title: 'Error',
                 content: `${data.message} while retrieving list of ${context}. Contact administrator or see logs for more details.`,
