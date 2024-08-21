@@ -12,7 +12,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
 # install additional packages
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    conda install -y numpy flask flask-session jwcrypto pycryptodome gunicorn"
+    conda install -y flask flask-session jwcrypto pycryptodome gunicorn"
 
 # copy config files
 COPY ./assets/nbgrader_config.py /opt/conda/envs/jhub/etc/jupyter/nbgrader_config.py

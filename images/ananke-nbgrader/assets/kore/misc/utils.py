@@ -6,9 +6,8 @@ import logging
 import os
 from pathlib import Path
 from subprocess import run, CalledProcessError
-from typing import List, Optional, Counter, Tuple
+from typing import List, Optional, Tuple
 
-import numpy as np
 from flask import Response
 from flask import request as flask_request
 from werkzeug.exceptions import BadRequestKeyError
@@ -505,15 +504,28 @@ def generate_unique_names(content: Content, active_paths: List[str], backed_up_p
             raise ValueError(f'Invalid content type: {content}. Must be `Content.COURSES`, `Content.ASSIGNMENTS`, or `Content.PROBLEMS`.')
 
     unique_names = []
-    for content_names in [active_names, backed_up_names] if backed_up_paths else [active_names]:
-        unique_array, unique_count = np.unique(content_names, return_counts=True)
+    for names in [active_names, backed_up_names] if backed_up_paths else [active_names]:
 
-        if not np.all(unique_count == 1):
-            counts = dict(Counter[content_names])
-            content_names = [key if i == 0 else key + f' ({i})' for key in unique_array for i in range(counts[key])]
+        if len(names) == len(set(names)):
+            unique_content_names = names
+        else:
+            seen = set()
+            unique_content_names = []
 
-        content_names = [name.replace('_', ' ') for name in content_names]
-        unique_names.extend(content_names)
+            for name in names:
+                if name not in seen:
+                    seen.add(name)
+                    unique_content_names.append(name)
+                else:
+                    count = 1
+                    while f'{name} ({count})' in seen:
+                        count += 1
+                    new_name = f'{name} ({count})'
+                    seen.add(new_name)
+                    unique_content_names.append(new_name)
+
+        unique_content_names = [name.replace('_', ' ') for name in unique_content_names]
+        unique_names.extend(unique_content_names)
 
     logging.debug(f'Unique {content.value} names: {unique_names}')
     return unique_names
