@@ -48,6 +48,15 @@ class CleanUpError(KoreError):
         super().__init__(self.message)
 
 
+class ActivePathsError(KoreError):
+    """ Error related to path of active course. """
+
+    def __init__(self):
+        self.message = 'An error occurred while generating path list of current course.'
+        logging.error(self.message)
+        super().__init__(self.message)
+
+
 class UniqueNamesError(KoreError):
     """ Error related to unique name generation. """
 

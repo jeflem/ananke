@@ -1,6 +1,4 @@
 # Used to create new key pair for LTI communication.
-# TODO add try - except block to open() statement?
-
 import json
 
 from Crypto.PublicKey import RSA
