@@ -51,7 +51,7 @@ def problems():
         try:
             run(['mkdir', '-p', dst], check=True)
             run(['cp', src, f'{dst}{filename}'], check=True)
-            run(['chown', '-R', f'{grader_user}:{grader_user}', f'{dst}{filename}'], check=True)
+            run(['chown', '-R', f'{grader_user}:{grader_user}', f'{dst}'], check=True)
         except CalledProcessError:
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 
