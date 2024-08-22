@@ -61,6 +61,10 @@ Nbgrader provides two configuration options for feedback generation. In the cour
 
 Close the editor with Ctrl-C, then Y, then return. Close the terminal by typing `logout`.
 
+```{note}
+For unknown reasons nbgrader shows a warning `Config option 'display_data_priority' not recognized by 'ClearHiddenTests'` while generating feedback. This warning can be savely ignored.
+```
+
 ### Further configuration
 
 To use custom delimiters for your sample solution add following lines to the formgrader user's `.jupyter/nbgrader_config.py` (cf. above):
