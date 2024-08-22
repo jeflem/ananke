@@ -17,6 +17,15 @@ Ignore those messages (click 'Dismiss').
 After a few seconds, everything should work as expected.
 The reason for this behavior is a restart of JupyterHub in the background due to configuration changes.
 
+## Missing context menu items in file browser
+
+With old Firefox versions some context menu items (like Copy and Paste, for instance) aren't shown if right-clicking a file in JupyterLab's file browser. Either update Firefox or use the follow workaround:
+1. Open the URL `about:config` in the browser.
+2. Search for `layout.css.has-selector.enabled`.
+3. Set the value to `true`.
+
+See [JupyterLab issue 16391](https://github.com/jupyterlab/jupyterlab/issues/16391) for some background information.
+
 ## Restarting JupyterLab
 
 If something goes completely wrong or if you have installed new Python environments (see below), restart JupyterLab: click 'File', then 'Hub Control Panel'.
