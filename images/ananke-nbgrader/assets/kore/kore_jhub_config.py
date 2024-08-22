@@ -68,19 +68,8 @@ instructors = []
 try:
     with open(file=instructors_database_path, mode='r') as instructors_database:
         instructors = json.load(instructors_database)
-except FileNotFoundError:
-    logging.info('Instructors data base not found. A new one will be created in the nbgrader_post_auth callback.')
-except PermissionError:
-    logging.debug(f'Instructor data base not readable: {instructors_database_path}')
-    run(['chmod', '600', instructors_database_path], check=True)
-    with open(file=instructors_database_path, mode='r') as instructors_database:
-        instructors = json.load(instructors_database)
-except CalledProcessError:
-    logging.error('Command cannot be executed!')
-except OSError:
-    logging.error('Instructor data base can not be opened! Continuing with an empty list.')
-except json.JSONDecodeError:
-    logging.error('Instructor data base can not be parsed! Continuing with an empty list.')
+except (FileNotFoundError, PermissionError, OSError, json.JSONDecodeError):
+    logging.error('Error while accessing/parsing the instructor data base.')
 
 logging.debug('found {} instructors'.format(len(instructors)))
 
@@ -167,7 +156,7 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         """
 
         if uid and gid:
-            os.system(f'chown -R {uid}:{gid} {path}')
+            run(['chown', '-R', f'{uid}:{gid}', path], check=True)
 
     async def run_as_user(username: str, cmd: str, args: list[str]) -> None:
         """
@@ -219,7 +208,6 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', '@jupyter/nbgrader:course-list'])
         await run_as_user(username, 'jupyter', ['labextension', 'enable', '--level=user', '@jupyter/nbgrader:course-list'])
         os.system('jupyter labextension lock @jupyter/nbgrader:course-list')
-
         os.system('jupyter labextension unlock kore-extension')
         await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', 'kore-extension'])
         await run_as_user(username, 'jupyter', ['labextension', 'enable', '--level=user', 'kore-extension'])
@@ -246,17 +234,8 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             with open(lti_file_path, mode='w') as lti_file:
                 json.dump(auth_state, lti_file, ensure_ascii=False, indent=4)
             run(['chmod', '600', lti_file_path], check=True)
-        except FileNotFoundError:
-            logging.error('LTI file not found and cannot be created!')
-        except PermissionError:
-            logging.debug('LTI file not readable!')
-            run(['chmod', '600', lti_file_path], check=True)
-            with open(lti_file_path, mode='w') as lti_file:
-                json.dump(auth_state, lti_file, ensure_ascii=False, indent=4)
-        except CalledProcessError:
-            logging.error('Command cannot be executed!')
-        except OSError:
-            logging.error('LTI file cannot be opened!')
+        except (FileNotFoundError, PermissionError, OSError):
+            logging.error('LTI file cannot be opened/altered.')
 
     # Generate course title and id.
     course_id, course_title, course_title_short, grader_user = make_course_id(lti_state=auth_state)
@@ -349,26 +328,19 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             'title': course_title,
             'title_short': course_title_short,
             'grader_user': grader_user,
-            'target_link_uri': target_link_uri
+            'target_link_uri': target_link_uri,
+            'aud': auth_state['aud'],
+            'lineitem': auth_state['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint']['lineitem']
         }
 
         try:
             with open(info_file_path, 'w', encoding='utf-8') as info_file:
                 json.dump(info, info_file, ensure_ascii=False, indent=4)
 
-            os.system(f'chown -R {grader_user}:{grader_user} {info_file_path}')
-            os.system(f'chmod -R go-rwx {info_file_path}')
-        except FileNotFoundError:
-            logging.error('Info file not found and cannot be created!')
-        except PermissionError:
-            logging.debug('Info file not readable!')
-            run(['chmod', '600', info_file_path], check=True)
-            with open(info_file_path, 'w', encoding='utf-8') as info_file:
-                json.dump(info, info_file, ensure_ascii=False, indent=4)
-        except CalledProcessError:
-            logging.error('Command cannot be executed!')
-        except OSError:
-            logging.error('Info file cannot be opened!')
+            run(['chown', '-R', f'{grader_user}:{grader_user}', info_file_path], check=True)
+            run(['chmod', '-R', 'go-rwx', info_file_path], check=True)
+        except (FileNotFoundError, PermissionError, CalledProcessError, OSError):
+            logging.error('Error while accessing info.json file.')
 
     # Create grader service if necessary.
     if is_instructor:
@@ -444,17 +416,8 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         try:
             with open(file=nbgrader_config_path, mode='r') as nbgrader_config_file:
                 content = nbgrader_config_file.read()
-        except FileNotFoundError:
-            logging.error('Configuration file for nbgrader not found!')
-        except PermissionError:
-            logging.debug('Configuration file for nbgrader not readable!')
-            run(['chmod', '600', nbgrader_config_path], check=True)
-            with open(file=nbgrader_config_path, mode='r') as nbgrader_config_file:
-                content = nbgrader_config_file.read()
-        except CalledProcessError:
-            logging.error('Command cannot be executed!')
-        except OSError:
-            logging.error('Info file cannot be opened!')
+        except (FileNotFoundError, PermissionError, OSError):
+            logging.error('Error while accessing nbgrader configuration file.')
 
         start = content.find('c.NbGrader.course_titles')
         end = content.find('}', start)
@@ -473,19 +436,8 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
                 nbgrader_config_file.write(pre)
                 nbgrader_config_file.write(f'c.NbGrader.course_titles = {str(mapping)}')
                 nbgrader_config_file.write(post)
-        except FileNotFoundError:
-            logging.error('Configuration file for nbgrader not found and cannot be created!')
-        except PermissionError:
-            logging.debug('Configuration file for nbgrader not readable!')
-            run(['chmod', '600', nbgrader_config_path], check=True)
-            with open(file=nbgrader_config_path, mode='w') as nbgrader_config_file:
-                nbgrader_config_file.write(pre)
-                nbgrader_config_file.write(f'c.NbGrader.course_titles = {str(mapping)}')
-                nbgrader_config_file.write(post)
-        except CalledProcessError:
-            logging.error('Command cannot be executed!')
-        except OSError:
-            logging.error('Info file cannot be opened!')
+        except (FileNotFoundError, PermissionError, OSError):
+            logging.error('Error while accessing nbgrader configuration file.')
 
     # Add student to course.
     if grader_exists and not is_instructor:
@@ -526,6 +478,7 @@ c.JupyterHub.load_roles.append({
 c.JupyterHub.services.append({
     'name': 'kore',
     'url': 'http://127.0.0.1:10001',
+    'display': False,  # Will be changed once refactored.
     'api_token': kore_token,
     'oauth_no_confirm': True,
     'cwd': '/opt/kore',

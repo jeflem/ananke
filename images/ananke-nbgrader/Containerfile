@@ -3,18 +3,18 @@ FROM ananke-base
 # official nbgrader releases not used until https://github.com/jupyter/nbgrader/pull/1797 gets merged 
 #ARG NBGRADER_VERSION=0.9.3
 
-# install nbgrader
+# install nbgrader and kore
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
     pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.5; \
+    pip install git+https://github.com/marcwit/kore-extension.git; \
     pip cache purge"
 #    pip install git+https://github.com/jupyter/nbgrader.git@v$NBGRADER_VERSION"
 
 # install additional packages
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    conda install -y flask flask-session jwcrypto pycryptodome gunicorn; \
-    conda clean -afy"
+    conda install -y flask flask-session jwcrypto pycryptodome gunicorn"
 
 # copy config files
 COPY ./assets/nbgrader_config.py /opt/conda/envs/jhub/etc/jupyter/nbgrader_config.py
@@ -65,6 +65,12 @@ RUN echo "cd /opt/kore" >> /opt/boot.sh && \
     echo "conda activate jhub" >> /opt/boot.sh && \
     echo "python misc/make_keys.py" >> /opt/boot.sh && \
     echo "chmod 600 keys/lti_key" >> /opt/boot.sh
+
+# clean package caches
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda activate python3; \
+    conda clean -p -t; \
+    pip cache purge"
 
 WORKDIR /
 

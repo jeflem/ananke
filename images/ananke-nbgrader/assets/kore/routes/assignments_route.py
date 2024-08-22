@@ -40,9 +40,13 @@ def assignments():
         try:
             info = load_info(f'{dst}/info.json')
             grader_user = info['grader_user']
+<<<<<<< HEAD
         except KeyError:
             return Response(response=json.dumps({'message': 'KeyError'}), status=500)
         except InfoFileError:
+=======
+        except (KeyError, InfoFileError):
+>>>>>>> kore-refactor
             return Response(response=json.dumps({'message': 'InfoFileError'}), status=500)
 
         dst = f'{dst}/source/'
