@@ -5,6 +5,10 @@ They are responsible for everything, especially for security.
 
 In this chapter, we sketch how to set up a (hopefully) secure host publicly accessibly from the outside world, and we provide information on maintenance tasks, general ones and JupyterHub related ones.
 
+```{note}
+If you prefer and trust a standard Linux install, you may skip large parts of this chapter. Ananke runs on any standard Linux server. The only requirement is that you install [Podman](https://podman.io) and [nginx](https://nginx.org), which ship with most Linux distributions.
+```
+
 ```{contents}
 ---
 local: true
@@ -25,7 +29,7 @@ They originate from setting up a public test system for the Ananke project and, 
 
 We assume that the reader has basic Linux administration and network knowledge.
 
-A special feature of the installation instruction here is that we do not use services of the surrounding network (likely an educational institution's network), except for internet connectivity.
+A special feature of the installation instructions here is that we do not use services of the surrounding network (likely an educational institution's network), except for internet connectivity.
 Reasons:
 * The host machine may be moved to another network easily.
 * There will be no or only minimal interference with central security measures like surveillance and antivirus tools.
@@ -41,9 +45,8 @@ Ananke uses [Debian](https://www.debian.org/) for container images.
 The host machine may use a different Linux flavor, but here we go with Debian, too.
 
 We do not use the usual [Debian installer](https://www.debian.org/devel/debian-installer/) but manual installation for two reasons:
-* We want to have a minimal installation.
-* So we can be sure we control and understand the details.
-* The host machine is likely to already serve a JupyterHub or something else, and we want to minimize downtime.
+* We want to have a minimal installation. So we can be sure we control and understand the details.
+* The host machine is likely to already serve a JupyterHub or something else, and we want to minimize downtime during reinstall of the operating system.
 
 The approach we follow is known as cross-installation.
 That is, we install a new operating system in parallel to the existing one.
@@ -518,7 +521,7 @@ sudo reboot now
 
 The new system should work now, but it's a good idea to keep the old one until you are really sure that the new one works flawlessly.
 
-To remove the old system, we take its disks partitions and add them the new systems `home` partition.
+To remove the old system, we take its disk partitions and add them to the new system's `home` partition.
 Thus, entire disk space will be available to the new system.
 
 Find the old system's partitions from the output of
@@ -559,12 +562,12 @@ Daily or weekly usage reports via email are a good idea, too.
 
 To make email notifications work, we need a world-facing SMTP server.
 Setting one up on our host machine is not trivial and should be avoided (usually all mails coming from 'small' SMTP servers are classified as spam).
-A better idea is to use an external SMTP server (a free mailer or your institutions' mail server).
+A better idea is to use an external SMTP server (a free mailer or your institution's mail server).
 
 ```{important}
-Don't use your standard mail account (at your institution, for instance) for sending because we have to store credentials on our server.
+Don't use your standard mail account (at your institution, for instance) for sending because we have to store credentials on your server.
 Although only admin users have access to the credentials file, it's not a good idea.
-Better create a new mail account solely used for sending notifications from our server to the outside world.
+Better create a new mail account solely used for sending notifications from your server to the outside world.
 ```
 
 Here we use the small and simple [DragonFly Mail Agent (dma)](https://github.com/corecode/dma).
@@ -1224,7 +1227,7 @@ Thus, standard Linux quotas won't work.
 To prevent a container from filling the host machine's disk, we use separate virtual file systems for each container admin.
 
 The container admin's file system's image file will be a sparse file.
-Thus, it requires much less disk space than it's size suggests.
+Thus, it requires much less disk space than its size suggests.
 See [Disk quota checks and extension](#disk-quota-checks-and-extension) for commands to check container admins' true disk usage.
 ```
 

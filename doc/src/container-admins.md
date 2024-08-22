@@ -54,20 +54,18 @@ If you are in Windows, you may try [WinSCP](https://winscp.net).
 
 ### Container files, images and containers
 
-An image is a blueprint for containers.
+An *image* is a blueprint for containers.
 A *container* is similar to a virtual machine.
 Its purpose is to run a program in isolation from other programs on the machine.
 From one image, one may create one or more containers.
 
 A container file contains all information relevant to Podman to build an image.
 
-The Ananke project's files are split into four separate parts:
-* Directories `images/ananke-base` and `images/ananke-nbgrader` contain all files needed to build Ananke's Podman images (without or with nbgrader).
-* In particular, they contain the container files, named `Containerfile`.
-* Directories `ananke-base-hub` and `ananke-nbgrader-hub` contain everything you need to run an Ananke container (without or with nbgrader).
-* They contain config files as well as subdirectories holding data generated during container runtime.
+The Ananke project's files are split into four separate subsets:
+* Directories `images/ananke-base` and `images/ananke-nbgrader` contain all files needed to build Ananke's Podman images (without or with nbgrader). In particular, they contain the container files, named `Containerfile`.
+* Directories `ananke-base-hub` and `ananke-nbgrader-hub` contain everything you need to run an Ananke container (without or with nbgrader). They contain config files as well as subdirectories holding data generated during container runtime.
 
-If you want to run more than one Ananke container, each container needs a separate copy of the relevant directory (`ananke-base-hub` or `ananke-nbgrader-hub`).
+If you want to run more than one Ananke container, that is, if you want to run several JupyterHubs, each container needs a separate copy of the relevant directory (`ananke-base-hub` or `ananke-nbgrader-hub`).
 
 ### Basic Podman commands
 
@@ -114,7 +112,7 @@ To get an Ananke container running proceed as follows (instructions are for Anan
    cd ~/ananke/images/ananke-base
    ./build.sh
    ```
-   **on the host machine** (see [SSH login to host machine](#ssh-login-to-host-machine)). Alternative: if you obtained a tar file containing the image, run
+   **on the host machine** (see [SSH login to host machine](#ssh-login-to-host-machine)). Alternative: if you have obtained a tar file containing the image, run
    ```
    podman load -i filename.tar
    ```
@@ -191,12 +189,12 @@ Even `new window` is not possible due to it's implementation in Moodle via embed
 
 ### Hub admins
 
-To give a hub user admin privileges inside the hub (see [here](hub-admins.md)), get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `runtime/jupyterhub_config.d/20_users.py` (rename `20_users.py.template`):
+To give a hub user admin privileges inside the hub (see [For hub admins](hub-admins.md)), get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `runtime/jupyterhub_config.d/20_users.py` (rename `20_users.py.template`):
 ```
 c.Authenticator.admin_users.add('hub_admin_user_id')
 ```
 
-If there is more than one hub admin, use one such line per hub admin.
+If there are more than one hub admin, use one such line per hub admin.
 
 ### User server behavior
 
@@ -207,7 +205,7 @@ In `runtime/jupyterhub_config.d/10_servers.py` you may modify JupyterHub's behav
 Configuration changes require restarting JupyterHub to take effect.
 Restarting the hub does not kill user's JupyterLabs.
 Thus, the hub can be restarted whenever necessary.
-Only users currently logging in may experience problems.
+Only users currently logging in may experience cumbersome error messages for some seconds.
 
 To restart the hub run
 ```
@@ -290,7 +288,7 @@ It's at `/opt/userdata.json`.
 
 ## Resource limits
 
-To see resource limits of the containern, run
+To see resource limits of the container, run
 ```
 cat /sys/fs/cgroup/cpu.max
 cat /sys/fs/cgroup/memory.max
@@ -315,11 +313,15 @@ You may run standard update commands in the container's root shell:
 apt update
 apt upgrade
 ```
-Update your Python environments, too:
+Update your Python environments, too, by running
 ```
 conda update --all
 ```
+in each environment.
 
+```{important}
+Updating packages in the `jhub` environment may cause lots of troubles. Unexperienced users better do not touch this environment. To get newer versions of Jupyter components update the whole container (see below).
+```
 ### Update the whole container
 
 Alternatively, you may get the newest Ananke files and rebuild image and container.
@@ -349,7 +351,7 @@ WebDAV provides access to Nextcloud accounts, for instance.
 To install jupyter-fs run `/opt/install/jupyterfs.sh` in the container's root shell and restart all user servers.
 
 ```{note}
-Files cannot be copied or moved between jupyterfs file browsers and JupyterLab's standard file browser. Thus, the install script will add a jupyterfs file browser to all users' JupyterLabs showing a user's home directory. To copy/move files from a user-defined WebDAV or other source the files have to be pasted in the jupyterfs home file browser, not in the standard file browser.
+Files cannot be copied or moved between jupyter-fs file browsers and JupyterLab's standard file browser. Thus, the install script will add a jupyter-fs file browser to all users' JupyterLabs showing a user's home directory. To copy/move files from a user-defined WebDAV or other source the files have to be pasted in the jupyter-fs home file browser, not in the standard file browser.
 ```
 
 To add further default file browsers for all users edit `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.py`.
@@ -358,7 +360,7 @@ See [File transfer for hub users](hub-users.md#file-transfer) for configuration 
 
 ### Shared directories
 
-If your hub users need to share files, either because you don't want them to upload and store identical copies of large data sets to their home directories or your users, want to send files to other users, you can set this up as follows:
+If your hub users need to share files, either because you don't want them to upload and store identical copies of large data sets to their home directories or your users want to send files to other users, you can set this up as follows:
 
 Create a directory `data` somewhere in your home directory on the host machine.
 Create a `datasets` subdirectory with read permission for all users and a `share` subdirectory with write permission for all users.
@@ -379,7 +381,7 @@ Mount this directory into the container by appending
 in the container's `run.sh`.
 ```{note}
 After modifying `run.sh` you have to recreate your container if it already exists, that is, run `remove.sh` and then run `run.sh` again.
-At the time of writing (February 2024) Podman does not support adding mounts to running containers.
+At the time of writing (August 2024) Podman does not support adding mounts to running containers.
 ```
 
 Make the `share` directory writable inside the container by adding
@@ -408,13 +410,13 @@ in `/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config_jupyterfs.py`.
 ### JupyterLab real-time collaboration
 
 The [`jupyterlab-collaboration`](https://github.com/jupyterlab/jupyter-collaboration) extension provides real-time collaboration for working with notebooks.
-Several users share one JupyterLab session and instantly see other user's edits and cell execution results.
+Several users share one JupyterLab session and instantly see other users' edits and cell execution results.
 
 #### Install
 
 Install the collaboration extension by running `/opt/install/rtc.sh` in the container's root shell.
 
-Rename the template `08_rtc.py.template` in `runtime/jupyterhub_config.d/` (in your container's working directory on the host machine) to `80_rtc.py` and define your public and private collaboration rooms in that file.
+Rename the template `80_rtc.py.template` in `runtime/jupyterhub_config.d/` (in your container's working directory on the host machine) to `80_rtc.py` and define your public and private collaboration rooms in that file.
 
 Then restart the hub with `systemctl restart jupyterhub`.
 
@@ -458,7 +460,7 @@ In the container's root shell run `nvidia-smi` to see whether and how many GPUs 
 
 #### Install Tensorflow
 
-To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell. Note that this will downgrade Python to version 3.10 to resolve package conflicts.
+To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell.
 
 The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
 

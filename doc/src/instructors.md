@@ -81,8 +81,7 @@ to `.jupyter/nbgrader_config.py`.
 The Kore service on the one hand sends nbgrader's grades to the LMS.
 On the other hand, it provides course management functionality for nbgrader.
 
-Access Kore from your JupyterLab session by clicking 'File', 'Hub Control Panel', 'Services', 'kore'.
+Access Kore from your JupyterLab session by clicking the 'Kore' menu item.
 
 Sending grades to the LMS only works for the LMS course you started your Jupyter session from.
 All other functionality works for all your courses.
-If you are a hub admin, then you have access to all instructors' courses on the hub via Kore.

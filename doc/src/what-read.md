@@ -25,7 +25,7 @@ local: true
 
 ## Hub users
 
-*Hub user* login to the JupyterHub and work in their JupyterLab environment.
+*Hub users* login to the JupyterHub and work in their JupyterLab environment.
 They have access to their personal files only and to nbgrader courses made available to them by an instructor.
 
 In a teaching environment, students are hub users.
