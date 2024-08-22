@@ -1,9 +1,0 @@
-{% extends "base.html.jinja" %}
-{% block content %}
-<h1>Kore</h1> 
-
-<p>Do you really want to remove course <span style="font-weight: bold;">{{ data.course_id }}</span>?</p>
-
-<p><a href="remove_course?course_id={{ data.course_id }}&ask=no">yes</a> | <a href="{{ data.prefix }}">no</a></p>
-
-{% endblock %}

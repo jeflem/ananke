@@ -1,43 +1,392 @@
 {% extends "base.html.jinja" %}
-{% block content %}
-<h1>Kore</h1> 
 
-<p>Manage your nbgrader courses.</p>
+{% block head %}
+<script>
+function showPreflightError() {
+    if ("{{ data.preflight_error }}" !== "") {
+        // Address preflight div by id and change visibility.
+        var preflightDiv = document.getElementById("preflight-error");
+        preflightDiv.style.display = "block";
 
-<p>
-You logged in as user {{ data.username }}
-(<span style="font-weight: bold;">{{ data.first_name }} {{ data.last_name }}</span>)
-from LMS course
-<span style="font-weight: bold;">{{ data.login_course_title }}</span>, nbgrader course ID {{ data.login_course_id }}.
-</p>
+        // Get heading and change content based on returned error.
+        var preflightHeading = document.getElementById("preflight-error-heading");
+        preflightHeading.innerHTML = "{{ data.preflight_error }}";
 
-{% for course_id in data.course_ids %}
-    <hr />
-    <p>Course <span style="font-weight: bold;">{{ course_id }}</span></p>
-    <p>instructors:<ul>
-        {% for instructor in data.instructors[course_id] %}
-            <li>{{ instructor }}</li>
-        {% endfor %}
-    </ul></p>
-    {% if course_id == data.login_course_id %}
-        <p><a href="send_all">send all grades to LMS</a></p>
-    {% else %}
-        <p>If you want to send this course's grades to the LMS, login to the hub via corresponding LMS course.</p>
-    {% endif %}
-    <p><a href="backup_course?course_id={{ course_id }}">backup course</a> (copy all course files to my home directory, including submissions, gradebook,...)</p>
-    <p>
-        <form method="get" action="import_assignments">
-            import assignments from directory: /home/{{ data.username }}/
-            <input type="text" name="path" />
-            <input type="hidden" name="course_id" value="{{ course_id }}" />
-            <button type="submit">import</button>
-            (only works if there aren't any assignments in the course)
-        </form>
+        // Address content div by id and change visibility.
+        var contentDiv = document.getElementById("content");
+        contentDiv.style.display = "none";
+    }
+}
+
+// Asynchronous function for retrieving lists of courses/assignments/problems. This function is defined in <head> to be executed on window load.
+async function getContent(context, onLoad = false) {
+    const requestOptions = {
+        method: 'GET',
+        mode: 'cors',
+        headers: {'Content-Type': 'application/json'}
+    };
+
+    let url = `https://gauss.fh-zwickau.de/mahub/services/kore/${context}`;
+    let params = { user: "{{ data.user }}" };
+
+    const response = await fetch(url + "?" + ( new URLSearchParams( params ) ).toString(), requestOptions);
+    const data = await response.json();
+
+    // Select the dropdown (<select>) element & the import button by id.
+    var dropdownElement = document.getElementById(`${context}-dropdown`)
+    var importButton = document.getElementById(`import-${context.slice(0, -1)}-button`)
+
+    // Clear all existing options of the dropdown element.
+    dropdownElement.innerHTML = "";
+
+    // Check status of the response.
+    if (response.ok) {
+        let names = data['names'];
+        let paths = data['paths'];
+
+        for (var i = 0; i < names.length; i++) {
+            var option = document.createElement("option");
+            option.text = names[i];
+            option.value = paths[i];
+            dropdownElement.add(option);
+        }
+
+        dropdownElement.disabled = false;
+        importButton.disabled = false;
+    } else {
+        var option = document.createElement("option");
+        option.text = `No ${context} found.`;
+        option.value = "None";
+        dropdownElement.add(option);
+
+        dropdownElement.disabled = true;
+        importButton.disabled = true;
+
+        if (data.message === 'NoContentError' && !onLoad) {
+            toasts.push({
+                title: 'Info',
+                content: `No content found while retrieving list of ${context}. Contact administrator or see logs for more details.`,
+                dismissAfter: '3s',
+                style: 'verified'
+            });
+        }
+        if (data.message !== 'NoContentError' && !onLoad) {
+            toasts.push({
+                title: 'Error',
+                content: `${data.message} while retrieving list of ${context}. Contact administrator or see logs for more details.`,
+                dismissAfter: '3s',
+                style: 'error'
+            });
+        }
+    }
+}
+
+window.onload = async function() {
+    showPreflightError();
+    await getContent("courses", true);
+    await getContent("assignments", true);
+    await getContent("problems", true);
+}
+</script>
+{% endblock %}
+
+{% block body %}
+<!-- This div shows, if there is an error during preflight. -->
+<div id="preflight-error">
+    <h4 id="preflight-error-heading" style="color: red; font-size: 32px;"></h4>
+    <p style="color: red; font-size: 24px;">
+        There was an error during the loading of the page. Please see the logs or contact your administrator for further information.
+        If there is an error in the code please write an issue on GitHub.
     </p>
-    <p><a href="reset_course?course_id={{ course_id }}">reset course</a> (remove all students, submissions,... only keep assignment source files)</p>
-    <p><a href="remove_course?course_id={{ course_id }}">remove course from hub</a></p>
-{% endfor %}
+</div>
 
-<!--<hr />
-<p>LTI state: {{ data.lti_state }}</p>-->
+<!-- This div contains all elements (texts, buttons, ...) necessary for grading, course-, assignment- and problem-handling. -->
+<div id="content">
+
+    <h4>
+        Send all grades to LMS:
+    </h4>
+
+    <p>
+        This will send all currently available grades of the active course to the LMS.
+        Please note, that all currently in the LMS stored grades will be overwritten.
+    </p>
+
+    <div id="send-grades" class="button-container" onClick="sendGrades()">
+        <button class="general-button">
+            Send grades!
+        </button>
+    </div>
+
+    <hr>
+
+    <h4>
+        Import course:
+    </h4>
+
+    <p>
+        For importing all assignments from an existing course with the associated problem statements.
+        This includes running courses as well as back upped ones.
+        Please note that only the <strong class="light-grey-background">'source'</strong> version of the assignments will be copied, so that the other versions have to be generated
+        within the <strong class="light-grey-background">'Formgrader'</strong>.
+        The names of the imported assignments are identical to those of the original assignments, except that the time of the import is added.
+        This due to the fact that assignments shall have unique names.
+    </p>
+
+    <div id="courses-dropdown-container">
+        <label class="dropdown-label" for="courses">
+            Choose a course:
+        </label>
+        <select name="courses" id="courses-dropdown" disabled>
+            <!-- Dropdown will be filled with options by getContent("courses") which is executed on page load. -->
+        </select>
+
+        <button onclick="getContent('courses')">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+
+        <button id="import-course-button" disabled onclick="importContent('course')">
+            Import
+        </button>
+    </div>
+
+    <h4>
+        Import assignment:
+    </h4>
+
+    <p>
+        For importing a single assignment from a running course or from the backup folder.
+        Please note that only the <strong class="light-grey-background">'source'</strong> version of the assignment will be copied, so that the other versions have to be generated
+        within the <strong class="light-grey-background">'Formgrader'</strong>.
+        The name of the imported assignment is identical to the of the original assignments, except that the time of the import is added.
+        This due to the fact that assignments shall have unique names.
+    </p>
+
+    <div id="assignments-dropdown-container">
+        <label class="dropdown-label" for="assignments">
+            Choose a assignment:
+        </label>
+        <select name="assignments" id="assignments-dropdown" disabled>
+            <!-- Dropdown will be filled with options by getContent("assignments") which is executed on page load. -->
+        </select>
+
+        <button onclick="getContent('assignments')">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+
+        <button id="import-assignment-button" disabled onclick="importContent('assignment')">
+            Import
+        </button>
+    </div>
+
+    <h4>
+        Import problem:
+    </h4>
+
+    <p>
+        For importing a single problem statement from a running course or from the backup folder.
+        The problem statement will be available within the <strong class="light-grey-background">'imported_problems'</strong> assignment.
+        This assignment will be created as well as the folder within your home directory.
+        The name of the imported problem statement is identical to the of the original one, except that the time of the import is added.
+        This due to the fact that problem statements shall have unique names.
+    </p>
+
+    <div id="problems-dropdown-container">
+        <label class="dropdown-label" for="problems">
+            Choose a problem:
+        </label>
+        <select name="problems" id="problems-dropdown" disabled>
+            <!-- Dropdown will be filled with options by getContent("problems") which is executed on page load. -->
+        </select>
+
+        <button onclick="getContent('problems')">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+
+        <button id="import-problem-button" disabled onclick="importContent('problem')">
+            Import
+        </button>
+    </div>
+
+    <hr>
+
+    <div class="inline-container">
+        <div class="inline-container-child">
+            <h4 class="inline-container-h4">
+                Backup course:
+            </h4>
+
+            <p>
+                The current course will be backed up to the user directory ('var/lib/private/your-user-name/').
+                The actual time is appended for distinguishability.
+                This backed up course will be available to import via this website (after refreshing the dropdown lists) and from the kore extension in JupyterLab.
+            </p>
+
+            <div class="button-container">
+                <button onClick="executeOperation('PUT')">
+                    Backup course!
+                </button>
+            </div>
+        </div>
+
+        <div class="inline-container-child">
+            <h4 class="inline-container-h4">
+                Reset course:
+            </h4>
+
+            <p>
+                This will reset the course to the initial state.
+                Please note, that everything will be deleted.
+                We advise to backup the course beforehand.
+            </p>
+
+            <div class="button-container">
+                <button onClick="executeOperation('PATCH')">
+                    Reset course!
+                </button>
+            </div>
+        </div>
+
+        <div class="inline-container-child">
+            <h4 class="inline-container-h4">
+                Delete course:
+            </h4>
+
+            <p>
+                This will delete the entire active course, which will delete all data and remove the associated service from the JupyterHub database.
+                The JupyterHub will be restarted within a few seconds for the deletion of the course to take effect.
+                Please make sure, that you saved all necessary data.
+                You may use the backup functionality for this.
+            </p>
+
+            <div class="button-container">
+                <button onClick="executeOperation('DELETE')">
+                    Delete course!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Loading the notifications template, where the toast notifications are declared as class Toasts().
+{% include 'notifications.html.jinja' %}
+
+const toasts = new Toasts({
+    width: 300,
+    timing: 'ease',
+    duration: '.5s',
+    dimOld: false,
+    position: 'bottom-right' // top-left | top-center | top-right | bottom-left | bottom-center | bottom-right
+});
+
+async function sendGrades() {
+    toasts.push({
+        title: 'Pending',
+        content: 'Sending grades in progress.',
+        dismissAfter: '3s',
+        style: 'verified'
+    });
+
+    const requestOptions = {
+        method: 'POST',
+        mode: 'cors',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ user: "{{ data.user }}" })
+    };
+
+    const response = await fetch("https://gauss.fh-zwickau.de/mahub/services/kore/grades", requestOptions);
+    const data = await response.json();
+
+    if (response.ok) {
+        toasts.push({
+            title: 'Success',
+            content: (data.message),
+            dismissAfter: '3s',
+            style: 'success'
+        });
+    }
+    else {
+        toasts.push({
+            title: 'Error',
+            content: (data) + ' while sending grades to LMS. Contact administrator or see logs for more details.',
+            dismissAfter: '3s',
+            style: 'error'
+        });
+    }
+}
+
+// Function used for importing content (course/assignment/problem) defined in dropdown.
+async function importContent(context) {
+    // Appending s to context due to naming conventions.
+    var dropdownElement = document.getElementById(`${context}s-dropdown`);
+    var contentName = dropdownElement.options[dropdownElement.selectedIndex];
+    var contentPath = contentName.value;
+
+    const requestOptions = {
+        method: 'POST',
+        mode: 'cors',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ user: "{{ data.user }}", path: contentPath })
+    };
+
+    let url = `https://gauss.fh-zwickau.de/mahub/services/kore/${context}s`;
+
+    const response = await fetch(url, requestOptions);
+    const data = await response.json();
+
+    if (response.ok) {
+        toasts.push({
+            title: 'Success',
+            content: (data.message),
+            dismissAfter: '3s',
+            style: 'success'
+        });
+    }
+    else {
+        toasts.push({
+            title: 'Error',
+            content: (data.message) + ` while importing ${context}. Contact administrator or see logs for more details.`,
+            dismissAfter: '3s',
+            style: 'error'
+        });
+    }
+}
+
+// Misc functions for course interaction (backup, reset, deletion). Valid methods to supply are 'PUT', 'PATCH' and 'DELETE'.
+async function executeOperation(method) {
+    const requestOptions = {
+        method: method,
+        mode: 'cors',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ user: "{{ data.user }}" })
+    };
+
+    const response = await fetch("https://gauss.fh-zwickau.de/mahub/services/kore/courses", requestOptions);
+    const data = await response.json();
+
+    if (response.ok) {
+        toasts.push({
+            title: 'Success',
+            content: (data.message),
+            dismissAfter: '3s',
+            style: 'success'
+        });
+    }
+    else {
+        let operationMap = new Map([
+            ["PUT", "backup"],
+            ["PATCH", "reset"],
+            ["DELETE", "deletion"]
+        ]);
+
+        toasts.push({
+            title: 'Error',
+            content: (data.message) + ` while course ${operationMap.get(method)}. Contact administrator or see logs for more details.`,
+            dismissAfter: '3s',
+            style: 'error'
+        });
+    }
+}
+</script>
 {% endblock %}

@@ -51,12 +51,19 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
 COPY ./assets/kore /opt/kore
 RUN chmod -R go-rwx /opt/kore
 
+# install kore-extension and disable globally
+RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
+    conda activate jhub; \
+    pip install /opt/kore/kore_extension-0.1.0-py3-none-any.whl; \
+    jupyter labextension disable --level=sys_prefix kore-extension; \
+    jupyter labextension lock --level=sys_prefix kore-extension"
+
 # extend boot script to create LTI keys
 RUN echo "cd /opt/kore" >> /opt/boot.sh && \
     echo "mkdir -p keys" >> /opt/boot.sh && \
     echo "source /opt/conda/etc/profile.d/conda.sh" >> /opt/boot.sh && \
     echo "conda activate jhub" >> /opt/boot.sh && \
-    echo "python make_keys.py" >> /opt/boot.sh && \
+    echo "python misc/make_keys.py" >> /opt/boot.sh && \
     echo "chmod 600 keys/lti_key" >> /opt/boot.sh
 
 WORKDIR /
