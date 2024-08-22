@@ -6,6 +6,7 @@ They may have a look into running JupyterLabs, and they may stop the JupyterLab 
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 

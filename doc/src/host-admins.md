@@ -12,6 +12,7 @@ If you prefer and trust a standard Linux install, you may skip large parts of th
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 

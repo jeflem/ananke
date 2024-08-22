@@ -6,6 +6,7 @@ They may access the host machine via SSH to install, configure, start and stop t
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 
@@ -217,6 +218,7 @@ systemctl restart jupyterhub
 
 After start-up the container's time zone is set to `Europe/Berlin`. To modify the time zone run `timedatectl list-timezones` and then set the time zone with `timedatectl set-timezone TIME_ZONE_FROM_LIST`.
 
+(backups)=
 ## Backups
 
 Hub user's home directories and the hub's configuration are accessible from outside the container.
@@ -328,6 +330,18 @@ Alternatively, you may get the newest Ananke files and rebuild image and contain
 Rebuilding the image will install most current versions of all components.
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
+
+(update-to-0_5)=
+### Update from Ananke 0.4 to Ananke 0.5
+
+Ananke 0.5 brings breaking changes in course handling for the Ananke nbgrader image. Thus, update from Ananke 0.4 needs some extra attention.
+
+Due to changes in the directory and file structure all courses have to be recreated. Proceed as follows:
+1. Tell your instructor users to backup all their courses. Alternatively, [Backup](#backups) all courses of your hub.
+2. Remove the old container.
+3. Remove all directories in `runtime/home/` starting with `c-`.
+4. Start the new container
+5. Tell your instructor users to log in to the hub from all their LMS courses. Then backup data can be copied to the new courses.
 
 ## Useful optional features
 

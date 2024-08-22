@@ -6,6 +6,7 @@ It's not intended to be a complete description of the system (although that woul
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 

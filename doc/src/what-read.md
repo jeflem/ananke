@@ -20,6 +20,7 @@ Below, you find more details on the mentioned types of users.
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 

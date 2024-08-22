@@ -2,7 +2,7 @@
 
 ## Next release
 * New features:
-  * LTI/Nbgrader course and grades management is now accessible through the 'Kore' menu item in the instructor's JupyterLab (see [kore-extension](https://github.com/marcwit/kore-extension)). This replaces the former Kore service GUI.
+  * **BREAKING CHANGE** - LTI/Nbgrader course and grades management is now accessible through the 'Kore' menu item in the instructor's JupyterLab (see [kore-extension](https://github.com/marcwit/kore-extension)). This replaces the former Kore service GUI. See [Update form Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
 * Bugfixes:
   * hide Nbgrader menu in collaboration rooms
 * Update all packages:

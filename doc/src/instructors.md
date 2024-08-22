@@ -6,6 +6,7 @@ In the learning management system (LMS) they create courses and control access t
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 

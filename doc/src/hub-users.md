@@ -6,6 +6,7 @@ Each user has its own JupyterLab on the hub and its own directory for storing fi
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 
