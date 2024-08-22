@@ -41,13 +41,7 @@ def problems():
         try:
             info = load_info(f'{dst}/info.json')
             grader_user = info['grader_user']
-<<<<<<< HEAD
-        except KeyError:
-            return Response(response=json.dumps({'message': 'KeyError'}), status=500)
-        except InfoFileError:
-=======
         except (KeyError, InfoFileError):
->>>>>>> kore-refactor
             return Response(response=json.dumps({'message': 'InfoFileError'}), status=500)
 
         dst = f'{dst}/source/imported/'
@@ -55,11 +49,7 @@ def problems():
         try:
             run(['mkdir', '-p', dst], check=True)
             run(['cp', src, f'{dst}{filename}'], check=True)
-<<<<<<< HEAD
-            run(['chown', '-R', f'{grader_user}:{grader_user}', f'{dst}{filename}'], check=True)
-=======
             run(['chown', '-R', f'{grader_user}:{grader_user}', f'{dst}'], check=True)
->>>>>>> kore-refactor
         except CalledProcessError:
             return Response(response=json.dumps({'message': 'CalledProcessError'}), status=500)
 

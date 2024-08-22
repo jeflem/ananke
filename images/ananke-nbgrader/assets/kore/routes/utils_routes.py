@@ -18,10 +18,6 @@ utils_bp = Blueprint('utils', __name__)
 def config():
     # Retrieve full course list (active and backed up ones).
     if flask_request.method == 'GET':
-<<<<<<< HEAD
-        # TODO: Add check if user is admin?
-=======
->>>>>>> kore-refactor
         try:
             config_data = load_config(path='/opt/kore/config/config.json')
             return Response(response=json.dumps(config_data), status=200)
@@ -29,10 +25,6 @@ def config():
             return Response(response=json.dumps({'message': 'ConfigFileError'}), status=500)
 
 
-<<<<<<< HEAD
-# TODO: Refactor routes?
-=======
->>>>>>> kore-refactor
 @utils_bp.route('/oauth_callback')
 def oauth_callback():
     prefix = current_app.config['PREFIX']
