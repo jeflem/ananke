@@ -1,5 +1,18 @@
 # Changelog
 
+## Next release
+* New features:
+  * LTI/Nbgrader course and grades management is now accessible through the 'Kore' menu item in the instructor's JupyterLab (see [kore-extension](https://github.com/marcwit/kore-extension)). This replaces the former Kore service GUI.
+* Bugfixes:
+  * hide Nbgrader menu in collaboration rooms
+* Update all packages:
+  * JupyterHub 5.1.0
+  * JupyterLab 4.2.4
+  * Notebook 7.2.1
+  * Nbgrader 9.3
+  * Python 3.12.5
+* Update to Moodle 4.4.2 for development/testing
+
 ## Ananke 0.4
 
 * Minor additions and corrections to doc.
