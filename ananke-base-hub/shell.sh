@@ -1,5 +1,5 @@
 #!/bin/bash
 
-CONTAINER_NAME=ananke-base-hub
+source config.sh
 
-podman exec -it $CONTAINER_NAME /bin/bash
+podman exec -it "$CONTAINER_NAME" /bin/bash
