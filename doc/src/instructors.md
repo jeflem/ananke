@@ -6,6 +6,7 @@ In the learning management system (LMS) they create courses and control access t
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 
@@ -60,6 +61,10 @@ Nbgrader provides two configuration options for feedback generation. In the cour
 
 Close the editor with Ctrl-C, then Y, then return. Close the terminal by typing `logout`.
 
+```{note}
+For unknown reasons nbgrader shows a warning `Config option 'display_data_priority' not recognized by 'ClearHiddenTests'` while generating feedback. This warning can be savely ignored.
+```
+
 ### Further configuration
 
 To use custom delimiters for your sample solution add following lines to the formgrader user's `.jupyter/nbgrader_config.py` (cf. above):
@@ -81,8 +86,7 @@ to `.jupyter/nbgrader_config.py`.
 The Kore service on the one hand sends nbgrader's grades to the LMS.
 On the other hand, it provides course management functionality for nbgrader.
 
-Access Kore from your JupyterLab session by clicking 'File', 'Hub Control Panel', 'Services', 'kore'.
+Access Kore from your JupyterLab session by clicking the 'Kore' menu item.
 
 Sending grades to the LMS only works for the LMS course you started your Jupyter session from.
 All other functionality works for all your courses.
-If you are a hub admin, then you have access to all instructors' courses on the hub via Kore.

@@ -1,11 +1,12 @@
 # For hub users
 
-Hub users login to the hub via a learning management system.
+Hub users log in to the hub via a learning management system.
 Each user has its own JupyterLab on the hub and its own directory for storing files.
 
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 
@@ -15,6 +16,15 @@ In rare circumstances, JupyterLab may show cumbersome messages ('Directory "" no
 Ignore those messages (click 'Dismiss').
 After a few seconds, everything should work as expected.
 The reason for this behavior is a restart of JupyterHub in the background due to configuration changes.
+
+## Missing context menu items in file browser
+
+With old Firefox versions some context menu items (like Copy and Paste, for instance) aren't shown if right-clicking a file in JupyterLab's file browser. Either update Firefox or use the follow workaround:
+1. Open the URL `about:config` in the browser.
+2. Search for `layout.css.has-selector.enabled`.
+3. Set the value to `true`.
+
+See [JupyterLab issue 16391](https://github.com/jupyterlab/jupyterlab/issues/16391) for some background information.
 
 ## Restarting JupyterLab
 
@@ -127,6 +137,8 @@ Thus, it's a good idea to always have a jupyter-fs resource for your home direct
 
 ## JupyterLab real-time collaboration
 
+### Collaboration rooms
+
 If your JupyterHub provides real-time collaboration (RTC), click 'File' and 'Hub Control Panel' in your JupyterLab's menu.
 In the top bar, click 'Services' and choose a collaboration room.
 Inside such a collaboration room all users see all other user's edits and cell executions.
@@ -134,6 +146,8 @@ Inside such a collaboration room all users see all other user's edits and cell e
 ```{note}
 In collaboration rooms files will be autosaved every second. Thus, there's no need for manual saving.
 ```
+
+### Sharing your personal JupyterLab
 
 You may also share your personal JupyterLab session with other users. But be careful! Other users with access to your Lab session have read and write access to all your files! To enable RTC for your Lab run
 ```
@@ -143,9 +157,18 @@ jupyter labextension enable --level=user @jupyter/collaboration-extension
 (both lines!) in a terminal. Then restart your server ('File', 'Hub Control Panel', 'Stop My Server', 'Start My Server').
 In the upper right corner you should see a share link button. Everyone who has this link may join your Lab session.
 
+### User name and avatar
+
+At the moment there is no support for setting your displayed user name in collaboration rooms. Initials, color and symbol are chosen by JupyterLab. With the following workaround you may set at least your initials and your color:
+1. Join a collaboration room.
+2. Open your browser's developer tools (Firefox: 'Tools', 'Browser Tools', Web Developer Tools'; Chromium: 'More Tools', 'Developer Tools').
+3. Navigate to the sites local storage (Firefox: 'Storage', 'Local Storage'; Chromium: 'Application', 'Local storage').
+4. Edit (double click) the value of key '@jupyterlab/services:UserManager#user'.
+5. Refresh your browser (press F5).
+
 ## TensorFlow and GPUs
 
-If you JupyterHub provides GPU access via TensorFlow you may want (or have) to restrict your TensorFlow commands to a subset of available GPUs. Else GPUs may be blocked for other users.
+If your JupyterHub provides GPU access via TensorFlow you may want (or have) to restrict your TensorFlow commands to a subset of available GPUs. Else GPUs may be blocked for other users.
 
 To get a list of available GPUs and their current load open a terminal and run `nvidia-smi`.
 

@@ -6,6 +6,7 @@ It's not intended to be a complete description of the system (although that woul
 ```{contents}
 ---
 local: true
+backlinks: none
 ---
 ```
 
@@ -55,6 +56,14 @@ Starting with 0.3 Ananke uses [`nb_conda_kernels`](https://github.com/Anaconda-P
 The advantage compared to usual kernel management via `ipykernel install` is that kernels installed by `nb_conda_kernels` automatically run `conda activate` at start-up.
 This is necessary for some packages (TensorFlow, Plotly) to have access to relevant environment variables.
 With standard kernel management there is no `conda activate` at start-up.
+
+## Kore for LTI related features
+
+Ananke adds LTI capabilities to JupyterHub and Nbgrader. Two components are involved:
+* The *Kore service* running as a JupyterHub service provides a REST API for LTI functions. Before Ananke 0.5 this serivce also provided a GUI for course and grades management.
+* The *Kore lab extension* provides a GUI in JupyterLab for course and grades management starting with Ananke 0.5.
+
+Note that there is no Jupyter Server extension involved, because LTI functions heavily interact with the authentication process. Thus, they have to be implemented globally for the whole JupyterHub.
 
 ## Container structure
 

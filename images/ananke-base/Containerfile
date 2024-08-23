@@ -65,6 +65,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda install -y \
     jupyterhub=$JUPYTERHUB_VERSION \
     jupyterlab=$JUPYTERLAB_VERSION \
+    jupyterlab_execute_time \
     nb_conda_kernels \
     notebook=$NOTEBOOK_VERSION \
     pycurl \
