@@ -1,7 +1,21 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import subprocess
+
+
+IMG_DEF_DIR = 'images'
+IMG_PREFIX = 'ananke-'
+
+CONT_DATA_DIR = 'containers'
+CONT_DATA_IGNORE = 'template'
+
+BASE_PATH = os.path.abspath(os.path.dirname(__file__))
+
+COLOR_RESET = '\x1b[0m'
+COLOR_BOLD = '\x1b[1m'
+
 
 def shell(cmd):
     '''
@@ -24,7 +38,53 @@ def shell(cmd):
 
 def subcmd_list(args):
 
-    print('list')
+    # list available image definitions
+    print(f'{COLOR_BOLD}available image definitions:{COLOR_RESET}')
+    path = f'{BASE_PATH}/{IMG_DEF_DIR}'
+    n_found = 0
+    for name in os.listdir(path):
+        if name.startswith(IMG_PREFIX) and os.path.isdir(f'{path}/{name}'):
+            print(f'  - {name}')
+            n_found += 1
+    if n_found == 0:
+        print('  none')
+
+    # list available images
+    print(f'{COLOR_BOLD}available/built images{COLOR_RESET} ("podman image ls" for details):')
+    output = shell('podman image ls'.split())
+    n_found = 0
+    for line in output[1:-1]:  # first line is header, last line is empty
+        repo_and_name, tag, _ = line.split(maxsplit=2)
+        repo, name = repo_and_name.rsplit('/', maxsplit=1)
+        if name.startswith(IMG_PREFIX):
+            if tag != '<none>':
+                print(f'  - {repo}/{name}:{tag}')
+            else:
+                print(f'  - {repo}/{name} (no tag)')
+            n_found += 1
+    if n_found == 0:
+        print('  none')
+
+    # list containers
+    print(f'{COLOR_BOLD}containers{COLOR_RESET} ("podman ps -a" for details):')
+    output = shell('podman ps -a'.split())
+    n_found = 0
+    for line in output[1:-1]:  # first line is header, last line is empty
+        _, img, _ = line.split(maxsplit=2)
+        name = line.rsplit(maxsplit=1)
+        if ':' in img:
+            repo_and_img_name, tag = img.rsplit(':', maxsplit=1)
+        else:
+            repo_and_img_name, tag = img, ''
+        repo, img_name = repo_and_img_name.rsplit('/', maxsplit=1)
+        if img_name.startswith(IMG_PREFIX):
+            if tag != '':
+                print(f'  - {name} (from image {repo}/{name}:{tag})')
+            else:
+                print(f'  - {name} (from image {repo}/{name})')
+            n_found += 1
+    if n_found == 0:
+        print('  none')
 
 
 def subcmd_build(args):
