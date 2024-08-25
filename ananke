@@ -5,13 +5,12 @@ import logging
 import os
 import subprocess
 
+
 LOG_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 LOG_FILE = 'ananke.log'
 
 IMG_DEF_DIR = 'images'
 IMG_PREFIX = 'ananke-'
-DEFAULT_IMG_NAME = 'ananke-{base,nbgrader}'
-BUILD_LOG = 'build.log'
 
 CONT_DATA_DIR = 'containers'
 CONT_DATA_IGNORE = 'template'
@@ -58,17 +57,17 @@ def get_img_defs():
 
     img_defs = []
     path = f'{BASE_PATH}/{IMG_DEF_DIR}'
-    logger.info('Looking for image definitions in {path}...')
+    logger.info(f'Looking for image definitions in {path}...')
     for name in os.listdir(path):
         if name.startswith(IMG_PREFIX) and os.path.isdir(f'{path}/{name}'):
             img_defs.append(name)
 
-    return img_defs
+    return sorted(img_defs)
 
 
 def get_imgs():
     '''
-    Return list of available images.
+    Return sorted list of available images.
 
     Returns
     -------
@@ -110,6 +109,45 @@ def get_conts():
     return conts
 
 
+def choose(items, default):
+    '''
+    Let user choose one item from a list.
+
+    Parameters
+    ----------
+    items : list[str]
+        Items to choose from.
+    default: int
+        Index of default item.
+
+    Returns
+    -------
+    int
+        Index of chosen item.
+    '''
+
+    n = len(items)
+    invalid = True
+    while invalid:
+        for i, item in enumerate(items):
+            print(f'{i+1:2}) {item}')
+        choice = input(f'Choose 1-{n} [{default+1}]: ')
+        if choice == '':
+            choice = default
+            invalid = False
+        else:
+            try:
+                choice = int(choice) - 1
+                if choice >= 0 and choice < n:
+                    invalid = False
+            except ValueError:
+                pass
+        if invalid:
+            print('ERROR: invalid input!')
+
+    return choice
+
+
 def subcmd_list(args):
 
     # list available image definitions
@@ -142,24 +180,26 @@ def subcmd_list(args):
 
 def subcmd_build(args):
 
-    # check arguments
-    name = args.name
-    img_def = args.img_def.split('/')[-1]
-    if name == DEFAULT_IMG_NAME:
-        name = img_def
-    if not name.startswith(IMG_PREFIX):
-        print(f'Image name has to start with "{IMG_PREFIX}", but image name is "{name}". Aborting...')
-        return
+    # ask for image definition
+    img_defs = get_img_defs()
+    print('What image definition shall be used?')
+    choice = choose(img_defs, 0)
+    img_def = img_defs[choice]
+
+    # ask for image tag
+    print(f'Image name will be "localhost/{img_def}:TAG".')
+    tag = input('Choose a tag [latest]: ')
+    if tag == '':
+        tag = 'latest'
 
     # build image
-    print(f'building Ananke image "{name}" from image definition "{img_def}" (this may take several minutes)...')
-    output, code = shell(['podman', 'build', f'--tag={name}', f'{BASE_PATH}/{IMG_DEF_DIR}/{img_def}'])
-    with open(f'{BASE_PATH}/{BUILD_LOG}', 'w') as f:
-        f.write('\n'.join(output))
+    name = f'{img_def}:{tag}'
+    print(f'Building image "{name}" from image definition "{img_def}" (this may take several minutes)...')
+    _, code = shell(['podman', 'build', f'--tag={name}', f'{BASE_PATH}/{IMG_DEF_DIR}/{img_def}'])
     if code == 0:
         print('...done')
     else:
-        print(f'An ERROR occured. See file {BUILD_LOG} for details.')
+        print(f'An ERROR occured. See file {LOG_FILE} for details.')
 
 
 def main():
@@ -188,16 +228,6 @@ def main():
     parser_build = subparsers.add_parser(
         'build',
         help='build an image'
-    )
-    parser_build.add_argument(
-        '-n', '--name',
-        default=DEFAULT_IMG_NAME,
-        help='name of built image'
-    )
-    parser_build.add_argument(
-        'img_def',
-        metavar='IMAGE_DEFINITION',
-        help='name of image definition to use ("ananke list" yields available image definitions)'
     )
     parser_build.set_defaults(func=subcmd_build)
 
