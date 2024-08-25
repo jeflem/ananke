@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import os
 import subprocess
 
+LOG_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+LOG_FILE = 'ananke.log'
 
 IMG_DEF_DIR = 'images'
 IMG_PREFIX = 'ananke-'
@@ -13,10 +16,12 @@ BUILD_LOG = 'build.log'
 CONT_DATA_DIR = 'containers'
 CONT_DATA_IGNORE = 'template'
 
-BASE_PATH = os.path.abspath(os.path.dirname(__file__))
-
 COLOR_RESET = '\x1b[0m'
 COLOR_BOLD = '\x1b[1m'
+
+BASE_PATH = os.path.abspath(os.path.dirname(__file__))
+
+logger = logging.getLogger(__name__)
 
 
 def shell(cmd):
@@ -34,58 +39,104 @@ def shell(cmd):
         List of lines returned on stdout.
     '''
 
+    logger.info('Executing shell command "{}".'.format(' '.join(cmd)))
     result = subprocess.run(cmd, capture_output=True, text=True)
+    logger.info('Shell command\'s output:\n' + result.stdout)
+
     return result.stdout.split('\n'), result.returncode
+
+
+def get_img_defs():
+    '''
+    Return list of available image definitions.
+
+    Returns
+    -------
+    list[str]
+        List of subdirectory names containing image definitions.
+    '''
+
+    img_defs = []
+    path = f'{BASE_PATH}/{IMG_DEF_DIR}'
+    logger.info('Looking for image definitions in {path}...')
+    for name in os.listdir(path):
+        if name.startswith(IMG_PREFIX) and os.path.isdir(f'{path}/{name}'):
+            img_defs.append(name)
+
+    return img_defs
+
+
+def get_imgs():
+    '''
+    Return list of available images.
+
+    Returns
+    -------
+    list[(str, str, str)]
+        List of (repo, name, tag) tuples for all images.
+    '''
+
+    imgs = []
+    output, _ = shell('podman image ls'.split())
+    for line in output[1:-1]:  # first line is header, last line is empty
+        repo_and_name, tag, _ = line.split(maxsplit=2)
+        repo, name = repo_and_name.rsplit('/', maxsplit=1)
+        tag = tag if tag != '<none>' else ''
+        if name.startswith(IMG_PREFIX):
+            imgs.append((repo, name, tag))
+
+    return imgs
+
+
+def get_conts():
+    '''
+    Return list of available containers.
+
+    Returns
+    -------
+    list[(str, str)]
+        List of (container_name, image_name) tuples for all containers.
+    '''
+
+    conts = []
+    output, _ = shell('podman ps -a'.split())
+    for line in output[1:-1]:  # first line is header, last line is empty
+        cont_name = line.rsplit(maxsplit=1)
+        _, img, _ = line.split(maxsplit=2)
+        _, img_name = img.rsplit('/', maxsplit=1)
+        if img_name.startswith(IMG_PREFIX):
+            conts.append((name, img))
+
+    return conts
 
 
 def subcmd_list(args):
 
     # list available image definitions
+    img_defs = get_img_defs()
     print(f'{COLOR_BOLD}available image definitions:{COLOR_RESET}')
-    path = f'{BASE_PATH}/{IMG_DEF_DIR}'
-    n_found = 0
-    for name in os.listdir(path):
-        if name.startswith(IMG_PREFIX) and os.path.isdir(f'{path}/{name}'):
-            print(f'  {name}')
-            n_found += 1
-    if n_found == 0:
+    for img_def in img_defs:
+        print(f'  {img_def}')
+    if len(img_defs) == 0:
         print('  none')
 
     # list available images
+    imgs = get_imgs()
     print(f'{COLOR_BOLD}available/built images{COLOR_RESET} ("podman image ls" for details):')
-    output, _ = shell('podman image ls'.split())
-    n_found = 0
-    for line in output[1:-1]:  # first line is header, last line is empty
-        repo_and_name, tag, _ = line.split(maxsplit=2)
-        repo, name = repo_and_name.rsplit('/', maxsplit=1)
-        if name.startswith(IMG_PREFIX):
-            if tag != '<none>':
-                print(f'  {repo}/{name}:{tag}')
-            else:
-                print(f'  {repo}/{name} (no tag)')
-            n_found += 1
-    if n_found == 0:
+    for repo, name, tag in imgs:
+        if tag != '':
+            print(f'  {repo}/{name}:{tag}')
+        else:
+            print(f'  {repo}/{name} (no tag)')
+    if len(imgs) == 0:
         print('  none')
 
     # list containers
+    conts = get_conts()
     print(f'{COLOR_BOLD}containers{COLOR_RESET} ("podman ps -a" for details):')
-    output, _ = shell('podman ps -a'.split())
-    n_found = 0
-    for line in output[1:-1]:  # first line is header, last line is empty
-        _, img, _ = line.split(maxsplit=2)
-        name = line.rsplit(maxsplit=1)
-        if ':' in img:
-            repo_and_img_name, tag = img.rsplit(':', maxsplit=1)
-        else:
-            repo_and_img_name, tag = img, ''
-        repo, img_name = repo_and_img_name.rsplit('/', maxsplit=1)
-        if img_name.startswith(IMG_PREFIX):
-            if tag != '':
-                print(f'  {name} (from image {repo}/{name}:{tag})')
-            else:
-                print(f'  {name} (from image {repo}/{name})')
-            n_found += 1
-    if n_found == 0:
+    for cont_name, img_name in conts:
+        print(f'  {cont_name} (using image {img_name})')
+    if len(conts) == 0:
         print('  none')
 
 
@@ -112,6 +163,19 @@ def subcmd_build(args):
 
 
 def main():
+
+    global logger
+
+    # set up logging to log file
+    path = f'{BASE_PATH}/{LOG_FILE}'
+    try:
+        handler = logging.FileHandler(path, mode='w')
+        handler.setFormatter(logging.Formatter(LOG_FORMAT))
+        logger.addHandler(handler)
+    except Exception as e:
+        print(f'ERROR: Creating log file failed ({e}). Aborting...')
+    logger.setLevel(logging.INFO)
+    logger.info('Logging initialized.')
 
     # intialize argument parser
     parser = argparse.ArgumentParser()
