@@ -7,6 +7,8 @@ import subprocess
 
 IMG_DEF_DIR = 'images'
 IMG_PREFIX = 'ananke-'
+DEFAULT_IMG_NAME = 'ananke-{base,nbgrader}'
+BUILD_LOG = 'build.log'
 
 CONT_DATA_DIR = 'containers'
 CONT_DATA_IGNORE = 'template'
@@ -33,7 +35,7 @@ def shell(cmd):
     '''
 
     result = subprocess.run(cmd, capture_output=True, text=True)
-    return result.stdout.split('\n')
+    return result.stdout.split('\n'), result.returncode
 
 
 def subcmd_list(args):
@@ -44,30 +46,30 @@ def subcmd_list(args):
     n_found = 0
     for name in os.listdir(path):
         if name.startswith(IMG_PREFIX) and os.path.isdir(f'{path}/{name}'):
-            print(f'  - {name}')
+            print(f'  {name}')
             n_found += 1
     if n_found == 0:
         print('  none')
 
     # list available images
     print(f'{COLOR_BOLD}available/built images{COLOR_RESET} ("podman image ls" for details):')
-    output = shell('podman image ls'.split())
+    output, _ = shell('podman image ls'.split())
     n_found = 0
     for line in output[1:-1]:  # first line is header, last line is empty
         repo_and_name, tag, _ = line.split(maxsplit=2)
         repo, name = repo_and_name.rsplit('/', maxsplit=1)
         if name.startswith(IMG_PREFIX):
             if tag != '<none>':
-                print(f'  - {repo}/{name}:{tag}')
+                print(f'  {repo}/{name}:{tag}')
             else:
-                print(f'  - {repo}/{name} (no tag)')
+                print(f'  {repo}/{name} (no tag)')
             n_found += 1
     if n_found == 0:
         print('  none')
 
     # list containers
     print(f'{COLOR_BOLD}containers{COLOR_RESET} ("podman ps -a" for details):')
-    output = shell('podman ps -a'.split())
+    output, _ = shell('podman ps -a'.split())
     n_found = 0
     for line in output[1:-1]:  # first line is header, last line is empty
         _, img, _ = line.split(maxsplit=2)
@@ -79,9 +81,9 @@ def subcmd_list(args):
         repo, img_name = repo_and_img_name.rsplit('/', maxsplit=1)
         if img_name.startswith(IMG_PREFIX):
             if tag != '':
-                print(f'  - {name} (from image {repo}/{name}:{tag})')
+                print(f'  {name} (from image {repo}/{name}:{tag})')
             else:
-                print(f'  - {name} (from image {repo}/{name})')
+                print(f'  {name} (from image {repo}/{name})')
             n_found += 1
     if n_found == 0:
         print('  none')
@@ -89,7 +91,24 @@ def subcmd_list(args):
 
 def subcmd_build(args):
 
-    print('build')
+    # check arguments
+    name = args.name
+    img_def = args.img_def.split('/')[-1]
+    if name == DEFAULT_IMG_NAME:
+        name = img_def
+    if not name.startswith(IMG_PREFIX):
+        print(f'Image name has to start with "{IMG_PREFIX}", but image name is "{name}". Aborting...')
+        return
+
+    # build image
+    print(f'building Ananke image "{name}" from image definition "{img_def}" (this may take several minutes)...')
+    output, code = shell(['podman', 'build', f'--tag={name}', f'{BASE_PATH}/{IMG_DEF_DIR}/{img_def}'])
+    with open(f'{BASE_PATH}/{BUILD_LOG}', 'w') as f:
+        f.write('\n'.join(output))
+    if code == 0:
+        print('...done')
+    else:
+        print(f'An ERROR occured. See file {BUILD_LOG} for details.')
 
 
 def main():
@@ -102,13 +121,27 @@ def main():
     )
 
     # subparser for build command
-    parser_build = subparsers.add_parser('build', help='build an image')
-    parser_build.add_argument('-n', '--name', help='name of built image')
-    parser_build.add_argument('image_def', metavar='IMAGE_DEFINITION_DIR', help='directory with image definition')
+    parser_build = subparsers.add_parser(
+        'build',
+        help='build an image'
+    )
+    parser_build.add_argument(
+        '-n', '--name',
+        default=DEFAULT_IMG_NAME,
+        help='name of built image'
+    )
+    parser_build.add_argument(
+        'img_def',
+        metavar='IMAGE_DEFINITION',
+        help='name of image definition to use ("ananke list" yields available image definitions)'
+    )
     parser_build.set_defaults(func=subcmd_build)
 
     # subparser for list command
-    parser_list = subparsers.add_parser('list', help='list images and containers')
+    parser_list = subparsers.add_parser(
+        'list',
+        help='list images and containers'
+    )
     parser_list.set_defaults(func=subcmd_list)
 
     # execute command
