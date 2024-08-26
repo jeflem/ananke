@@ -45,8 +45,8 @@ def shell(cmd):
         List of lines returned on stdout.
     '''
 
-    logger.info('Executing shell command "{}".'.format(' '.join(cmd)))
-    result = subprocess.run(' '.join(cmd), capture_output=True, text=True, shell=True)
+    logger.info(f'Executing shell command "{cmd}".')
+    result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
     logger.info('Shell command\'s output:\n' + result.stdout)
 
     return result.stdout.split('\n'), result.returncode
@@ -83,7 +83,7 @@ def get_imgs():
     '''
 
     imgs = []
-    output, _ = shell('podman image ls'.split())
+    output, _ = shell('podman image ls')
     for line in output[1:-1]:  # first line is header, last line is empty
         repo_and_name, tag, _ = line.split(maxsplit=2)
         repo, name = repo_and_name.rsplit('/', maxsplit=1)
@@ -125,7 +125,7 @@ def get_conts():
     '''
 
     conts = []
-    output, _ = shell('podman ps -a'.split())
+    output, _ = shell('podman ps -a')
     for line in output[1:-1]:  # first line is header, last line is empty
         _, cont_name = line.rsplit(maxsplit=1)
         _, img, _ = line.split(maxsplit=2)
@@ -230,7 +230,7 @@ def subcmd_build(args):
     # build image
     name = f'{img_def}:{tag}'
     print(f'Building image "{name}" from image definition "{img_def}" (this may take several minutes)...')
-    _, code = shell(['podman', 'build', f'--tag={name}', f'{BASE_PATH}/{IMG_DEF_DIR}/{img_def}'])
+    _, code = shell(f'podman build --tag={name} "{BASE_PATH}/{IMG_DEF_DIR}/{img_def}"')
     if code == 0:
         print('...done')
     else:
@@ -280,34 +280,34 @@ def subcmd_create(args):
         if not src.startswith('/'):
             src = f'{cont_path}/{src}'
             config['volumes'][i] = (src, dest)
-        _, code = shell(['mkdir', '-p', src])
+        _, code = shell(f'mkdir -p "{src}"')
         if code != 0:
             print(f'ERROR: Creating directory {src} failed! Not creating container.')
 
     # create container
-    cmd = ['podman', 'create', '--cap-add=SYS_ADMIN']
-    cmd.append(f'--name="{cont_def}"')
-    cmd.append(f'--publish={config["port"]}:8000')
+    cmd = 'podman create --cap-add=SYS_ADMIN'
+    cmd += f' --name="{cont_def}"'
+    cmd += f' --publish={config["port"]}:8000'
     for src, dest in config['volumes']:
-        cmd.append(f'--mount=type=bind,source="{src}",destination="{dest}"')
+        cmd += f' --mount=type=bind,source="{src}",destination="{dest}"'
     for arg in config['podman_args']:
-        cmd.append(arg)
-    cmd.append(f'"{config["image_name"]}"')
+        cmd += f' {arg}'
+    cmd += f' "{config["image_name"]}"'
     _, code = shell(cmd)
     if code != 0:
         print(f'ERROR: Container creation failed! See {LOG_FILE} for details.')
         return
 
     # create systemd unit
-    shell(['podman', 'generate', 'systemd', '--restart-policy=always', '--files', f'--name {cont_def}'])
-    shell('mkdir -p ~/.config/systemd/user'.split())
-    _, code = shell(['mv', f'container-{cont_def}.service', f'~/.config/systemd/user/ananke-{cont_def}.service'])
+    shell(f'podman generate systemd --restart-policy=always --files --name "{cont_def}"')
+    shell('mkdir -p ~/.config/systemd/user')
+    _, code = shell(f'mv "container-{cont_def}.service" "~/.config/systemd/user/ananke-{cont_def}.service"')
     if code != 0:
         print(f'ERROR: Creating systemd service file failed! See {LOG_FILE} for details.')
         return
-    shell('systemctl --user daemon-reload'.split())
-    shell(['systemctl', '--user', 'enable', f'ananke-{cont_def}.service'])
-    _, code = shell(['systemctl', '--user', 'start', f'ananke-{cont_def}.service'])
+    shell('systemctl --user daemon-reload')
+    shell(f'systemctl --user enable "ananke-{cont_def}.service"')
+    _, code = shell(f'systemctl --user start "ananke-{cont_def}.service"')
     if code != 0:
         print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
         return
