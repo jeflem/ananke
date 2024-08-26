@@ -15,6 +15,7 @@ IMG_PREFIX = 'ananke-'
 CONT_DEF_DIR = 'containers'
 CONT_IGNORE_PREFIX = 'template'
 CONFIG_FILE = 'config.py'
+CONT_PREFIX = 'ananke-'
 
 DEFAULT_VOLUMES = [
     ('dyn_home', '/var/lib/private'),
@@ -24,6 +25,7 @@ DEFAULT_VOLUMES = [
 
 COLOR_RESET = '\x1b[0m'
 COLOR_BOLD = '\x1b[1m'
+COLOR_RED = '\x1b[31m'
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -129,8 +131,7 @@ def get_conts():
     for line in output[1:-1]:  # first line is header, last line is empty
         _, cont_name = line.rsplit(maxsplit=1)
         _, img, _ = line.split(maxsplit=2)
-        _, img_name = img.rsplit('/', maxsplit=1)
-        if img_name.startswith(IMG_PREFIX):
+        if cont_name.startswith(CONT_PREFIX):
             conts.append((cont_name, img))
 
     return conts
@@ -144,7 +145,7 @@ def choose(items, default):
     ----------
     items : list[str]
         Items to choose from.
-    default: int
+    default : int
         Index of default item.
 
     Returns
@@ -173,6 +174,67 @@ def choose(items, default):
             print('ERROR: invalid input!')
 
     return choice
+
+
+def ask_yes(default):
+    '''
+    Let user choose between yes and no.
+
+    Parameters
+    ----------
+    default : bool
+        Default answer (False == no).
+
+    Returns
+    -------
+    bool
+        Answer (False == no).
+    '''
+
+    invalid = True
+    while invalid:
+        choice = input(f'y/yes or n/no [{"y" if default else "n"}]: ')
+        choice = choice.lower()
+        if choice == '':
+            choice = default
+            invalid = False
+        elif choice in ['y', 'yes']:
+            choice = True
+            invalid = False
+        elif choice in ['n', 'no']:
+            choice = False
+            invalid = False
+        if invalid:
+            print('ERROR: invalid input!')
+
+    return choice
+
+
+def load_config(path):
+    '''
+    Read container config file.
+
+    Parameters
+    ----------
+    path : str
+        Path of config file.
+
+    Returns
+    -------
+    dict
+        Content of config file (None if error).
+    '''
+
+    try:
+        with open(path) as f:
+            config_code = f.read()
+    except:
+        print(f'ERROR: Container config file {path} could not be read!')
+        return None
+    config = dict()
+    exec(config_code)
+
+    return config
 
 
 def subcmd_list(args):
@@ -244,23 +306,20 @@ def subcmd_create(args):
     print('Which container definition shall be used?')
     choice = choose(cont_defs, 0)
     cont_def = cont_defs[choice]
+    cont_name = f'{CONT_PREFIX}{cont_def}'
 
     # check wether container already exists
     conts = get_conts()
-    if any([name == cont_def for name, _ in conts]):
+    if any([name == cont_name for name, _ in conts]):
         print('ERROR: Container already exists! Remove container before creating a new one.')
         return
 
     # load container config
     path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CONFIG_FILE}'
-    try:
-        with open(path) as f:
-            config_code = f.read()
-    except:
-        print(f'ERROR: Container config file {path} could not be read! Not creating container.')
+    config = load_config(path)
+    if not config:
+        print('Not creating container.')
         return
-    config = dict()
-    exec(config_code)
 
     # check config
     required = ['image_name', 'port']
@@ -286,7 +345,7 @@ def subcmd_create(args):
 
     # create container
     cmd = 'podman create --cap-add=SYS_ADMIN'
-    cmd += f' --name="{cont_def}"'
+    cmd += f' --name="{cont_name}"'
     cmd += f' --publish={config["port"]}:8000'
     for src, dest in config['volumes']:
         cmd += f' --mount=type=bind,source="{src}",destination="{dest}"'
@@ -299,21 +358,98 @@ def subcmd_create(args):
         return
 
     # create systemd unit
-    shell(f'podman generate systemd --restart-policy=always --files --name "{cont_def}"')
+    shell(f'podman generate systemd --restart-policy=always --files --name "{cont_name}"')
     shell('mkdir -p ~/.config/systemd/user')
-    _, code = shell(f'mv "container-{cont_def}.service" "~/.config/systemd/user/ananke-{cont_def}.service"')
+    _, code = shell(f'mv "container-{cont_name}.service" ~/.config/systemd/user/"{cont_name}.service"')
     if code != 0:
         print(f'ERROR: Creating systemd service file failed! See {LOG_FILE} for details.')
         return
     shell('systemctl --user daemon-reload')
-    shell(f'systemctl --user enable "ananke-{cont_def}.service"')
-    _, code = shell(f'systemctl --user start "ananke-{cont_def}.service"')
+    shell(f'systemctl --user enable "{cont_name}.service"')
+    _, code = shell(f'systemctl --user start "{cont_name}.service"')
     if code != 0:
         print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
         return
 
     # success
-    print(f'Container {cont_def} now running. Systemd service name is "ananke-{cont_def}.service".')
+    print(f'Container {cont_def} now running. Systemd service name is "{cont_name}.service".')
+
+
+def subcmd_remove(args):
+
+    # choose container
+    cont_names = [cont_name for cont_name, img_name in get_conts()]
+    if len(cont_names) == 0:
+        print('There are no Ananke containers!')
+        return
+    print('Which container shall be removed?')
+    choice = choose(cont_names, 0)
+    cont_name = cont_names[choice]
+
+    # load container config
+    path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_name[len(CONT_PREFIX):]}/{CONFIG_FILE}'
+    config = load_config(path)
+    if not config:
+        if ask_yes(f'Could not read container config file {path}. Do you want to remove the container nevertheless?'):
+            config = dict()
+        else:
+            print('Not removing container.')
+            return
+
+    # add default volumes
+    if 'volumes' not in config:
+        config['volumes'] = []
+    config['volumes'].extend(DEFAULT_VOLUMES)
+
+    # ask user for transfer of volume ownership
+    print(f'{COLOR_BOLD}You may now transfer ownership of files in container volumes to you. This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container. Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
+    transfer_paths = []
+    for src, dest in config['volumes']:
+        print(f'Transfer ownership of volume\n  "{src}" (host) > "{dest}" (container)\nto you?')
+        if ask_yes(False):
+            transfer_paths.append(dest)
+    print(transfer_paths)
+
+    # ask user for container restart
+    if len(transfer_paths) > 0:
+        output, _ = shell('podman inspect --format "{{.State.Running}}"' + f' "{cont_name}"')
+        cont_running = (len(output) > 0 and output[0].startswith('true'))
+        if not cont_running:
+            print('{COLOR_BOLD}You chose to transfer ownership of some volumes, but the container isn\'t running at the moment. The container will be started to transfer ownership. In rare situations this may cause security issues due to opening the container\'s port. Proceed?{COLOR_RESET}')
+            if not ask_yes(True):
+                print('Aborting. Not removing container.')
+                return
+
+    # ask user for final confirmation
+    print(f'Do you really want to remove container {cont_name}? {COLOR_RED}This may cause data loss!{COLOR_RESET}')
+    if not ask_yes(False):
+        print('Not removing container.')
+        return
+
+    # tranfer volume ownership
+    if len(transfer_paths) > 0:
+        if not cont_running:
+            _, code = shell(f'podman start "{cont_name}"')
+            if code != 0:
+                print('ERROR: Starting container failed. See {LOG_FILE} for details. Not removing container.')
+                return;
+        for path in transfer_paths:
+            _, code = shell(f'podman exec -it "{cont_name}" bash -c "chown -R root:root \\"{path}\\""')
+            if code != 0:
+                print(f'ERROR: Ownership of {path} in container could not be transfered! See {LOG_FILE} for details. Not removing container.')
+                return
+
+    # remove systemd service
+    shell(f'systemctl --user stop "{cont_name}.service"')
+    shell(f'systemctl --user disable "{cont_name}.service"')
+    shell(f'rm ~/.config/systemd/user/"{cont_name}.service"')
+    _, code = shell(f'podman rm "{cont_name}"')
+    if code != 0:
+        print(f'ERROR: Removing container failed! See {LOG_FILE} for details.')
+        return
+
+    # success
+    print(f'Container {cont_name} has been successfully removed.')
 
 
 def main():
@@ -338,13 +474,6 @@ def main():
         description='build, list ("ananke SUBCOMMAND -h" for details)'
     )
 
-    # subparser for create command
-    parser_create = subparsers.add_parser(
-        'create',
-        help='create and start a container'
-    )
-    parser_create.set_defaults(func=subcmd_create)
-
     # subparser for build command
     parser_build = subparsers.add_parser(
         'build',
@@ -352,12 +481,26 @@ def main():
     )
     parser_build.set_defaults(func=subcmd_build)
 
+    # subparser for create command
+    parser_create = subparsers.add_parser(
+        'create',
+        help='create and start a container'
+    )
+    parser_create.set_defaults(func=subcmd_create)
+
     # subparser for list command
     parser_list = subparsers.add_parser(
         'list',
         help='list images and containers'
     )
     parser_list.set_defaults(func=subcmd_list)
+
+    # subparser for remove command
+    parser_remove = subparsers.add_parser(
+        'remove',
+        help='stop and remove a container (keep user files)'
+    )
+    parser_remove.set_defaults(func=subcmd_remove)
 
     # execute command
     args = parser.parse_args()
