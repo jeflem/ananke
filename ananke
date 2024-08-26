@@ -439,7 +439,7 @@ def subcmd_remove(args):
     # transfer volume ownership
     if len(transfer_paths) > 0:
         if not cont_running:
-            _, code = shell(f'podman start "{cont_name}"')
+            _, code = shell(f'systemctl --user start "{cont_name}.service"')
             if code != 0:
                 print('ERROR: Starting container failed. See {LOG_FILE} for details. Not removing container.')
                 return;
