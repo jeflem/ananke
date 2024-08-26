@@ -371,6 +371,17 @@ def subcmd_create(args):
         print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
         return
 
+    # create script for starting root shell
+    path = f'{BASE_PATH}/{cont_name}.sh'
+    try:
+        with open(path, 'w') as f:
+            f.write(f'#!/bin/bash\n\npodman exec -it "{cont_name}" /bin/bash\n')
+        shell(f'chmod u+x {path}')
+        print(f'Run {cont_name}.sh to get a root shell inside the container.')
+    except Exception as e:
+        print(f'Could not create shell script {path}. See {LOG_FILE} for details.')
+        logger.error(f'Could not create shell script ({str(e)})')
+
     # success
     print(f'Container {cont_def} now running. Systemd service name is "{cont_name}.service".')
 
@@ -443,10 +454,16 @@ def subcmd_remove(args):
     shell(f'systemctl --user stop "{cont_name}.service"')
     shell(f'systemctl --user disable "{cont_name}.service"')
     shell(f'rm ~/.config/systemd/user/"{cont_name}.service"')
+
+    # remove Podman container
     _, code = shell(f'podman rm "{cont_name}"')
     if code != 0:
         print(f'ERROR: Removing container failed! See {LOG_FILE} for details.')
         return
+
+    # remove shell script
+    path = f'{BASE_PATH}/{cont_name}.sh'
+    shell(f'rm {path}')
 
     # success
     print(f'Container {cont_name} has been successfully removed.')
