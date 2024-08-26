@@ -12,8 +12,15 @@ LOG_FILE = 'ananke.log'
 IMG_DEF_DIR = 'images'
 IMG_PREFIX = 'ananke-'
 
-CONT_DATA_DIR = 'containers'
-CONT_DATA_IGNORE = 'template'
+CONT_DEF_DIR = 'containers'
+CONT_IGNORE_PREFIX = 'template'
+CONFIG_FILE = 'config.py'
+
+DEFAULT_VOLUMES = [
+    ('dyn_home', '/var/lib/private'),
+    ('home', '/home'),
+    ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d')
+]
 
 COLOR_RESET = '\x1b[0m'
 COLOR_BOLD = '\x1b[1m'
@@ -39,7 +46,7 @@ def shell(cmd):
     '''
 
     logger.info('Executing shell command "{}".'.format(' '.join(cmd)))
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(' '.join(cmd), capture_output=True, text=True, shell=True)
     logger.info('Shell command\'s output:\n' + result.stdout)
 
     return result.stdout.split('\n'), result.returncode
@@ -47,7 +54,7 @@ def shell(cmd):
 
 def get_img_defs():
     '''
-    Return list of available image definitions.
+    Return sorted list of available image definitions.
 
     Returns
     -------
@@ -67,7 +74,7 @@ def get_img_defs():
 
 def get_imgs():
     '''
-    Return sorted list of available images.
+    Return list of available images.
 
     Returns
     -------
@@ -87,6 +94,26 @@ def get_imgs():
     return imgs
 
 
+def get_cont_defs():
+    '''
+    Return sorted list of available container definitions.
+
+    Returns
+    -------
+    list[str]
+        List of subdirectory names containing container definitions.
+    '''
+
+    cont_defs = []
+    path = f'{BASE_PATH}/{CONT_DEF_DIR}'
+    logger.info(f'Looking for container definitions in {path}...')
+    for name in os.listdir(path):
+        if not name.startswith(CONT_IGNORE_PREFIX) and os.path.isdir(f'{path}/{name}'):
+            cont_defs.append(name)
+
+    return sorted(cont_defs)
+
+
 def get_conts():
     '''
     Return list of available containers.
@@ -100,11 +127,11 @@ def get_conts():
     conts = []
     output, _ = shell('podman ps -a'.split())
     for line in output[1:-1]:  # first line is header, last line is empty
-        cont_name = line.rsplit(maxsplit=1)
+        _, cont_name = line.rsplit(maxsplit=1)
         _, img, _ = line.split(maxsplit=2)
         _, img_name = img.rsplit('/', maxsplit=1)
         if img_name.startswith(IMG_PREFIX):
-            conts.append((name, img))
+            conts.append((cont_name, img))
 
     return conts
 
@@ -160,7 +187,7 @@ def subcmd_list(args):
 
     # list available images
     imgs = get_imgs()
-    print(f'{COLOR_BOLD}available/built images{COLOR_RESET} ("podman image ls" for details):')
+    print(f'{COLOR_BOLD}existing images{COLOR_RESET} ("podman image ls" for details):')
     for repo, name, tag in imgs:
         if tag != '':
             print(f'  {repo}/{name}:{tag}')
@@ -169,9 +196,17 @@ def subcmd_list(args):
     if len(imgs) == 0:
         print('  none')
 
-    # list containers
+    # list container definitions
+    cont_defs = get_cont_defs()
+    print(f'{COLOR_BOLD}available container definitions:{COLOR_RESET}')
+    for cont_def in cont_defs:
+        print(f'  {cont_def}')
+    if len(cont_defs) == 0:
+        print('  none')
+
+    # list existing containers
     conts = get_conts()
-    print(f'{COLOR_BOLD}containers{COLOR_RESET} ("podman ps -a" for details):')
+    print(f'{COLOR_BOLD}existing containers{COLOR_RESET} ("podman ps -a" for details):')
     for cont_name, img_name in conts:
         print(f'  {cont_name} (using image {img_name})')
     if len(conts) == 0:
@@ -182,7 +217,7 @@ def subcmd_build(args):
 
     # ask for image definition
     img_defs = get_img_defs()
-    print('What image definition shall be used?')
+    print('Which image definition shall be used?')
     choice = choose(img_defs, 0)
     img_def = img_defs[choice]
 
@@ -200,6 +235,85 @@ def subcmd_build(args):
         print('...done')
     else:
         print(f'An ERROR occured. See file {LOG_FILE} for details.')
+
+
+def subcmd_create(args):
+
+    # choose container definition
+    cont_defs = get_cont_defs()
+    print('Which container definition shall be used?')
+    choice = choose(cont_defs, 0)
+    cont_def = cont_defs[choice]
+
+    # check wether container already exists
+    conts = get_conts()
+    if any([name == cont_def for name, _ in conts]):
+        print('ERROR: Container already exists! Remove container before creating a new one.')
+        return
+
+    # load container config
+    path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CONFIG_FILE}'
+    try:
+        with open(path) as f:
+            config_code = f.read()
+    except:
+        print(f'ERROR: Container config file {path} could not be read! Not creating container.')
+        return
+    config = dict()
+    exec(config_code)
+
+    # check config
+    required = ['image_name', 'port']
+    if not all([r in config for r in required]):
+        print(f'ERROR: One of keys {required} missing in container config file! Not creating container.')
+    if 'podman_args' not in config:
+        config['podman_args'] = []
+    if 'volumes' not in config:
+        config['volumes'] = []
+
+    # default volumes
+    config['volumes'].extend(DEFAULT_VOLUMES)
+
+    # create directories for volumes and make paths absolute
+    cont_path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}'
+    for i, (src, dest) in enumerate(config['volumes']):
+        if not src.startswith('/'):
+            src = f'{cont_path}/{src}'
+            config['volumes'][i] = (src, dest)
+        _, code = shell(['mkdir', '-p', src])
+        if code != 0:
+            print(f'ERROR: Creating directory {src} failed! Not creating container.')
+
+    # create container
+    cmd = ['podman', 'create', '--cap-add=SYS_ADMIN']
+    cmd.append(f'--name="{cont_def}"')
+    cmd.append(f'--publish={config["port"]}:8000')
+    for src, dest in config['volumes']:
+        cmd.append(f'--mount=type=bind,source="{src}",destination="{dest}"')
+    for arg in config['podman_args']:
+        cmd.append(arg)
+    cmd.append(f'"{config["image_name"]}"')
+    _, code = shell(cmd)
+    if code != 0:
+        print(f'ERROR: Container creation failed! See {LOG_FILE} for details.')
+        return
+
+    # create systemd unit
+    shell(['podman', 'generate', 'systemd', '--restart-policy=always', '--files', f'--name {cont_def}'])
+    shell('mkdir -p ~/.config/systemd/user'.split())
+    _, code = shell(['mv', f'container-{cont_def}.service', f'~/.config/systemd/user/ananke-{cont_def}.service'])
+    if code != 0:
+        print(f'ERROR: Creating systemd service file failed! See {LOG_FILE} for details.')
+        return
+    shell('systemctl --user daemon-reload'.split())
+    shell(['systemctl', '--user', 'enable', f'ananke-{cont_def}.service'])
+    _, code = shell(['systemctl', '--user', 'start', f'ananke-{cont_def}.service'])
+    if code != 0:
+        print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
+        return
+
+    # success
+    print(f'Container {cont_def} now running. Systemd service name is "ananke-{cont_def}.service".')
 
 
 def main():
@@ -223,6 +337,13 @@ def main():
         title='subcommands',
         description='build, list ("ananke SUBCOMMAND -h" for details)'
     )
+
+    # subparser for create command
+    parser_create = subparsers.add_parser(
+        'create',
+        help='create and start a container'
+    )
+    parser_create.set_defaults(func=subcmd_create)
 
     # subparser for build command
     parser_build = subparsers.add_parser(
