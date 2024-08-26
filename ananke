@@ -419,7 +419,6 @@ def subcmd_remove(args):
         print(f'Transfer ownership of volume\n  "{src}" (host) > "{dest}" (container)\nto you?')
         if ask_yes(False):
             transfer_paths.append(dest)
-    print(transfer_paths)
 
     # ask user for container restart
     if len(transfer_paths) > 0:
