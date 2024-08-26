@@ -426,7 +426,7 @@ def subcmd_remove(args):
         print('Not removing container.')
         return
 
-    # tranfer volume ownership
+    # transfer volume ownership
     if len(transfer_paths) > 0:
         if not cont_running:
             _, code = shell(f'podman start "{cont_name}"')
@@ -498,7 +498,7 @@ def main():
     # subparser for remove command
     parser_remove = subparsers.add_parser(
         'remove',
-        help='stop and remove a container (keep user files)'
+        help='stop and remove a container'
     )
     parser_remove.set_defaults(func=subcmd_remove)
 
