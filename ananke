@@ -374,6 +374,22 @@ def subcmd_create(args):
         mem = ask_int(1, None, 8)
         config['memory'] = f'{mem}g'
 
+    # check cpu limit
+    if config.get('cpus') == 'interactive':
+        print(f'{COLOR_BOLD}How many CPUs (cores) the container is allowed to use?{COLOR_RESET}')
+        output, code = shell('nproc')
+        if code == 0:
+            try:
+                max_cpus = int(output[0])
+            except:
+                max_cpus = None
+        else:
+            max_cpus = None
+        cpus = ask_int(1, max_cpus, max_cpus)
+        config['cpus'] = f'{cpus}'
+    if config.get('cpus') == 'max':
+        config.pop('cpus')
+
     # default volumes
     config['volumes'].extend(DEFAULT_VOLUMES)
 
@@ -397,6 +413,8 @@ def subcmd_create(args):
         cmd += f' {arg}'
     if 'memory' in config:
         cmd += f' "--memory={config["memory"]}"'
+    if 'cpus' in config:
+        cmd += f' "--cpus={config["cpus"]}"'
     cmd += f' "{config["image_name"]}"'
     _, code = shell(cmd)
     if code != 0:
