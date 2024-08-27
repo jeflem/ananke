@@ -371,8 +371,22 @@ def subcmd_create(args):
     # check memory limit
     if config.get('memory') == 'interactive':
         print(f'{COLOR_BOLD}How much memory the container is allowed to use (in gigabytes)?{COLOR_RESET}')
-        mem = ask_int(1, None, 8)
+        output, code = shell('grep MemTotal /proc/meminfo')
+        if code == 0:
+            try:
+                max_mem = int(int(output[0].split()[1]) / 1e6)
+            except:
+                max_mem = None
+        else:
+            max_mem = None
+        if max_mem:
+            default = int(max_mem / 2)
+        else:
+            default = 8
+        mem = ask_int(1, max_mem, default)
         config['memory'] = f'{mem}g'
+    if config.get('memory') == 'max':
+        config.pop('memory')
 
     # check cpu limit
     if config.get('cpus') == 'interactive':

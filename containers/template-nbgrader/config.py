@@ -3,7 +3,7 @@
 config['image_name'] = 'ananke-base:latest'
 config['port'] = 8000
 
-# memory limit for container ('interactive', '8g', '500m',...)
+# memory limit for container ('interactive', '500m', '8g',..., 'max')
 config['memory'] = 'interactive'
 
 # maximum number of CPUs (cores) available to the container ('interactive', 1, 2,..., 'max')
