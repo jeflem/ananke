@@ -210,6 +210,44 @@ def ask_yes(default):
     return choice
 
 
+def ask_int(low, high, default):
+    '''
+    Let user input an integer.
+
+    Parameters
+    ----------
+    low : int
+        Lowest allowed value.
+    high : int
+        Highest allowed value.
+    default: int
+        Default value.
+
+    Returns
+    -------
+    int
+        Chosen integer.
+    '''
+
+    invalid = True
+    while invalid:
+        value = input(f'integer {low if low else "-∞"}...{high if high else "+∞"} [{default}]: ')
+        if value == '':
+            value = default
+            invalid = False
+        else:
+            try:
+                value = int(value)
+                if (not low or value >= low) and (not high or value <= high):
+                    invalid = False
+            except ValueError:
+                pass
+        if invalid:
+            print('ERROR: invalid input!')
+
+    return value
+
+
 def load_config(path):
     '''
     Read container config file.
@@ -330,6 +368,12 @@ def subcmd_create(args):
     if 'volumes' not in config:
         config['volumes'] = []
 
+    # check memory limit
+    if config.get('memory') == 'interactive':
+        print(f'{COLOR_BOLD}How much memory the container is allowed to use (in gigabytes)?{COLOR_RESET}')
+        mem = ask_int(1, None, 8)
+        config['memory'] = f'{mem}g'
+
     # default volumes
     config['volumes'].extend(DEFAULT_VOLUMES)
 
@@ -351,6 +395,8 @@ def subcmd_create(args):
         cmd += f' --mount=type=bind,source="{src}",destination="{dest}"'
     for arg in config['podman_args']:
         cmd += f' {arg}'
+    if 'memory' in config:
+        cmd += f' "--memory={config["memory"]}"'
     cmd += f' "{config["image_name"]}"'
     _, code = shell(cmd)
     if code != 0:
