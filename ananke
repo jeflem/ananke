@@ -25,6 +25,9 @@ DEFAULT_VOLUMES = [
 
 NVIDIA_YAML = '/etc/cdi/nvidia.yaml'
 
+DOWNLOAD_URL = 'https://gauss.whz.de/ananke/DOWNLOAD_NAME.tar.gz'
+DOWNLOAD_NAMES = ['ananke-base', 'ananke-nbgrader']
+
 COLOR_RESET = '\x1b[0m'
 COLOR_BOLD = '\x1b[1m'
 COLOR_RED = '\x1b[31m'
@@ -90,6 +93,8 @@ def get_imgs():
     output, _ = shell('podman image ls')
     for line in output[1:-1]:  # first line is header, last line is empty
         repo_and_name, tag, _ = line.split(maxsplit=2)
+        if '/' not in repo_and_name:
+            continue
         repo, name = repo_and_name.rsplit('/', maxsplit=1)
         tag = tag if tag != '<none>' else ''
         if name.startswith(IMG_PREFIX):
@@ -337,6 +342,36 @@ def subcmd_build(args):
         print('...done')
     else:
         print(f'An ERROR occured. See file {LOG_FILE} for details.')
+
+
+def subcmd_load(args):
+
+    # ask for image name
+    print(f'{COLOR_BOLD}Which image do you want to download?{COLOR_RESET}')
+    choice = choose(DOWNLOAD_NAMES, 0)
+    name = DOWNLOAD_NAMES[choice]
+
+    # download image
+    url = DOWNLOAD_URL.replace('DOWNLOAD_NAME', name)
+    filename = url.rsplit('/', maxsplit=1)[-1]
+    print(f'Downloading {url} (this may take several minutes)...')
+    output, code = shell(f'wget {url}')
+    if code != 0:
+        print(f'Download failed! See {LOG_FILE} for details.')
+        shell(f'rm {filename}')
+        return
+    print('Unpacking image file...')
+    shell(f'gunzip {filename}')
+
+    # load image
+    filename = filename.rsplit('.', maxsplit=1)[0]  # strip .gz
+    print(f'Loading image file {filename}...')
+    _, code = shell(f'podman load --input="{filename}"')
+    if code == 0:
+        print('...done')
+    else:
+        print(f'An ERROR occured. See file {LOG_FILE} for details.')
+    shell(f'rm {filename}')
 
 
 def subcmd_create(args):
@@ -654,6 +689,13 @@ def main():
         help='list images and containers'
     )
     parser_list.set_defaults(func=subcmd_list)
+
+    # subparser for load command
+    parser_load = subparsers.add_parser(
+        'load',
+        help='download image from Ananke website'
+    )
+    parser_load.set_defaults(func=subcmd_load)
 
     # subparser for remove command
     parser_remove = subparsers.add_parser(
