@@ -218,6 +218,12 @@ Here are some notes to fill in the correct values:
 * `admin_users` - The ID may be extracted from Moodle's URL. The URL might look something like this: yoursite.com/user/profile.php?id=123, where "123" is your user ID. Remember to prefix the ID with the letter 'u'.
 * All values for `30_lms.py` may be seen within the `Tool configuration details`. These are available from the list symbol (left to the cog symbol) of the tool (`Site administration` > `Plugins` > `Manage tools`).
 
+## Testing jupyter-fs locally
+
+Jupyter-fs uses browser security features preventing local testing if the local host's IP address is not `127.0.0.1`. For Chromium this security feature can be disabled:
+1. Type `chrome://flags/#unsafely-treat-insecure-origin-as-secure` in Chromium's address bar.
+2. Fill the text area with your local IP and the JHub port (`http://192.168.178.128:8000`).
+
 ## Arguments to `podman run`
 
 Some special arguments used in `run.sh`:
