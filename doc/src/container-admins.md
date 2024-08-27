@@ -110,7 +110,7 @@ or continue its execution with
 podman restart container_label_or_id
 ```
 
-(install)
+(install)=
 ### Install and run a container
 
 To get an Ananke container running proceed as follows (instructions are for Ananke without nbgrader, replace `base` by `nbgrader` wherever it appears to get Ananke with nbgrader):
@@ -152,6 +152,9 @@ cd ~/ananke
 ./ananke build
 ```
 This asks for an image definition and then builds a new image from that definition.
+```{note}
+If you want to build the `ananke-nbgrader` image, you first have to build `ananke-base`, because `ananke-nbgrader` is built on top of `ananke-base`.
+```
 
 #### Step 3: Choose container definition template
 
@@ -422,19 +425,21 @@ All courses have to be recreated and container configuration files as well as hu
     images/  ---> Ananke 0.4 image definitions
 ```
 Proceed as follows:
-1. Follow steps 1 to 4 of above [install instructions](#install), but name the base directory `ananke_0.5` instead of `ananke` (don't overwrite your Ananke 0.4 install).
+1. Follow steps 1 and 2 of above [install instructions](#install), but name the base directory `ananke_0.5` instead of `ananke` (don't overwrite your Ananke 0.4 install).
 2. (nbgrader only) Tell your instructor users to backup all their courses. Alternatively, [Backup](#backups) all courses of your hub.
-3. Remove the old container with `remove.sh` from Ananke 0.4.
-4. Rename the container directory from `ananke-nbgrader-hub` to `containers`.
-5. Rename the runtime directory from `containers/runtime` to `containers/my-hub`.
-6. Remove all directories in `containers/my-hub/home/` starting with `c-`.
-7. Copy all relevant files from `ananke_0.5` to `ananke`. These include `images` (replace old directory), `ananke` (the new management script), `containers/templates-*` (if you need them).
-4. Start the new container with
-```
+3. Start a root shell in the old container with `shell.sh` and remove all directories in `/home` starting with `c-` (the courses).
+4. Remove the old container with `remove.sh` from Ananke 0.4.
+5. Rename the container directory from `ananke-nbgrader-hub` to `containers`.
+6. Rename the runtime directory from `containers/runtime` to `containers/my-hub`.
+7. Copy `config.py` from a `ananke_0.5/containers/templates-base_or_nbgrader` to `ananke/containers/my-hub`.
+8. Adjust settings in `config.py` according to settings in former `run.sh`.
+9. Copy all relevant files from `ananke_0.5` to `ananke`. These include `images` (replace old directory), `ananke` (the new management script), `containers/templates-*` (if you need them).
+10. Start the new container with
+ ```
 cd ~/ananke
 ./ananke create
 ```
-5. Tell your instructor users to log in to the hub from all their LMS courses. Then backup data can be copied to the new courses.
+11. Tell your instructor users to log in to the hub from all their LMS courses. Then backup data can be copied to the new courses.
 
 (optional-features)=
 ## Useful optional features

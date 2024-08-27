@@ -19,6 +19,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
 
 # copy config files
 COPY ./assets/nbgrader_config.py /opt/conda/envs/jhub/etc/jupyter/nbgrader_config.py
+RUN chmod a+r /opt/conda/envs/jhub/etc/jupyter/nbgrader_config.py
 
 # nbgrader exchange directory
 RUN mkdir /opt/nbgrader_exchange && \

@@ -106,6 +106,9 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
 COPY ./assets/jupyterhub_config.py /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.py
 COPY ./assets/jupyter_config.py /opt/conda/envs/jhub/etc/jupyter/jupyter_config.py
 COPY ./assets/jupyterhub.service /opt/conda/envs/jhub/etc/systemd/jupyterhub.service
+RUN chmod a+r /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.py
+RUN chmod a+r /opt/conda/envs/jhub/etc/jupyter/jupyter_config.py
+RUN chmod a+r /opt/conda/envs/jhub/etc/systemd/jupyterhub.service
 
 # create systemd service for JupyterHub
 RUN ln -s /opt/conda/envs/jhub/etc/systemd/jupyterhub.service /etc/systemd/system/jupyterhub.service
