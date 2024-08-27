@@ -9,6 +9,9 @@ config['memory'] = 'interactive'
 # maximum number of CPUs (cores) available to the container ('interactive', 1, 2,..., 'max')
 config['cpus'] = 'interactive'
 
+# GPUs available to the container ('interactive', GPU name (string), list of GPU names (strings))
+config['gpus'] = 'interactive'
+
 # additional arguments to Podman
 config['podman_args'] = []
 

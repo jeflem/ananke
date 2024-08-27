@@ -23,6 +23,8 @@ DEFAULT_VOLUMES = [
     ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d')
 ]
 
+NVIDIA_YAML = '/etc/cdi/nvidia.yaml'
+
 COLOR_RESET = '\x1b[0m'
 COLOR_BOLD = '\x1b[1m'
 COLOR_RED = '\x1b[31m'
@@ -385,10 +387,10 @@ def subcmd_create(args):
             default = 8
         mem = ask_int(1, max_mem, default)
         config['memory'] = f'{mem}g'
-    if config.get('memory') == 'max':
+    elif config.get('memory') == 'max':
         config.pop('memory')
 
-    # check cpu limit
+    # check CPU limit
     if config.get('cpus') == 'interactive':
         print(f'{COLOR_BOLD}How many CPUs (cores) the container is allowed to use?{COLOR_RESET}')
         output, code = shell('nproc')
@@ -401,8 +403,53 @@ def subcmd_create(args):
             max_cpus = None
         cpus = ask_int(1, max_cpus, max_cpus)
         config['cpus'] = f'{cpus}'
-    if config.get('cpus') == 'max':
+    elif config.get('cpus') == 'max':
         config.pop('cpus')
+
+    # check GPUs
+    gpu_devices = []
+    if config.get('gpus') == 'interactive':
+        output, code = shell(f'grep "name:" {NVIDIA_YAML}')
+        gpus = []
+        if code == 0:
+            try:
+                for line in output:
+                    splitted = line.strip().split()
+                    if splitted[0] == 'name:':
+                        gpus.append(splitted[1].strip('"'))
+            except:
+                pass
+        print(f'{COLOR_BOLD}Which GPU devices shall be accessible inside the container?{COLOR_RESET}')
+        if len(gpus) == 0:
+            input('No NVIDIA GPUs detected. Press return to proceed.')
+        else:
+            print('Available GPUs:')
+            for gpu in gpus:
+                print(f'  {gpu}')
+            invalid = True
+            while invalid:
+                chosen_gpus = []
+                choice = input('comma separated list of GPU names [no GPUs]: ').strip()
+                if len(choice) == 0:
+                    invalid = False
+                else:
+                    invalid = False
+                    for gpu in choice.split(','):
+                        gpu = gpu.strip()
+                        if gpu in gpus:
+                            chosen_gpus.append(gpu)
+                        else:
+                            print(f'GPU name "{gpu}" invalid!')
+                            invalid = True
+            for gpu in chosen_gpus:
+                gpu_devices.append(f'nvidia.com/gpu={gpu}')
+    elif isinstance(config.get('gpus'), str):
+        quot = '"'
+        gpu_devices.append(f'nvidia.com/gpu={config["gpus"].strip().strip(quot)}')
+    elif isinstance(config.get('gpus'), list):
+        quot = '"'
+        for gpu in config['gpus']:
+            gpu_devices.append(f'nvidia.com/gpu={gpu.strip().strip(quot)}')
 
     # default volumes
     config['volumes'].extend(DEFAULT_VOLUMES)
@@ -426,9 +473,11 @@ def subcmd_create(args):
     for arg in config['podman_args']:
         cmd += f' {arg}'
     if 'memory' in config:
-        cmd += f' "--memory={config["memory"]}"'
+        cmd += f' --memory={config["memory"]}'
     if 'cpus' in config:
-        cmd += f' "--cpus={config["cpus"]}"'
+        cmd += f' --cpus={config["cpus"]}'
+    for dev in gpu_devices:
+        cmd += f' --device={dev}'
     cmd += f' "{config["image_name"]}"'
     _, code = shell(cmd)
     if code != 0:
