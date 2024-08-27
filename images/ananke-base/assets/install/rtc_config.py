@@ -23,6 +23,8 @@ for idx, room in enumerate(public_rtc_rooms):
                     conda activate jhub; \
                     jupyter labextension disable --level=user @jupyter/collaboration-extension; \
                     jupyter labextension enable --level=user @jupyter/collaboration-extension; \
+                    jupyter labextension disable --level=user @jupyter/docprovider-extension; \
+                    jupyter labextension enable --level=user @jupyter/docprovider-extension; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:menu"')
