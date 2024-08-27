@@ -445,7 +445,7 @@ def subcmd_create(args):
         output, code = shell('grep MemTotal /proc/meminfo')
         if code == 0:
             try:
-                max_mem = int(int(output[0].split()[1]) / 1e6)
+                max_mem = int(int(output[0].split()[1]) / 1024 / 1024)
             except (IndexError, AttributeError, ValueError, ZeroDivisionError):
                 max_mem = None
         else:
