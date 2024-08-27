@@ -571,12 +571,6 @@ config['podman_args'].append('--device=YOUR_GPU_DEVICE_NAME')
 ```
 to your container definition's `config.py`. Multiple such lines are possible, too, if you want to have access to multiple GPUs.
 
-In case of NVIDIA GPUs, before creating the container add
-```
-config['requires'] = ['nvidia-persistenced.service']
-```
-to your container definition's `config.py`. This prevents problems with automatic container restart at host machine reboot.
-
 #### Test Podman GPU support
 
 In the container's root shell run `nvidia-smi` to see whether and how many GPUs are available inside the container (NVIDIA only).
