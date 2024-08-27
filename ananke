@@ -319,7 +319,7 @@ def subcmd_build(args):
 
     # ask for image definition
     img_defs = get_img_defs()
-    print('Which image definition shall be used?')
+    print(f'{COLOR_BOLD}Which image definition shall be used?{COLOR_RESET}')
     choice = choose(img_defs, 0)
     img_def = img_defs[choice]
 
@@ -341,9 +341,21 @@ def subcmd_build(args):
 
 def subcmd_create(args):
 
+    # Some hints
+    print(f'{COLOR_BOLD}Before creating an Ananke container check that{COLOR_RESET}')
+    print('  1. you have chosen a template container definition,')
+    print('  2. you have made a copy of corresponding template directory in "containers" directory,')
+    print('  3. you have set image name and port in the container definition\'s "config.py",')
+    print('  4. you have set c.JupyterHub.base_url in "containers/YOUR_CONTAINER/jupyterhub_config.d/00_base.py",')
+    print('  5. you have adjusted other settings in "containers/YOUR_CONTAINER/jupyterhub_config.d".')
+    print('Do you want to proceed?')
+    if not ask_yes('y'):
+        print('Aborting...')
+        return
+
     # choose container definition
     cont_defs = get_cont_defs()
-    print('Which container definition shall be used?')
+    print(f'{COLOR_BOLD}Which container definition shall be used?{COLOR_RESET}')
     choice = choose(cont_defs, 0)
     cont_def = cont_defs[choice]
     cont_name = f'{CONT_PREFIX}{cont_def}'
@@ -520,7 +532,7 @@ def subcmd_remove(args):
     if len(cont_names) == 0:
         print('There are no Ananke containers!')
         return
-    print('Which container shall be removed?')
+    print(f'{COLOR_BOLD}Which container shall be removed?{COLOR_RESET}')
     choice = choose(cont_names, 0)
     cont_name = cont_names[choice]
 
@@ -558,7 +570,7 @@ def subcmd_remove(args):
                 return
 
     # ask user for final confirmation
-    print(f'Do you really want to remove container {cont_name}? {COLOR_RED}This may cause data loss!{COLOR_RESET}')
+    print(f'{COLOR_BOLD}Do you really want to remove container {cont_name}? {COLOR_RED}This may cause data loss!{COLOR_RESET}')
     if not ask_yes(False):
         print('Not removing container.')
         return
