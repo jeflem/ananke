@@ -3,7 +3,8 @@
 ## Next release
 * New features:
   * **BREAKING CHANGE** - LTI/Nbgrader course and grades management is now accessible through the 'Kore' menu item in the instructor's JupyterLab (see [kore-extension](https://github.com/marcwit/kore-extension)). This replaces the former Kore service GUI. See [Update form Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
-  * [jupyterlab-execute-time extension](https://github.com/deshaw/jupyterlab-execute-time) is activated in all JupyterLabs by default.
+  * **BREAKING CHANGE** - Images and Containers now are managed by one Python script instead of several bash scripts. Directory structure changed, too. See [Update form Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
+  * [jupyterlab-execute-time extension](https://github.com/deshaw/jupyterlab-execute-time) is activated in all JupyterLabs by default. 
 * Minor additions and corrections to doc.
 * Bugfixes:
   * hide Nbgrader menu in collaboration rooms
