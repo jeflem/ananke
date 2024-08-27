@@ -4,7 +4,7 @@ import argparse
 import logging
 import os
 import subprocess
-
+from typing import List, Tuple
 
 LOG_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 LOG_FILE = 'ananke.log'
@@ -37,20 +37,23 @@ BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
 
-def shell(cmd):
-    '''
-    Run a shell command and return its output.
+def shell(cmd: str) -> Tuple[List[str], int]:
+    """
+    Run a shell command and return its output and exit status.
 
     Parameters
     ----------
-    cmd : list[str]
-        Command to execute. First item is command. Others are arguments.
+    cmd : str
+        A string representing the command to execute and its arguments.
+        The first item is the command to run, and subsequent items are arguments to the command.
 
     Returns
     -------
-    list[str]
-        List of lines returned on stdout.
-    '''
+    Tuple[List[str], int]
+        A tuple containing two elements:
+        - A list of strings, where each string is a line from the standard output of the command.
+        - An integer representing the exit status of the command (0 indicates success).
+    """
 
     logger.info(f'Executing shell command "{cmd}".')
     result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
@@ -59,15 +62,15 @@ def shell(cmd):
     return result.stdout.split('\n'), result.returncode
 
 
-def get_img_defs():
-    '''
+def get_img_defs() -> List[str]:
+    """
     Return sorted list of available image definitions.
 
     Returns
     -------
-    list[str]
-        List of subdirectory names containing image definitions.
-    '''
+    List[str]
+        A sorted list of subdirectory names containing image definitions.
+    """
 
     img_defs = []
     path = f'{BASE_PATH}/{IMG_DEF_DIR}'
@@ -79,15 +82,15 @@ def get_img_defs():
     return sorted(img_defs)
 
 
-def get_imgs():
-    '''
+def get_imgs() -> List[Tuple[str, str, str]]:
+    """
     Return list of available images.
 
     Returns
     -------
-    list[(str, str, str)]
+    List[Tuple[str, str, str]]
         List of (repo, name, tag) tuples for all images.
-    '''
+    """
 
     imgs = []
     output, _ = shell('podman image ls')
@@ -103,15 +106,15 @@ def get_imgs():
     return imgs
 
 
-def get_cont_defs():
-    '''
+def get_cont_defs() -> List[str]:
+    """
     Return sorted list of available container definitions.
 
     Returns
     -------
-    list[str]
+    List[str]
         List of subdirectory names containing container definitions.
-    '''
+    """
 
     cont_defs = []
     path = f'{BASE_PATH}/{CONT_DEF_DIR}'
@@ -123,15 +126,15 @@ def get_cont_defs():
     return sorted(cont_defs)
 
 
-def get_conts():
-    '''
+def get_conts() -> List[Tuple[str, str]]:
+    """
     Return list of available containers.
 
     Returns
     -------
-    list[(str, str)]
+    List[Tuple[str, str]]
         List of (container_name, image_name) tuples for all containers.
-    '''
+    """
 
     conts = []
     output, _ = shell('podman ps -a')
@@ -144,13 +147,13 @@ def get_conts():
     return conts
 
 
-def choose(items, default):
-    '''
+def choose(items: List[str], default: int) -> int:
+    """
     Let user choose one item from a list.
 
     Parameters
     ----------
-    items : list[str]
+    items : List[str]
         Items to choose from.
     default : int
         Index of default item.
@@ -159,32 +162,30 @@ def choose(items, default):
     -------
     int
         Index of chosen item.
-    '''
+    """
 
     n = len(items)
-    invalid = True
-    while invalid:
+
+    while True:
         for i, item in enumerate(items):
             print(f'{i+1:2}) {item}')
-        choice = input(f'Choose 1-{n} [{default+1}]: ')
+
+        choice = input(f'Choose 1-{n} [{default+1}]: ').strip()
         if choice == '':
-            choice = default
-            invalid = False
-        else:
-            try:
-                choice = int(choice) - 1
-                if choice >= 0 and choice < n:
-                    invalid = False
-            except ValueError:
-                pass
-        if invalid:
-            print('ERROR: invalid input!')
+            return default
 
-    return choice
+        try:
+            choice = int(choice) - 1
+            if 0 <= choice < n:
+                return choice
+        except ValueError:
+            pass
+
+        print('ERROR: invalid input! Please enter a number between 1 and', n)
 
 
-def ask_yes(default):
-    '''
+def ask_yes(default: bool) -> bool:
+    """
     Let user choose between yes and no.
 
     Parameters
@@ -196,29 +197,24 @@ def ask_yes(default):
     -------
     bool
         Answer (False == no).
-    '''
+    """
 
-    invalid = True
-    while invalid:
-        choice = input(f'y/yes or n/no [{"y" if default else "n"}]: ')
-        choice = choice.lower()
+    default_choice = 'y' if default else 'n'
+
+    while True:
+        choice = input(f'y/yes or n/no [{default_choice}]: ').strip().lower()
+
         if choice == '':
-            choice = default
-            invalid = False
+            return default
         elif choice in ['y', 'yes']:
-            choice = True
-            invalid = False
+            return True
         elif choice in ['n', 'no']:
-            choice = False
-            invalid = False
-        if invalid:
+            return False
+        else:
             print('ERROR: invalid input!')
 
-    return choice
-
-
-def ask_int(low, high, default):
-    '''
+def ask_int(low: int, high: int, default: int) -> int:
+    """
     Let user input an integer.
 
     Parameters
@@ -234,29 +230,27 @@ def ask_int(low, high, default):
     -------
     int
         Chosen integer.
-    '''
+    """
+    range_text = f'{low if low is not None else "-∞"}...{high if high is not None else "+∞"}'
 
-    invalid = True
-    while invalid:
-        value = input(f'integer {low if low else "-∞"}...{high if high else "+∞"} [{default}]: ')
+    while True:
+        value = input(f'integer {range_text} [{default}]: ').strip()
+
         if value == '':
-            value = default
-            invalid = False
-        else:
-            try:
-                value = int(value)
-                if (not low or value >= low) and (not high or value <= high):
-                    invalid = False
-            except ValueError:
-                pass
-        if invalid:
-            print('ERROR: invalid input!')
+            return default
 
-    return value
+        try:
+            value = int(value)
+            if (not low or value >= low) and (not high or value <= high):
+                return value
+        except ValueError:
+            pass
+
+        print('ERROR: invalid input!')
 
 
-def load_config(path):
-    '''
+def load_config(path: str) -> dict:
+    """
     Read container config file.
 
     Parameters
@@ -268,22 +262,37 @@ def load_config(path):
     -------
     dict
         Content of config file (None if error).
-    '''
+    """
 
+    config = dict()
     try:
         with open(path) as f:
             config_code = f.read()
-    except:
+    except (PermissionError, FileNotFoundError, OSError):
         print(f'ERROR: Container config file {path} could not be read!')
-        return None
-    config = dict()
+        return config
     exec(config_code)
 
     return config
 
 
-def subcmd_list(args):
+def subcmd_list(args) -> None:
+    """
+    List available image definitions, images, container definitions, and containers.
 
+    Parameters
+    ----------
+    args : any
+        Arguments passed from the command line interface.
+
+    Returns
+    -------
+    None
+        This function prints the available images, image definitions, container definitions,
+        and existing containers to the console.
+    """
+
+    # TODO: args parameter is unused?
     # list available image definitions
     img_defs = get_img_defs()
     print(f'{COLOR_BOLD}available image definitions:{COLOR_RESET}')
@@ -320,12 +329,25 @@ def subcmd_list(args):
         print('  none')
 
 
-def subcmd_build(args):
+def subcmd_build(args) -> None:
+    """
+    Build a container image based on user-selected image definitions.
+
+    Parameters
+    ----------
+    args : any
+        Arguments passed from the command line interface (currently not used).
+
+    Returns
+    -------
+    None
+        This function does not return a value; it prints the build process status to the console.
+    """
 
     # ask for image definition
     img_defs = get_img_defs()
     print(f'{COLOR_BOLD}Which image definition shall be used?{COLOR_RESET}')
-    choice = choose(img_defs, 0)
+    choice = choose(items=img_defs, default=0)
     img_def = img_defs[choice]
 
     # ask for image tag
@@ -341,7 +363,7 @@ def subcmd_build(args):
     if code == 0:
         print('...done')
     else:
-        print(f'An ERROR occured. See file {LOG_FILE} for details.')
+        print(f'An ERROR occurred. See file {LOG_FILE} for details.')
 
 
 def subcmd_load(args):
@@ -370,7 +392,7 @@ def subcmd_load(args):
     if code == 0:
         print('...done')
     else:
-        print(f'An ERROR occured. See file {LOG_FILE} for details.')
+        print(f'An ERROR occurred. See file {LOG_FILE} for details.')
     shell(f'rm {filename}')
 
 
@@ -384,18 +406,18 @@ def subcmd_create(args):
     print('  4. you have set c.JupyterHub.base_url in "containers/YOUR_CONTAINER/jupyterhub_config.d/00_base.py",')
     print('  5. you have adjusted other settings in "containers/YOUR_CONTAINER/jupyterhub_config.d".')
     print('Do you want to proceed?')
-    if not ask_yes('y'):
+    if not ask_yes(True):
         print('Aborting...')
         return
 
     # choose container definition
     cont_defs = get_cont_defs()
     print(f'{COLOR_BOLD}Which container definition shall be used?{COLOR_RESET}')
-    choice = choose(cont_defs, 0)
+    choice = choose(items=cont_defs, default=0)
     cont_def = cont_defs[choice]
     cont_name = f'{CONT_PREFIX}{cont_def}'
 
-    # check wether container already exists
+    # check whether container already exists
     conts = get_conts()
     if any([name == cont_name for name, _ in conts]):
         print('ERROR: Container already exists! Remove container before creating a new one.')
@@ -424,7 +446,7 @@ def subcmd_create(args):
         if code == 0:
             try:
                 max_mem = int(int(output[0].split()[1]) / 1e6)
-            except:
+            except (IndexError, AttributeError, ValueError, ZeroDivisionError):
                 max_mem = None
         else:
             max_mem = None
@@ -432,7 +454,7 @@ def subcmd_create(args):
             default = int(max_mem / 2)
         else:
             default = 8
-        mem = ask_int(1, max_mem, default)
+        mem = ask_int(low=1, high=max_mem, default=default)
         config['memory'] = f'{mem}g'
     elif config.get('memory') == 'max':
         config.pop('memory')
@@ -444,11 +466,11 @@ def subcmd_create(args):
         if code == 0:
             try:
                 max_cpus = int(output[0])
-            except:
+            except (IndexError, ValueError, TypeError):
                 max_cpus = None
         else:
             max_cpus = None
-        cpus = ask_int(1, max_cpus, max_cpus)
+        cpus = ask_int(low=1, high=max_cpus, default=max_cpus)
         config['cpus'] = f'{cpus}'
     elif config.get('cpus') == 'max':
         config.pop('cpus')
@@ -464,7 +486,7 @@ def subcmd_create(args):
                     splitted = line.strip().split()
                     if splitted[0] == 'name:':
                         gpus.append(splitted[1].strip('"'))
-            except:
+            except (TypeError, AttributeError, IndexError, ValueError):
                 pass
         print(f'{COLOR_BOLD}Which GPU devices shall be accessible inside the container?{COLOR_RESET}')
         if len(gpus) == 0:
@@ -473,9 +495,11 @@ def subcmd_create(args):
             print('Available GPUs:')
             for gpu in gpus:
                 print(f'  {gpu}')
+
             invalid = True
+            chosen_gpus = []
+
             while invalid:
-                chosen_gpus = []
                 choice = input('comma separated list of GPU names [no GPUs]: ').strip()
                 if len(choice) == 0:
                     invalid = False
@@ -580,7 +604,8 @@ def subcmd_remove(args):
     path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_name[len(CONT_PREFIX):]}/{CONFIG_FILE}'
     config = load_config(path)
     if not config:
-        if ask_yes(f'Could not read container config file {path}. Do you want to remove the container nevertheless?'):
+        print(f'Could not read container config file {path}. Do you want to remove the container nevertheless?')
+        if ask_yes(False):
             config = dict()
         else:
             print('Not removing container.')
@@ -600,6 +625,7 @@ def subcmd_remove(args):
             transfer_paths.append(dest)
 
     # ask user for container restart
+    cont_running = False
     if len(transfer_paths) > 0:
         output, _ = shell('podman inspect --format "{{.State.Running}}"' + f' "{cont_name}"')
         cont_running = (len(output) > 0 and output[0].startswith('true'))
@@ -621,11 +647,11 @@ def subcmd_remove(args):
             _, code = shell(f'systemctl --user start "{cont_name}.service"')
             if code != 0:
                 print('ERROR: Starting container failed. See {LOG_FILE} for details. Not removing container.')
-                return;
+                return
         for path in transfer_paths:
             _, code = shell(f'podman exec -it "{cont_name}" bash -c "chown -R root:root \\"{path}\\""')
             if code != 0:
-                print(f'ERROR: Ownership of {path} in container could not be transfered! See {LOG_FILE} for details. Not removing container.')
+                print(f'ERROR: Ownership of {path} in container could not be transferred! See {LOG_FILE} for details. Not removing container.')
                 return
 
     # remove systemd service
@@ -662,7 +688,7 @@ def main():
     logger.setLevel(logging.INFO)
     logger.info('Logging initialized.')
 
-    # intialize argument parser
+    # initialize argument parser
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
         title='subcommands',
