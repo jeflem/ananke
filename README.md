@@ -17,7 +17,6 @@ Also have a look at [Ananke website](https://gauss.fh-zwickau.de/ananke).
 The structure of an Ananke-based JupyterHub deployment is as follows:
 * A host machine runs one or several Podman containers.
 * Each container represents one JupyterHub, which may be used by a whole university or a department or by only one instructor depending on individual configuration needs.
-* One host machine may provide several JupyterHubs with different configurations and features.
 * Each JupyterHub provides individual JupyterLabs for all its users (instructors and students).
 
 ## Available container images
@@ -34,6 +33,16 @@ The Ananke project provides the following container images:
 
 See `doc` subdirectory.
 There's also an [HTML rendering of the doc](https://gauss.fh-zwickau.de/ananke/doc).
+
+## Quickstart
+Here are the major steps to get your own JupyterHub with LMS integration:
+1. Get a server with Debian Linux (other distros should work, too).
+2. Download or build an Ananke Podman image.
+3. Choose a configuration template.
+4. Create a container.
+5. Configure your LMS.
+
+See [documentation](https://gauss.fh-zwickau.de/ananke/doc) for detailled install instructions.
 
 ## Contact and contributors
 
