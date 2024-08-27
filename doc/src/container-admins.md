@@ -493,6 +493,9 @@ Mount this directory into the container by appending
 config['volumes'].append(('~/container-data', '/data'))
 ```
 to the container definitions `config.py`.
+```{important}
+Do not use `~` in paths in `config['volumes']`. The `~` will not be resolved to the your home directory.
+```
 ```{note}
 After modifying `config.py` you have to recreate your container if it already exists, that is, run `./ananke remove` and then run `./ananke create` again.
 At the time of writing (August 2024) Podman does not support adding mounts to running containers.

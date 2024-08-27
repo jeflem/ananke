@@ -19,5 +19,6 @@ config['gpus'] = 'interactive'
 config['podman_args'] = []
 
 # host directories accessible inside the container (list of (host_path, container_path) tuples)
-# paths have to be absolute or relative to config file path)
+# Paths have to be absolute or relative to config file path.
+# Don't use ~ in paths!
 config['volumes'] = []
