@@ -10,6 +10,7 @@ backlinks: none
 ---
 ```
 
+(cumbersome-errors)=
 ## Cumbersome error messages
 
 In rare circumstances, JupyterLab may show cumbersome messages ('Directory "" not found', 'No server available.', aso.).

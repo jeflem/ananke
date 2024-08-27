@@ -6,7 +6,7 @@ They are responsible for everything, especially for security.
 In this chapter, we sketch how to set up a (hopefully) secure host publicly accessibly from the outside world, and we provide information on maintenance tasks, general ones and JupyterHub related ones.
 
 ```{note}
-If you prefer and trust a standard Linux install, you may skip large parts of this chapter. Ananke runs on any standard Linux server. The only requirement is that you install [Podman](https://podman.io) and [nginx](https://nginx.org), which ship with most Linux distributions.
+If you prefer and trust a standard Linux install, you may skip large parts of this chapter. Ananke runs on any standard Linux server. The only requirement is that you install [Podman](https://podman.io), [nginx](https://nginx.org) and [Python](https://python.org), which ship with all major Linux distributions.
 ```
 
 ```{contents}

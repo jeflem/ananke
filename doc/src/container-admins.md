@@ -53,22 +53,34 @@ If you are in Windows, you may try [WinSCP](https://winscp.net).
 
 ## Run an Ananke container
 
-### Container files, images and containers
+Ananke uses [Podman](https://podman.io) containers for deployment.
+
+### Introduction to images and containers
 
 An *image* is a blueprint for containers.
 A *container* is similar to a virtual machine.
 Its purpose is to run a program in isolation from other programs on the machine.
 From one image, one may create one or more containers.
 
-A container file contains all information relevant to Podman to build an image.
+Images are built from image definitions consisting of
+* a `Containerfile` containing image building instructions for Podman,
+* assets (files to copy to the image).
 
-The Ananke project's files are split into four separate subsets:
-* Directories `images/ananke-base` and `images/ananke-nbgrader` contain all files needed to build Ananke's Podman images (without or with nbgrader). In particular, they contain the container files, named `Containerfile`.
-* Directories `ananke-base-hub` and `ananke-nbgrader-hub` contain everything you need to run an Ananke container (without or with nbgrader). They contain config files as well as subdirectories holding data generated during container runtime.
+Ananke's image definitions are in `ananke/images`.
 
-If you want to run more than one Ananke container, that is, if you want to run several JupyterHubs, each container needs a separate copy of the relevant directory (`ananke-base-hub` or `ananke-nbgrader-hub`).
+Containers are built from images. Ananke containers require several config files and directories for storing runtime data. These files and directories are referred to as *container definition* and reside in `ananke/containers`.
 
-### Basic Podman commands
+Currently, Ananke provides two images:
+* `ananke-base` for JupyerHub without additional assessment tools,
+* `ananke-nbgrader` for JupyterHub with nbgrader.
+
+If you want to run more than one Ananke container, that is, if you want to run several JupyterHubs, each container needs a separate container definition (subdirectory of `ananke/containers`).
+
+### Introduction to Podman
+
+```{note}
+You may skip this section, because under normal circumstances you won't have to use Podman directly.
+```
 
 Podman provides several (sub-)commands to manage images and containers.
 To see all currently installed images, run
@@ -98,62 +110,142 @@ or continue its execution with
 podman restart container_label_or_id
 ```
 
-```{important}
-Above Podman commands are rarely needed for Ananke images and containers because Ananke ships with several shell scripts for standard procedures like image building, running a container, or removing a container.
-See instructions below.
-```
-
-### Install and run the container
+(install)
+### Install and run a container
 
 To get an Ananke container running proceed as follows (instructions are for Ananke without nbgrader, replace `base` by `nbgrader` wherever it appears to get Ananke with nbgrader):
 
-1. Copy all Ananke files to your `home` directory on the host machine. See [File Transfer](#file-transfer) for details.
-2. Build the image by running
-   ```
-   cd ~/ananke/images/ananke-base
-   ./build.sh
-   ```
-   **on the host machine** (see [SSH login to host machine](#ssh-login-to-host-machine)). Alternative: if you have obtained a tar file containing the image, run
-   ```
-   podman load -i filename.tar
-   ```
-3. Get your JupyterHub's port from your host admin and replace `PORT=8000` in `ananke-base-hub/run.sh` by `PORT=your_port`.
-4. Get your JupyterHub's name (last part of URL) from your host admin and write it to `ananke-base-hub/runtime/jupyterhub_config.d/00_base.py`:
-   ```
-   c.JupyterHub.base_url = 'your_hub_name/'
-   ```
-5. Run
-   ```
-   cd ~/ananke/ananke-base-hub
-   ./run.sh
-   ```
+#### Step 1: Get Ananke files
 
-Now the JupyterHub is running, and you should at least get some message produced by JupyterHub when visiting `https://your-domain.org/your_hub_name`.
-You have to access JupyterHub via some LTI platform (Moodle aso.).
-**Direct login won't work.** LTI configuration will be described below: [LTI configuration](#lti-configuration).
+There are two alternatives to get Ananke
 
-(root-access-to-the-container)=
-### Root access to the container
-
-To work inside the container (checking the logs, for instance) run
+**Alternative 1:** Download Ananke's [zipped GitHub repository](https://github.com/jeflem/ananke/archive/refs/heads/main.zip) and unzip it to your home directory on the host machine. On the host machine:
 ```
-cd ~/ananke/ananke-base-hub
-./shell.sh
+cd ~
+wget https://github.com/jeflem/ananke/archive/refs/heads/main.zip
+unzip main.zip
+mv ananke-main ananke
 ```
-This opens a shell inside the container.
-There you are the container's root user.
 
-### Remove the container
+**Alternative 2:** Clone Ananke's GitHub repository. On the host machine:
+```
+cd ~
+git clone https://github.com/jeflem/ananke.git
+```
 
-To remove a Podman container created by `run.sh` use `remove.sh`.
+Then you should have a directory named `ananke` in your home directory.
+
+#### Step 2: Get an Ananke image
+
+There are two alternatives to get an Ananke image.
+
+**Alternative 1** (faster): Run
+```
+cd ~/ananke
+./ananke load
+```
+This asks for an image to load and then downloads the image file from [Ananke website](https://gauss.whz.de/ananke).
+
+**Alternative 2** (customizable): Run
+```
+cd ~/ananke
+./ananke build
+```
+This asks for an image definition and then builds a new image from that definition.
+
+#### Step 3: Choose container definition template
+
+In `ananke/containers` there are several subdirectories starting with `template-`. Check each templates `readme.md` and decide for the most suitable one. Then copy the template (here we go with `template-base`):
+```
+cd ~/ananke/containers
+cp -R template-base my-hub
+```
+
+#### Step 4: Adjust container configuration
+
+Open your container definition's `config.py` in a text editor:
+```
+nano ~/ananke/containers/my-hub/config.py
+```
+Adjust settings as needed. In most cases the `port` has to be set to a value provided to you by your host machine's admin.
+
+If you plan to mount external data directories to the container, do it now. Mounting directories to running containers is not supported by Podman. See [Shared directories](#shared-directories) for more details.
+
+If you plan to use NVIDIA GPUs inside the container, set the `required` option as described in [Tensorflow with GPU support](#tensorflow-gpu).
+
+#### Step 5: Adjust JupyterHub configuration
+
+JupyterHub configuration files are in `ananke/containers/my-hub/jupyterhubc_conf.d`. Settings may be changed during container runtime, too. But some settings are required for successful start-up.
+
+In `00_base.py` set `c.JupyterHub.base_url` to the value provided by your host machine's admin.
+
+Configure communication with your learning management system (LMS) in `30_lms.py`. See [LTI configuration](#lti-configuration) for details.
+
+#### Step 6: Create and start the container
+ Now it's time to start the container:
+```
+cd ~/ananke
+./ananke create
+```
+Select the container definition to use and answer all questions.
+
+If you go to  `https://your-domain.org/your_hub_name` with your web browser, you should see some message that login requires LTI. Direct login without LMS is not possible!
+
+#### Step 7: (Almost) done
+
+Configure your LMS, see [LTI configuration](#lti-configuration) for details. Then go to JupyterHub via your LMS.
+
+If something isn't working properly, open a root shell inside the container:
+```
+cd ~/ananke
+./ananke-my-hub.sh
+```
+In the root shell type
+```
+journalctl
+```
+to see the logs.
+
+#### Step 8: Optional features
+
+You may install some or all optional features provided my Ananke. See [Useful optional features](#optional-features) for details.
+
+(root-shell)=
+### Root access to a container
+
+For each container created with `ananke create` there is a shell script `ananke-container-name.sh` starting a root shell inside the container:
+```
+cd ~/ananke
+./ananke-my-hub.sh
+```
+This opens a shell inside the container. There you are the container's root user. You may check the logs (`journalctl`) or install additional software.
+
+The hub users home directories are in `/var/lib/private` inside the container.
+
+### Remove a container
+
+To remove an Ananke container run
+```
+cd ~/ananke
+./ananke remove
+```
+Choose the container to remove.
+
+Files living in volumes mounted to the container (everything you see in `ananke/containers/my-hub`) won't be removed. During the removal procedure you'll be asked whether ownership of those file shall be transfered to you. Without transfering ownership you may have problems deleting files because you do not have sufficient permissions. Do NOT transfer ownership if you plan to reuse the volumes in a new container!
 
 ```{important}
-If you remove a container all modifications to files inside the container will be lost.
+If you remove a container, all modifications to files inside the container not living in a mounted volume will be lost.
 ```
 
-Removing a container leaves all files in `ananke/ananke-base-hub/runtime` untouched. Especially, hub users' home directories will still be there. To remove such home directories (some or all) you need host admin privileges you do not have, because hub users' files are not owned by your account on the host machine. The only way to get rid of hub user files is to ask the host admin for removal or to run a container and remove files from inside the container. Hub users' home directories are located in `/var/lib/private/` inside the container.
+## JupyterHub configuration options
 
-## Container configuration options
+Behavior of JupyterHub can be adjusted in `ananke/containers/my-hub/jupyterhub_config.d`. After modifying files there, you have to restart the hub: [open a root shell](#root-shell) and run
+```
+systemctl restart jupyterhub
+```
+Restarting the hub does not kill user's JupyterLabs.
+Thus, the hub can be restarted whenever necessary.
+Only users currently active users may experience [cumbersome error messages](#cumbersome-errors) for some seconds.
 
 (lti-configuration)=
 ### LTI configuration
@@ -162,8 +254,7 @@ LTI communication between JupyterHub and your learning management system (LMS) h
 
 #### JupyterHub
 
-On hub side LTI configuration is in `runtime/jupyterhub_config.d/30_lms.py`.
-Rename `30_lms.py.template` to `30_lms.py` and write the URLs provided by your LMS to corresponding lines.
+On hub side LTI configuration is in `ananke/containers/my-hub/jupyterhub_config.d/30_lms.py`. Write the URLs provided by your LMS to corresponding lines.
 
 ```{important}
 Note that the value for `c.LTI13Authenticator.client_id` has to be a list of strings even if only one client ID is present.
@@ -190,7 +281,7 @@ Even `new window` is not possible due to it's implementation in Moodle via embed
 
 ### Hub admins
 
-To give a hub user admin privileges inside the hub (see [For hub admins](hub-admins.md)), get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `runtime/jupyterhub_config.d/20_users.py` (rename `20_users.py.template`):
+To give a hub user admin privileges inside the hub (see [For hub admins](hub-admins.md)), get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `ananke/containers/my-hub/jupyterhub_config.d/20_users.py`:
 ```
 c.Authenticator.admin_users.add('hub_admin_user_id')
 ```
@@ -199,48 +290,34 @@ If there are more than one hub admin, use one such line per hub admin.
 
 ### User server behavior
 
-In `runtime/jupyterhub_config.d/10_servers.py` you may modify JupyterHub's behavior concerning single user's JupyterLabs.
-
-### Restarting the hub
-
-Configuration changes require restarting JupyterHub to take effect.
-Restarting the hub does not kill user's JupyterLabs.
-Thus, the hub can be restarted whenever necessary.
-Only users currently logging in may experience cumbersome error messages for some seconds.
-
-To restart the hub run
-```
-systemctl restart jupyterhub
-```
-**inside the container** (see [Root access to the container](#root-access-to-the-container)).
+In `ananke/containers/my-hub/jupyterhub_config.d/10_servers.py` you may modify JupyterHub's behavior concerning single user's JupyterLabs.
 
 ### Time zone
 
-After start-up the container's time zone is set to `Europe/Berlin`. To modify the time zone run `timedatectl list-timezones` and then set the time zone with `timedatectl set-timezone TIME_ZONE_FROM_LIST`.
+After start-up the container's time zone is set to `Europe/Berlin`. To modify the time zone run `timedatectl list-timezones` in the container's root shell and then set the time zone with `timedatectl set-timezone TIME_ZONE_FROM_LIST`.
 
 (backups)=
 ## Backups
 
 Hub user's home directories and the hub's configuration are accessible from outside the container.
-To back up home directories and configuration, simply make a copy of the `runtime` directory.
+To back up home directories and configuration, simply make a copy of the `ananke/containers/my-hub` directory.
 
 Example backup procedure:
 1. Log in to the host machine via SSH (see [SSH login to host machine](#ssh-login-to-host-machine)).
-2. Go to the container's directory:
+2. Go to the `containers` directory:
    ```
-   cd ananke-base-hub
+   cd ~/ananke/containers
    ```
 3. Copy all relevant files to a tar archive:
    ```
-   tar czfv backup.tar.gz ./runtime
+   tar czfv backup.tar.gz ./my-hub
    ```
    (some files aren't readable, but those files only contain runtime information from Jupyter and can be safely ignored).
 4. Move the tar archive to some save place (see [File Transfer](#file-transfer)).
 
-
 ## Modify global Python environment
 
-There are two default Python environments: `jhub` (contains all the Jupyter stuff, do not modify), `python3` (the environment in which notebooks run, install all required packages here): inside the container's root shell (see [Root access to the container](#root-access-to-the-container)) run
+There are two default Python environments: `jhub` (contains all the Jupyter stuff, do not modify), `python3` (the environment in which notebooks run, install all required packages here): inside the container's [root shell](#root-shell) run
 ```
 conda install package_name
 ```
@@ -248,6 +325,8 @@ conda install package_name
 ```{important}
 Modification of Python environment is done inside the container.
 Replacing the container by a new one (even from the same image) resets the Python environment.
+
+Python environments live in `/opt/conda/envs` inside the container.
 ```
 
 ## Additional global Python environments
@@ -273,6 +352,8 @@ The new environment's kernel appears in all users' JupyterLabs after a few secon
 ```{important}
 Creation of an additional global Python environment is done inside the container.
 Replacing the container by a new one (even from the same image) removes all additional Python environments.
+
+Python environments live in `/opt/conda/envs` inside the container.
 ```
 
 ## Log files
@@ -288,7 +369,7 @@ There's also a list of all users having visited the hub via LTI.
 It's a JSON file with hub username, first name, last name, email, LMS username.
 It's at `/opt/userdata.json`.
 
-## Resource limits
+## Check resource limits
 
 To see resource limits of the container, run
 ```
@@ -297,12 +378,9 @@ cat /sys/fs/cgroup/memory.max
 ```
 in the container's root shell.
 
-You may modify the container's resource limits by editing `run.sh` (the script used for starting a container).
-The argument `-m=8g` limits available memory (8 GB).
-There are arguments for limiting CPU usage, too.
-See [Podman documentation](https://docs.podman.io/en/latest/markdown/podman-run.1.html).
+You may set a container's resource limits by editing `ananke/containers/my-hub/config.py` before (!) creating the container.
 
-Per user resource limits can be configured in `runtime/jupyterhub_config.d/10_servers.py`.
+Per-user resource limits can be configured in `ananke/containers/my-hub/jupyterhub_config.d/10_servers.py`.
 
 ## Updates
 
@@ -324,25 +402,41 @@ in each environment.
 ```{important}
 Updating packages in the `jhub` environment may cause lots of troubles. Unexperienced users better do not touch this environment. To get newer versions of Jupyter components update the whole container (see below).
 ```
+
 ### Update the whole container
 
-Alternatively, you may get the newest Ananke files and rebuild image and container.
-Rebuilding the image will install most current versions of all components.
+Alternatively to in-container updates yoyu may replace your container by a new one based on the latest Ananke release.
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
 
 (update-to-0_5)=
 ### Update from Ananke 0.4 to Ananke 0.5
 
-Ananke 0.5 brings breaking changes in course handling for the Ananke nbgrader image. Thus, update from Ananke 0.4 needs some extra attention.
+Ananke 0.5 brings breaking changes in course handling for the Ananke nbgrader image and modified directory structure for both images base and nbgrader. Thus, update from Ananke 0.4 needs some extra attention.
 
-Due to changes in the directory and file structure all courses have to be recreated. Proceed as follows:
-1. Tell your instructor users to backup all their courses. Alternatively, [Backup](#backups) all courses of your hub.
-2. Remove the old container.
-3. Remove all directories in `runtime/home/` starting with `c-`.
-4. Start the new container
+All courses have to be recreated and container configuration files as well as hub user data have to be moved. We assume that you have following directory structure:
+```
+~/ananke/  --> copy of Ananke 0.4 repository
+    ananke-nbgrader-hub/  --> the container to update
+        runtime/  --> container configuration and data
+    images/  ---> Ananke 0.4 image definitions
+```
+Proceed as follows:
+1. Follow steps 1 to 4 of above [install instructions](#install), but name the base directory `ananke_0.5` instead of `ananke` (don't overwrite your Ananke 0.4 install).
+2. (nbgrader only) Tell your instructor users to backup all their courses. Alternatively, [Backup](#backups) all courses of your hub.
+3. Remove the old container with `remove.sh` from Ananke 0.4.
+4. Rename the container directory from `ananke-nbgrader-hub` to `containers`.
+5. Rename the runtime directory from `containers/runtime` to `containers/my-hub`.
+6. Remove all directories in `containers/my-hub/home/` starting with `c-`.
+7. Copy all relevant files from `ananke_0.5` to `ananke`. These include `images` (replace old directory), `ananke` (the new management script), `containers/templates-*` (if you need them).
+4. Start the new container with
+```
+cd ~/ananke
+./ananke create
+```
 5. Tell your instructor users to log in to the hub from all their LMS courses. Then backup data can be copied to the new courses.
 
+(optional-features)=
 ## Useful optional features
 
 ### Base packages
@@ -372,6 +466,7 @@ To add further default file browsers for all users edit `/opt/conda/envs/jhub/et
 
 See [File transfer for hub users](hub-users.md#file-transfer) for configuration of user-defined file systems.
 
+(shared-directories)=
 ### Shared directories
 
 If your hub users need to share files, either because you don't want them to upload and store identical copies of large data sets to their home directories or your users want to send files to other users, you can set this up as follows:
@@ -390,11 +485,11 @@ chmod a+rwx share
 ```
 Mount this directory into the container by appending
 ```
---mount=type=bind,source=../container-data,destination=/data
+config['volumes'].append(('~/container-data', '/data'))
 ```
-in the container's `run.sh`.
+to the container definitions `config.py`.
 ```{note}
-After modifying `run.sh` you have to recreate your container if it already exists, that is, run `remove.sh` and then run `run.sh` again.
+After modifying `config.py` you have to recreate your container if it already exists, that is, run `./ananke remove` and then run `./ananke create` again.
 At the time of writing (August 2024) Podman does not support adding mounts to running containers.
 ```
 
@@ -402,8 +497,8 @@ Make the `share` directory writable inside the container by adding
 ```
 c.SystemdSpawner.readwrite_paths.append('/data/share')
 ```
-to your container's `runtime/jupyterhub_config.d/10_servers.py`.
-Then restart JupyterHub with `systemctl restart jupyterhub`.
+to your container's `ananke/containers/my-hub/jupyterhub_config.d/10_servers.py`.
+Then restart JupyterHub with `systemctl restart jupyterhub` in the container's root shell.
 
 If you use jupyter-fs, you may add a file browser for the `data` directory to all users' JupyterLabs.
 Simply add
@@ -430,17 +525,13 @@ Several users share one JupyterLab session and instantly see other users' edits 
 
 Install the collaboration extension by running `/opt/install/rtc.sh` in the container's root shell.
 
-Rename the template `80_rtc.py.template` in `runtime/jupyterhub_config.d/` (in your container's working directory on the host machine) to `80_rtc.py` and define your public and private collaboration rooms in that file.
+Rename the `80_rtc.py.disabled` in `ananke/containers/my-hub/jupyterhub_config.d/` to `80_rtc.py` and define your public and private collaboration rooms in that file.
 
 Then restart the hub with `systemctl restart jupyterhub`.
 
-````{note}
-For each collaboration room there is a user account inside the container. All files created during collaboration sessions are stored in `/home/name-of-room` inside the container. To simplify backup of files from collaboration sessions you may want to make the container's `home` directory available outside the container. For this purpose add
+```{note}
+For each collaboration room there is a user account inside the container. All files created during collaboration sessions are stored in `/home/rtc-name-of-room` inside the container.
 ```
---mount=type=bind,source=runtime/home,destination=/home \
-```
-to your container's `run.sh` script. This is only necessary for Ankane base image. Ananke nbgrader image already has this line.
-````
 
 ```{note}
 The collaboration extension is disabled by default for all hub users. But users may enable the extension on their own. See [JupyterLab RTC for hub users](hub-users.md#jupyterlab-real-time-collaboration).
@@ -459,24 +550,38 @@ This does not remove any files create during corresponding collaboration session
 
 LSP support allows for code completion, automatic code formatting and several other useful features. To install LSP support for JupyterLab run `/opt/install/lsp.sh` in the container's root shell and restart the hub as well as all user servers.
 
+(tensorflow-gpu)=
 ### TensorFlow with GPU support
 
 If the host machine has got one or more GPUs and Podman is configured to provide GPU access inside containers, then TensorFlow should be installed with GPU support. Have a look at [GPU support](host-admins.md#gpu-support) in the documentation for host admins and/or ask your host admin for details on GPU availability.
 
+#### Configuration
+
+Ananke supports autoconfiguration of NVIDIA GPUs during container creation (if GPU support for Podman is available on your host machine). If no GPUs are found by the container creation procedure (either not NVIDIA or for other reasons), add a line
+```
+config['podman_args'].append('--device=YOUR_GPU_DEVICE_NAME')
+```
+to your container definition's `config.py`. Multiple such lines are possible, too, if you want to have access to multiple GPUs.
+
+In case of NVIDIA GPUs, before creating the container add
+```
+config['requires'] = ['nvidia-persistenced.service']
+```
+to your container definition's `config.py`. This prevents problems with automatic container restart at host machine reboot.
+
 #### Test Podman GPU support
 
-If GPU support for Podman is available on your host machine, add the line
-```
---device nvidia.com/gpu=all \
-```
-below `podman create` in your container's `run.sh`.
-In the container's root shell run `nvidia-smi` to see whether and how many GPUs are available inside the container.
+In the container's root shell run `nvidia-smi` to see whether and how many GPUs are available inside the container (NVIDIA only).
 
 #### Install Tensorflow
 
 To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell.
 
 The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
+
+```{important}
+TensorFlow 2.17 does not have NumPy 2 support. The install script will downgrade NumPy to 1.26.4!
+```
 
 #### Assign GPUs to users
 
