@@ -575,10 +575,6 @@ In the container's root shell run `nvidia-smi` to see whether and how many GPUs 
 
 #### Install Tensorflow
 
-```{important}
-Installing TensorFlow 2.17 will downgrade your NumPy install to NumPy 1.26.4.
-```
-
 To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell.
 
 The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
