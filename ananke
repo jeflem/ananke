@@ -497,7 +497,12 @@ def subcmd_create(args):
         return
 
     # create systemd unit
-    shell(f'podman generate systemd --restart-policy=always --files --name "{cont_name}"')
+    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=60 --stop-timeout=60'
+    if 'requires' in config:
+        for unit in config['requires']:
+            cmd += f' --after={unit} --requires={unit}'
+    cmd += f' --name "{cont_name}"'
+    shell(cmd)
     shell('mkdir -p ~/.config/systemd/user')
     _, code = shell(f'mv "container-{cont_name}.service" ~/.config/systemd/user/"{cont_name}.service"')
     if code != 0:
