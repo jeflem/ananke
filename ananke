@@ -630,7 +630,7 @@ def subcmd_remove(args):
         output, _ = shell('podman inspect --format "{{.State.Running}}"' + f' "{cont_name}"')
         cont_running = (len(output) > 0 and output[0].startswith('true'))
         if not cont_running:
-            print('{COLOR_BOLD}You chose to transfer ownership of some volumes, but the container isn\'t running at the moment. The container will be started to transfer ownership. In rare situations this may cause security issues due to opening the container\'s port. Proceed?{COLOR_RESET}')
+            print(f'{COLOR_BOLD}You chose to transfer ownership of some volumes, but the container isn\'t running at the moment. The container will be started to transfer ownership. In rare situations this may cause security issues due to opening the container\'s port. Proceed?{COLOR_RESET}')
             if not ask_yes(True):
                 print('Aborting. Not removing container.')
                 return
