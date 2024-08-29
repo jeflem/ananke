@@ -490,7 +490,7 @@ chmod a+rwx share
 ```
 Mount this directory into the container by appending
 ```
-config['volumes'].append(('~/container-data', '/data'))
+config['volumes'].append(('/home/username/container-data', '/data'))
 ```
 to the container definitions `config.py`.
 ```{important}
