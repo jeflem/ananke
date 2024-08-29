@@ -3,7 +3,7 @@
 import argparse
 import logging
 import os
-import subprocess
+from subprocess import run, CalledProcessError
 from typing import List, Tuple
 
 LOG_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
@@ -37,7 +37,7 @@ BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
 
-def shell(cmd: str) -> Tuple[List[str], int]:
+def shell(cmd: str) -> List[str]:
     """
     Run a shell command and return its output and exit status.
 
@@ -49,17 +49,15 @@ def shell(cmd: str) -> Tuple[List[str], int]:
 
     Returns
     -------
-    Tuple[List[str], int]
-        A tuple containing two elements:
-        - A list of strings, where each string is a line from the standard output of the command.
-        - An integer representing the exit status of the command (0 indicates success).
+    List[str]
+        A list of strings, where each string is a line from the standard output of the command.
     """
 
     logger.info(f'Executing shell command "{cmd}".')
-    result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+    result = run(cmd, capture_output=True, text=True, shell=True, check=True)
     logger.info('Shell command\'s output:\n' + result.stdout)
 
-    return result.stdout.split('\n'), result.returncode
+    return result.stdout.split('\n')
 
 
 def get_img_defs() -> List[str]:
@@ -93,8 +91,7 @@ def get_imgs() -> List[Tuple[str, str, str]]:
     """
 
     imgs = []
-    output, _ = shell('podman image ls')
-    for line in output[1:-1]:  # first line is header, last line is empty
+    for line in shell('podman image ls')[1:-1]:  # first line is header, last line is empty
         repo_and_name, tag, _ = line.split(maxsplit=2)
         if '/' not in repo_and_name:
             continue
@@ -137,8 +134,7 @@ def get_conts() -> List[Tuple[str, str]]:
     """
 
     conts = []
-    output, _ = shell('podman ps -a')
-    for line in output[1:-1]:  # first line is header, last line is empty
+    for line in shell('podman ps -a')[1:-1]:  # first line is header, last line is empty
         _, cont_name = line.rsplit(maxsplit=1)
         _, img, _ = line.split(maxsplit=2)
         if cont_name.startswith(CONT_PREFIX):
@@ -268,65 +264,13 @@ def load_config(path: str) -> dict:
     try:
         with open(path) as f:
             config_code = f.read()
-    except (PermissionError, FileNotFoundError, OSError):
+    except (PermissionError, FileNotFoundError, OSError) as e:
         print(f'ERROR: Container config file {path} could not be read!')
+        logger.error(f'Reading operation of container config file at {path} failed with ({type(e).__name__})')
         return config
     exec(config_code)
 
     return config
-
-
-def subcmd_list(args) -> None:
-    """
-    List available image definitions, images, container definitions, and containers.
-
-    Parameters
-    ----------
-    args : any
-        Arguments passed from the command line interface.
-
-    Returns
-    -------
-    None
-        This function prints the available images, image definitions, container definitions,
-        and existing containers to the console.
-    """
-
-    # TODO: args parameter is unused?
-    # list available image definitions
-    img_defs = get_img_defs()
-    print(f'{COLOR_BOLD}available image definitions:{COLOR_RESET}')
-    for img_def in img_defs:
-        print(f'  {img_def}')
-    if len(img_defs) == 0:
-        print('  none')
-
-    # list available images
-    imgs = get_imgs()
-    print(f'{COLOR_BOLD}existing images{COLOR_RESET} ("podman image ls" for details):')
-    for repo, name, tag in imgs:
-        if tag != '':
-            print(f'  {repo}/{name}:{tag}')
-        else:
-            print(f'  {repo}/{name} (no tag)')
-    if len(imgs) == 0:
-        print('  none')
-
-    # list container definitions
-    cont_defs = get_cont_defs()
-    print(f'{COLOR_BOLD}available container definitions:{COLOR_RESET}')
-    for cont_def in cont_defs:
-        print(f'  {cont_def}')
-    if len(cont_defs) == 0:
-        print('  none')
-
-    # list existing containers
-    conts = get_conts()
-    print(f'{COLOR_BOLD}existing containers{COLOR_RESET} ("podman ps -a" for details):')
-    for cont_name, img_name in conts:
-        print(f'  {cont_name} (using image {img_name})')
-    if len(conts) == 0:
-        print('  none')
 
 
 def subcmd_build(args) -> None:
@@ -359,41 +303,17 @@ def subcmd_build(args) -> None:
     # build image
     name = f'{img_def}:{tag}'
     print(f'Building image "{name}" from image definition "{img_def}" (this may take several minutes)...')
-    _, code = shell(f'podman build --tag={name} "{BASE_PATH}/{IMG_DEF_DIR}/{img_def}"')
-    if code == 0:
+    try:
+        shell(f'podman build --tag={name} "{BASE_PATH}/{IMG_DEF_DIR}/{img_def}"')
         print('...done')
-    else:
-        print(f'An ERROR occurred. See file {LOG_FILE} for details.')
+    except (KeyboardInterrupt, CalledProcessError) as e:
+        print(f'ERROR: Build of container failed! See file {LOG_FILE} for details.')
+        logger.error(f'Build of container failed with ({type(e).__name__})')
+        print('Removing broken image.')
 
-
-def subcmd_load(args):
-
-    # ask for image name
-    print(f'{COLOR_BOLD}Which image do you want to download?{COLOR_RESET}')
-    choice = choose(DOWNLOAD_NAMES, 0)
-    name = DOWNLOAD_NAMES[choice]
-
-    # download image
-    url = DOWNLOAD_URL.replace('DOWNLOAD_NAME', name)
-    filename = url.rsplit('/', maxsplit=1)[-1]
-    print(f'Downloading {url} (this may take several minutes)...')
-    output, code = shell(f'wget {url}')
-    if code != 0:
-        print(f'Download failed! See {LOG_FILE} for details.')
-        shell(f'rm {filename}')
-        return
-    print('Unpacking image file...')
-    shell(f'gunzip {filename}')
-
-    # load image
-    filename = filename.rsplit('.', maxsplit=1)[0]  # strip .gz
-    print(f'Loading image file {filename}...')
-    _, code = shell(f'podman load --input="{filename}"')
-    if code == 0:
-        print('...done')
-    else:
-        print(f'An ERROR occurred. See file {LOG_FILE} for details.')
-    shell(f'rm {filename}')
+        images = shell('podman images --filter "dangling=true" -q')
+        for image in images:
+            shell(f'podman rmi -f {image}')
 
 
 def subcmd_create(args):
@@ -441,82 +361,83 @@ def subcmd_create(args):
 
     # check memory limit
     if config.get('memory') == 'interactive':
-        print(f'{COLOR_BOLD}How much memory the container is allowed to use (in gigabytes)?{COLOR_RESET}')
-        output, code = shell('grep MemTotal /proc/meminfo')
-        if code == 0:
-            try:
-                max_mem = int(int(output[0].split()[1]) / 1024 / 1024)
-            except (IndexError, AttributeError, ValueError, ZeroDivisionError):
-                max_mem = None
-        else:
+        try:
+            print(f'{COLOR_BOLD}How much memory the container is allowed to use (in gigabytes)?{COLOR_RESET}')
+            memory = shell('grep MemTotal /proc/meminfo')
+            max_mem = int(int(memory[0].split()[1]) / 1024 / 1024)
+        except (CalledProcessError, IndexError, AttributeError, ValueError, ZeroDivisionError):
             max_mem = None
+
         if max_mem:
             default = int(max_mem / 2)
         else:
             default = 8
+
         mem = ask_int(low=1, high=max_mem, default=default)
         config['memory'] = f'{mem}g'
+
     elif config.get('memory') == 'max':
         config.pop('memory')
 
     # check CPU limit
     if config.get('cpus') == 'interactive':
-        print(f'{COLOR_BOLD}How many CPUs (cores) the container is allowed to use?{COLOR_RESET}')
-        output, code = shell('nproc')
-        if code == 0:
-            try:
-                max_cpus = int(output[0])
-            except (IndexError, ValueError, TypeError):
-                max_cpus = None
-        else:
+        try:
+            print(f'{COLOR_BOLD}How many CPUs (cores) the container is allowed to use?{COLOR_RESET}')
+            cpus = shell('nproc')
+            max_cpus = int(cpus[0])
+        except (CalledProcessError, IndexError, ValueError, TypeError):
             max_cpus = None
+
         cpus = ask_int(low=1, high=max_cpus, default=max_cpus)
         config['cpus'] = f'{cpus}'
+
     elif config.get('cpus') == 'max':
         config.pop('cpus')
 
     # check GPUs
     gpu_devices = []
     if config.get('gpus') == 'interactive':
-        output, code = shell(f'grep "name:" {NVIDIA_YAML}')
+
         gpus = []
-        if code == 0:
-            try:
-                for line in output:
-                    splitted = line.strip().split()
-                    if splitted[0] == 'name:':
-                        gpus.append(splitted[1].strip('"'))
-            except (TypeError, AttributeError, IndexError, ValueError):
-                pass
+        try:
+            for line in shell(f'grep "name:" {NVIDIA_YAML}'):
+                splitted = line.strip().split()
+                if splitted[0] == 'name:':
+                    gpus.append(splitted[1].strip('"'))
+        except KeyboardInterrupt:
+            return
+        except (CalledProcessError, TypeError, AttributeError, IndexError, ValueError):
+            pass
+
         print(f'{COLOR_BOLD}Which GPU devices shall be accessible inside the container?{COLOR_RESET}')
-        if len(gpus) == 0:
+        if not gpus:
             input('No NVIDIA GPUs detected. Press return to proceed.')
         else:
             print('Available GPUs:')
             for gpu in gpus:
                 print(f'  {gpu}')
 
-            invalid = True
             chosen_gpus = []
-
-            while invalid:
+            while True:
                 choice = input('comma separated list of GPU names [no GPUs]: ').strip()
-                if len(choice) == 0:
-                    invalid = False
+
+                if not choice:
+                    break
                 else:
-                    invalid = False
                     for gpu in choice.split(','):
                         gpu = gpu.strip()
                         if gpu in gpus:
                             chosen_gpus.append(gpu)
                         else:
                             print(f'GPU name "{gpu}" invalid!')
-                            invalid = True
+
             for gpu in chosen_gpus:
                 gpu_devices.append(f'nvidia.com/gpu={gpu}')
+
     elif isinstance(config.get('gpus'), str):
         quot = '"'
         gpu_devices.append(f'nvidia.com/gpu={config["gpus"].strip().strip(quot)}')
+
     elif isinstance(config.get('gpus'), list):
         quot = '"'
         for gpu in config['gpus']:
@@ -531,9 +452,12 @@ def subcmd_create(args):
         if not src.startswith('/'):
             src = f'{cont_path}/{src}'
             config['volumes'][i] = (src, dest)
-        _, code = shell(f'mkdir -p "{src}"')
-        if code != 0:
+
+        try:
+            shell(f'mkdir -p "{src}"')
+        except (KeyboardInterrupt, CalledProcessError) as e:
             print(f'ERROR: Creating directory {src} failed! Not creating container.')
+            logger.error(f'Creating directory at {src} failed with ({type(e).__name__})')
 
     # create container
     cmd = 'podman create --cap-add=SYS_ADMIN'
@@ -550,9 +474,12 @@ def subcmd_create(args):
     for dev in gpu_devices:
         cmd += f' --device={dev}'
     cmd += f' "{config["image_name"]}"'
-    _, code = shell(cmd)
-    if code != 0:
+
+    try:
+        shell(cmd)
+    except CalledProcessError as e:
         print(f'ERROR: Container creation failed! See {LOG_FILE} for details.')
+        logger.error(f'Container creation failed with ({type(e).__name__})')
         return
 
     # create systemd unit
@@ -561,17 +488,23 @@ def subcmd_create(args):
         for unit in config['requires']:
             cmd += f' --after={unit} --requires={unit}'
     cmd += f' --name "{cont_name}"'
-    shell(cmd)
-    shell('mkdir -p ~/.config/systemd/user')
-    _, code = shell(f'mv "container-{cont_name}.service" ~/.config/systemd/user/"{cont_name}.service"')
-    if code != 0:
+
+    try:
+        shell(cmd)
+        shell('mkdir -p ~/.config/systemd/user')
+        shell(f'mv "container-{cont_name}.service" ~/.config/systemd/user/"{cont_name}.service"')
+    except CalledProcessError as e:
         print(f'ERROR: Creating systemd service file failed! See {LOG_FILE} for details.')
+        logger.error(f'Creating systemd service file failed with ({type(e).__name__})')
         return
-    shell('systemctl --user daemon-reload')
-    shell(f'systemctl --user enable "{cont_name}.service"')
-    _, code = shell(f'systemctl --user start "{cont_name}.service"')
-    if code != 0:
+
+    try:
+        shell('systemctl --user daemon-reload')
+        shell(f'systemctl --user enable "{cont_name}.service"')
+        shell(f'systemctl --user start "{cont_name}.service"')
+    except CalledProcessError as e:
         print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
+        logger.error(f'Starting systemd service failed with ({type(e).__name__})')
         return
 
     # create script for starting root shell
@@ -582,27 +515,109 @@ def subcmd_create(args):
         shell(f'chmod u+x {path}')
         print(f'Run {cont_name}.sh to get a root shell inside the container.')
     except Exception as e:
-        print(f'Could not create shell script {path}. See {LOG_FILE} for details.')
-        logger.error(f'Could not create shell script ({str(e)})')
+        print(f'ERROR: Creation of shell script at {path} failed. See file {LOG_FILE} for details.')
+        logger.error(f'Creation of shell script at {path} failed with ({type(e).__name__})')
 
     # success
     print(f'Container {cont_def} now running. Systemd service name is "{cont_name}.service".')
+
+
+def subcmd_list(args) -> None:
+    """
+    List available image definitions, images, container definitions, and containers.
+
+    Parameters
+    ----------
+    args : any
+        Arguments passed from the command line interface.
+
+    Returns
+    -------
+    None
+        This function prints the available images, image definitions, container definitions,
+        and existing containers to the console.
+    """
+
+    # list available image definitions
+    img_defs = get_img_defs()
+    print(f'{COLOR_BOLD}available image definitions:{COLOR_RESET}')
+    for img_def in img_defs:
+        print(f'  {img_def}')
+    if not img_defs:
+        print('  none')
+
+    # list available images
+    imgs = get_imgs()
+    print(f'{COLOR_BOLD}existing images{COLOR_RESET} ("podman image ls" for details):')
+    for repo, name, tag in imgs:
+        if tag != '':
+            print(f'  {repo}/{name}:{tag}')
+        else:
+            print(f'  {repo}/{name} (no tag)')
+    if not imgs:
+        print('  none')
+
+    # list container definitions
+    cont_defs = get_cont_defs()
+    print(f'{COLOR_BOLD}available container definitions:{COLOR_RESET}')
+    for cont_def in cont_defs:
+        print(f'  {cont_def}')
+    if not cont_defs:
+        print('  none')
+
+    # list existing containers
+    conts = get_conts()
+    print(f'{COLOR_BOLD}existing containers{COLOR_RESET} ("podman ps -a" for details):')
+    for cont_name, img_name in conts:
+        print(f'  {cont_name} (using image {img_name})')
+    if not conts:
+        print('  none')
+
+
+def subcmd_load(args):
+
+    # ask for image name
+    print(f'{COLOR_BOLD}Which image do you want to download?{COLOR_RESET}')
+    choice = choose(DOWNLOAD_NAMES, 0)
+    name = DOWNLOAD_NAMES[choice]
+
+    # download image
+    url = DOWNLOAD_URL.replace('DOWNLOAD_NAME', name)
+    filename = url.rsplit('/', maxsplit=1)[-1]
+
+    try:
+        print(f'Downloading {url} (this may take several minutes)...')
+        shell(f'wget {url}')
+
+        print('Unpacking image file...')
+        shell(f'gunzip {filename}')
+
+        filename = filename.rsplit('.', maxsplit=1)[0]  # strip .gz
+
+        print(f'Loading image file {filename}...')
+        shell(f'podman load --input="{filename}"')
+        print('...done')
+    except (KeyboardInterrupt, CalledProcessError, ValueError) as e:
+        print(f'ERROR: Image download, unpacking or loading failed! See file {LOG_FILE} for details.')
+        logger.error(f'Image download, unpacking or loading failed with ({type(e).__name__})')
+        shell(f'rm {filename}')
 
 
 def subcmd_remove(args):
 
     # choose container
     cont_names = [cont_name for cont_name, img_name in get_conts()]
-    if len(cont_names) == 0:
+    if not cont_names:
         print('There are no Ananke containers!')
         return
+
     print(f'{COLOR_BOLD}Which container shall be removed?{COLOR_RESET}')
-    choice = choose(cont_names, 0)
+    choice = choose(items=cont_names, default=0)
     cont_name = cont_names[choice]
 
     # load container config
     path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_name[len(CONT_PREFIX):]}/{CONFIG_FILE}'
-    config = load_config(path)
+    config = load_config(path=path)
     if not config:
         print(f'Could not read container config file {path}. Do you want to remove the container nevertheless?')
         if ask_yes(False):
@@ -617,7 +632,9 @@ def subcmd_remove(args):
     config['volumes'].extend(DEFAULT_VOLUMES)
 
     # ask user for transfer of volume ownership
-    print(f'{COLOR_BOLD}You may now transfer ownership of files in container volumes to you. This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container. Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
+    print(f'{COLOR_BOLD}You may now transfer ownership of files in container volumes to you.'
+          f'This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container.'
+          f'Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
     transfer_paths = []
     for src, dest in config['volumes']:
         print(f'Transfer ownership of volume\n  "{src}" (host) > "{dest}" (container)\nto you?')
@@ -626,11 +643,13 @@ def subcmd_remove(args):
 
     # ask user for container restart
     cont_running = False
-    if len(transfer_paths) > 0:
-        output, _ = shell('podman inspect --format "{{.State.Running}}"' + f' "{cont_name}"')
+    if transfer_paths:
+        output = shell('podman inspect --format "{{.State.Running}}"' + f' "{cont_name}"')
         cont_running = (len(output) > 0 and output[0].startswith('true'))
         if not cont_running:
-            print('{COLOR_BOLD}You chose to transfer ownership of some volumes, but the container isn\'t running at the moment. The container will be started to transfer ownership. In rare situations this may cause security issues due to opening the container\'s port. Proceed?{COLOR_RESET}')
+            print(f'{COLOR_BOLD}You chose to transfer ownership of some volumes, but the container isn\'t running at the moment.'
+                  f'The container will be started to transfer ownership.'
+                  f'In rare situations this may cause security issues due to opening the container\'s port. Proceed?{COLOR_RESET}')
             if not ask_yes(True):
                 print('Aborting. Not removing container.')
                 return
@@ -642,32 +661,47 @@ def subcmd_remove(args):
         return
 
     # transfer volume ownership
-    if len(transfer_paths) > 0:
+    if transfer_paths:
         if not cont_running:
-            _, code = shell(f'systemctl --user start "{cont_name}.service"')
-            if code != 0:
-                print('ERROR: Starting container failed. See {LOG_FILE} for details. Not removing container.')
+            try:
+                shell(f'systemctl --user start "{cont_name}.service"')
+            except CalledProcessError as e:
+                print(f'ERROR: Starting container failed! See {LOG_FILE} for details. Not removing container.')
+                logger.error(f'Starting container failed with ({type(e).__name__})')
                 return
+
         for path in transfer_paths:
-            _, code = shell(f'podman exec -it "{cont_name}" bash -c "chown -R root:root \\"{path}\\""')
-            if code != 0:
+            try:
+                shell(f'podman exec -it "{cont_name}" bash -c "chown -R root:root \\"{path}\\""')
+            except CalledProcessError as e:
                 print(f'ERROR: Ownership of {path} in container could not be transferred! See {LOG_FILE} for details. Not removing container.')
+                logger.error(f'Changing ownership of {path} in container failed with ({type(e).__name__})')
                 return
 
     # remove systemd service
-    shell(f'systemctl --user stop "{cont_name}.service"')
-    shell(f'systemctl --user disable "{cont_name}.service"')
-    shell(f'rm ~/.config/systemd/user/"{cont_name}.service"')
+    try:
+        shell(f'systemctl --user stop "{cont_name}.service"')
+        shell(f'systemctl --user disable "{cont_name}.service"')
+        shell(f'rm ~/.config/systemd/user/"{cont_name}.service"')
+    except CalledProcessError as e:
+        print(f'ERROR: Ownership of {path} in container could not be transferred! See {LOG_FILE} for details. Not removing container.')
+        logger.error(f'Changing ownership of {path} in container failed with ({type(e).__name__})')
 
     # remove Podman container
-    _, code = shell(f'podman rm "{cont_name}"')
-    if code != 0:
+    try:
+        shell(f'podman rm "{cont_name}"')
+    except CalledProcessError as e:
         print(f'ERROR: Removing container failed! See {LOG_FILE} for details.')
+        logger.error(f'Removing container failed with ({type(e).__name__})')
         return
 
     # remove shell script
-    path = f'{BASE_PATH}/{cont_name}.sh'
-    shell(f'rm {path}')
+    try:
+        path = f'{BASE_PATH}/{cont_name}.sh'
+        shell(f'rm {path}')
+    except CalledProcessError as e:
+        print(f'ERROR: Removing shell script failed! See {LOG_FILE} for details.')
+        logger.error(f'Removing shell script failed with ({type(e).__name__})')
 
     # success
     print(f'Container {cont_name} has been successfully removed.')
@@ -684,7 +718,7 @@ def main():
         handler.setFormatter(logging.Formatter(LOG_FORMAT))
         logger.addHandler(handler)
     except Exception as e:
-        print(f'ERROR: Creating log file failed ({e}). Aborting...')
+        print(f'ERROR: Creating log file failed ({e})! Aborting...')
     logger.setLevel(logging.INFO)
     logger.info('Logging initialized.')
 
@@ -739,4 +773,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('\nOperation interrupted by user. Exiting gracefully.')
