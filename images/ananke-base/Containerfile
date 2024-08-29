@@ -71,6 +71,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     pycurl \
     python=$PYTHON_VERSION; \
     conda clean -afy"
+
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate python3; \
     conda install -y \
@@ -98,9 +99,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     python -m ipykernel install --prefix=/opt/conda/envs/python3/ --display-name 'Python 3 (all users)'; \
     conda activate jhub; \
     jupyter kernelspec remove -y python3; \
-    python -m nb_conda_kernels list \
-                               --CondaKernelSpecManager.kernelspec_path='--sys-prefix' \
-                               --CondaKernelSpecManager.name_format='{display_name}'"
+    python -m nb_conda_kernels list --CondaKernelSpecManager.kernelspec_path='--sys-prefix' --CondaKernelSpecManager.name_format='{display_name}'"
 
 # copy JupyterHub config files
 COPY ./assets/jupyterhub_config.py /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.py
