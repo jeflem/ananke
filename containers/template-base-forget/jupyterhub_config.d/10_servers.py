@@ -50,3 +50,4 @@ c.JupyterHub.services.append({
         '--cull-every=1800', # check every 30 minutes (in seconds)
         '--timeout=3600' # cull if 1 hour inactive (in seconds)
     ]
+})
