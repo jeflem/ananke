@@ -15,7 +15,7 @@ from routes.problems_route import problems_bp
 from routes.utils_routes import utils_bp
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='[%(levelname)1.1s %(asctime)s.%(msecs)03d %(module)s:%(lineno)d] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )

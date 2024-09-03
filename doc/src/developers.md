@@ -272,21 +272,17 @@ Steps for new Ananke release:
    * `images/ananke-base/assets/jupyterhub_config.py`
    * `images/ananke-nbgrader/assets/kore/kore.py`
    * `images/ananke-nbgrader/assets/kore/kore_jhub_config.py` (two times)
-   * `ananke-base-hub/runtime/jupyterhub_config.d/00_base.py`
-   * `ananke-nbgrader-hub/runtime/jupyterhub_config.d/00_base.py`
-2. Disable output of LTI state on Kore home page if necessary:
-   * `images/ananke-nbgrader/assets/kore/templates/home.html.jinja`
-3. Update version string in doc (`doc/src/conf.py`) and render HTML.
-4. Replace `next` heading in `CHANGELOG.md` by version number.
-5. Merge `dev` branch into `main` branch.
-6. Create release on GitHub.
-7. Make image tar files:
+2. Update version string in doc (`doc/src/conf.py`) and render HTML.
+3. Replace `next` heading in `CHANGELOG.md` by version number.
+4. Merge `dev` branch into `main` branch.
+5. Create release on GitHub.
+6. Make image tar files:
    * `podman save -o ananke-base.tar ananke-base`
    * `gzip -9 ananke-base.tar`
    * `podman save -o ananke-nbgrader.tar ananke-nbgrader`
    * `gzip -9 ananke-nbgrader.tar`
-8. Upload tar files to webserver.
-9. Upload HTML doc to webserver.
+7. Upload tar files to webserver.
+8. Upload HTML doc to webserver.
 
 ## Links
 

@@ -266,6 +266,7 @@ Note that the value for `c.LTI13Authenticator.client_id` has to be a list of str
 Don't abuse `30_lms.py` for other configuration purposes than the described LTI configuration.
 This may lead to unexpected behavior.
 
+(lti-lms)=
 #### LMS
 
 For your LMS you need the following configuration information (field names are taken from Moodle here and may be slightly different in other LMS):
@@ -490,7 +491,7 @@ chmod a+rwx share
 ```
 Mount this directory into the container by appending
 ```
-config['volumes'].append(('~/container-data', '/data'))
+config['volumes'].append(('/home/username/container-data', '/data'))
 ```
 to the container definitions `config.py`.
 ```{important}

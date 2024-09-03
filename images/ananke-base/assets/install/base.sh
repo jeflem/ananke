@@ -27,5 +27,7 @@ conda install -y \
 
 conda activate jhub
 conda install -y \
-      ipympl=$IPYMPL_VERSION \
       plotly=$PLOTLY_VERSION
+
+# installing ipympl with conda seems to be broken, see https://github.com/matplotlib/ipympl/issues/564
+pip install ipympl==$IPYMPL_VERSION
