@@ -2,97 +2,179 @@
 
 {% block head %}
 <script>
+const data = {{ data | tojson }};
+console.log(data);
+
 function showPreflightError() {
-    if ("{{ data.preflight_error }}" !== "") {
-        // Address preflight div by id and change visibility.
-        var preflightDiv = document.getElementById("preflight-error");
-        preflightDiv.style.display = "block";
-
-        // Get heading and change content based on returned error.
-        var preflightHeading = document.getElementById("preflight-error-heading");
-        preflightHeading.innerHTML = "{{ data.preflight_error }}";
-
-        // Address content div by id and change visibility.
-        var contentDiv = document.getElementById("content");
-        contentDiv.style.display = "none";
+    const error = "{{ data.preflight_error }}";
+    if (error) {
+        document.getElementById("preflight-error").style.display = "block";
+        document.getElementById("preflight-error-heading").innerText = error;
+        document.getElementById("content").style.display = "none";
     }
 }
 
-// Asynchronous function for retrieving lists of courses/assignments/problems. This function is defined in <head> to be executed on window load.
-async function getContent(context, onLoad = false) {
-    const requestOptions = {
-        method: 'GET',
-        mode: 'cors',
-        headers: {'Content-Type': 'application/json'}
-    };
+async function getConfig(onLoad = false) {
+    const url = `${data.url}/config`;
+    const params = { user: "{{ data.user }}" };
 
-    let url = `https://gauss.fh-zwickau.de/mahub/services/kore/${context}`;
-    let params = { user: "{{ data.user }}" };
+    try {
+        const response = await fetch(`${url}?${new URLSearchParams(params)}`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {'Content-Type': 'application/json'}
+        });
 
-    const response = await fetch(url + "?" + ( new URLSearchParams( params ) ).toString(), requestOptions);
-    const data = await response.json();
+        const requestData = await response.json();
+        return requestData;
 
-    // Select the dropdown (<select>) element & the import button by id.
-    var dropdownElement = document.getElementById(`${context}-dropdown`)
-    var importButton = document.getElementById(`import-${context.slice(0, -1)}-button`)
+    } catch (error) {
+        console.error('Error fetching content:', error);
+    }
+}
 
-    // Clear all existing options of the dropdown element.
+async function getContent(context, dropdownID, importButtonID = "", onLoad = false) {
+    const url = `${data.url}/${context}`;
+    const params = { user: "{{ data.user }}" };
+    const dropdownElement = document.getElementById(dropdownID);
+    const importButton = importButtonID ? document.getElementById(importButtonID) : null;
+
     dropdownElement.innerHTML = "";
 
-    // Check status of the response.
-    if (response.ok) {
-        let names = data['names'];
-        let paths = data['paths'];
+    try {
+        const response = await fetch(`${url}?${new URLSearchParams(params)}`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {'Content-Type': 'application/json'}
+        });
 
-        for (var i = 0; i < names.length; i++) {
-            var option = document.createElement("option");
-            option.text = names[i];
-            option.value = paths[i];
-            dropdownElement.add(option);
+        const requestData = await response.json();
+
+        if (response.ok) {
+            requestData.names.forEach((name, i) => {
+                const option = new Option(name, requestData.paths[i]);
+                dropdownElement.add(option);
+            });
+            dropdownElement.disabled = false;
+            if (importButton) importButton.disabled = false;
+        } else {
+            handleNoContent(dropdownElement, context, importButton, requestData.message, onLoad);
         }
+    } catch (error) {
+        console.error('Error fetching content:', error);
+    }
+}
 
-        dropdownElement.disabled = false;
-        importButton.disabled = false;
+function handleNoContent(dropdown, context, importButton, message, onLoad) {
+    const option = new Option(`No ${context} found.`, "None");
+    dropdown.add(option);
+    dropdown.disabled = true;
+    if (importButton) importButton.disabled = true;
+
+    if (!onLoad) {
+        const toastStyle = message === 'NoContentError' ? 'verified' : 'error';
+        const toastMessage = message === 'NoContentError'
+            ? `No content found while retrieving list of ${context}.`
+            : `${message} while retrieving list of ${context}.`;
+
+        showToast('Info', toastMessage, '3s', toastStyle);
+    }
+}
+
+function showToast(title, content, dismissAfter, style) {
+    toasts.push({ title, content, dismissAfter, style });
+}
+
+async function sendGrades() {
+    await performAction('grades', 'Sending grades in progress.', 'Grades sent successfully.');
+}
+
+async function importContent(context) {
+    // Get FROM path.
+    const dropdown = document.getElementById(`${context}s-dropdown`);
+    const contentPath = dropdown.value;
+
+    const activCourseDropdown = document.getElementById("active-courses-dropdown");
+    const activeCoursePath = activCourseDropdown.value;
+
+    await performAction(
+        `${context}s`,
+        `Importing ${context}...`,
+        `${context.charAt(0).toUpperCase() + context.slice(1)} imported successfully.`,
+        { fromPath: contentPath, toPath: activeCoursePath }
+    );
+}
+
+async function executeOperation(method) {
+    const activeCourseDropdown = document.getElementById("active-courses-dropdown");
+    const activeCoursePath = activeCourseDropdown.value;
+    const activeCourseName = activeCourseDropdown.options[activeCourseDropdown.selectedIndex].text;
+
+    const operationMap = { 'PUT': 'backup', 'PATCH': 'reset', 'DELETE': 'deletion' };
+
+    if ( method === 'PUT' ) {
+        bodyData = { name: activeCourseName, path: activeCoursePath }
     } else {
-        var option = document.createElement("option");
-        option.text = `No ${context} found.`;
-        option.value = "None";
-        dropdownElement.add(option);
+        bodyData = { path: activeCoursePath }
+    }
 
-        dropdownElement.disabled = true;
-        importButton.disabled = true;
+    await performAction('courses', `Course ${operationMap[method]} in progress...`, `Course ${operationMap[method]} successful.`, bodyData, method);
+}
 
-        if (data.message === 'NoContentError' && !onLoad) {
-            toasts.push({
-                title: 'Info',
-                content: `No content found while retrieving list of ${context}. Contact administrator or see logs for more details.`,
-                dismissAfter: '3s',
-                style: 'verified'
-            });
+
+async function performAction(endpoint, pendingMessage, successMessage, bodyData = {}, method = 'POST') {
+    showToast('Pending', pendingMessage, '3s', 'verified');
+
+    try {
+        const response = await fetch(`${data.url}/${endpoint}`, {
+            method,
+            mode: 'cors',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user: "{{ data.user }}", ...bodyData })
+        });
+
+        const requestData = await response.json();
+
+        if (response.ok) {
+            showToast('Success', requestData.message || successMessage, '3s', 'success');
+        } else {
+            throw new Error(requestData.message);
         }
-        if (data.message !== 'NoContentError' && !onLoad) {
-            toasts.push({
-                title: 'Error',
-                content: `${data.message} while retrieving list of ${context}. Contact administrator or see logs for more details.`,
-                dismissAfter: '3s',
-                style: 'error'
-            });
-        }
+    } catch (error) {
+        showToast('Error', `${error.message} while processing request.`, '3s', 'error');
     }
 }
 
 window.onload = async function() {
     showPreflightError();
-    await getContent("courses", true);
-    await getContent("assignments", true);
-    await getContent("problems", true);
+
+    const config = await getConfig(true);
+    const gradingScope = config.grading_scope;
+    const activeCoursesRefreshButton = document.getElementById("active-courses-refresh-button");
+
+    const contexts = [
+        { context: "courses", dropdownID: "courses-dropdown", buttonID: "import-course-button" },
+        { context: "assignments", dropdownID: "assignments-dropdown", buttonID: "import-assignment-button" },
+        { context: "problems", dropdownID: "problems-dropdown", buttonID: "import-problem-button" },
+        { context: gradingScope === "current" ? "courses/current" : "courses/active", dropdownID: "active-courses-dropdown" }
+    ];
+
+    if (gradingScope === "current") {
+        activeCoursesRefreshButton.style.display = 'none';
+    } else {
+        activeCoursesRefreshButton.style.display = 'inline-block';
+    }
+
+    for (let ctx of contexts) {
+        await getContent(ctx.context, ctx.dropdownID, ctx.buttonID, true);
+    }
 }
 </script>
 {% endblock %}
 
 {% block body %}
 <!-- This div shows, if there is an error during preflight. -->
-<div id="preflight-error">
+<div id="preflight-error" style="display: none;">
     <h4 id="preflight-error-heading" style="color: red; font-size: 32px;"></h4>
     <p style="color: red; font-size: 24px;">
         There was an error during the loading of the page. Please see the logs or contact your administrator for further information.
@@ -102,9 +184,31 @@ window.onload = async function() {
 
 <!-- This div contains all elements (texts, buttons, ...) necessary for grading, course-, assignment- and problem-handling. -->
 <div id="content">
+    <h4>
+        Select active course:
+    </h4>
+
+    <p>
+        Please choose the course that you wish to set as your <strong class="light-grey-background">active course</strong>.
+        The active course serves as the reference point for all operations you perform within this platform.
+
+        <ul style="text-align: left;">
+            <li><strong class="light-grey-background">Import Operations:</strong> When importing assignments, problems, or other content, the active course will automatically be selected as the destination where these items will be copied.</li>
+            <li><strong class="light-grey-background">Management Operations:</strong> For tasks such as backup, reset, or delete, the active course is the one that will be affected. This means the selected course will be backed up, reset to its initial state, or removed entirely, depending on the operation you choose.</li>
+        </ul>
+
+        Make sure to select the correct course as your active course to ensure that all operations are performed on the intended course.
+    </p>
+
+    <div id="active-courses-dropdown-container">
+        <label for="active-courses">Choose active course:</label>
+        <select id="active-courses-dropdown" disabled></select>
+        <button id="active-courses-refresh-button" onclick="getContent('courses/active', 'active-courses-dropdown')"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <hr>
 
     <h4>
-        Send all grades to LMS:
+        Send grades to LMS:
     </h4>
 
     <p>
@@ -113,11 +217,8 @@ window.onload = async function() {
     </p>
 
     <div id="send-grades" class="button-container" onClick="sendGrades()">
-        <button class="general-button">
-            Send grades!
-        </button>
+        <button>Send grades!</button>
     </div>
-
     <hr>
 
     <h4>
@@ -133,21 +234,11 @@ window.onload = async function() {
         This due to the fact that assignments shall have unique names.
     </p>
 
-    <div id="courses-dropdown-container">
-        <label class="dropdown-label" for="courses">
-            Choose a course:
-        </label>
-        <select name="courses" id="courses-dropdown" disabled>
-            <!-- Dropdown will be filled with options by getContent("courses") which is executed on page load. -->
-        </select>
-
-        <button onclick="getContent('courses')">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-
-        <button id="import-course-button" disabled onclick="importContent('course')">
-            Import
-        </button>
+    <div id="course-dropdown-container">
+        <label for="courses">Choose a course:</label>
+        <select id="courses-dropdown" disabled></select>
+        <button onclick="getContent('courses', 'courses-dropdown')"><i class="fas fa-sync-alt"></i></button>
+        <button id="import-course-button" disabled onclick="importContent('course')">Import</button>
     </div>
 
     <h4>
@@ -162,21 +253,11 @@ window.onload = async function() {
         This due to the fact that assignments shall have unique names.
     </p>
 
-    <div id="assignments-dropdown-container">
-        <label class="dropdown-label" for="assignments">
-            Choose a assignment:
-        </label>
-        <select name="assignments" id="assignments-dropdown" disabled>
-            <!-- Dropdown will be filled with options by getContent("assignments") which is executed on page load. -->
-        </select>
-
-        <button onclick="getContent('assignments')">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-
-        <button id="import-assignment-button" disabled onclick="importContent('assignment')">
-            Import
-        </button>
+    <div id="assignment-dropdown-container">
+        <label for="assignments">Choose a assignment:</label>
+        <select id="assignments-dropdown" disabled></select>
+        <button onclick="getContent('assignments', 'assignments-dropdown')"><i class="fas fa-sync-alt"></i></button>
+        <button id="import-assignment-button" disabled onclick="importContent('assignment')">Import</button>
     </div>
 
     <h4>
@@ -185,29 +266,17 @@ window.onload = async function() {
 
     <p>
         For importing a single problem statement from a running course or from the backup folder.
-        The problem statement will be available within the <strong class="light-grey-background">'imported_problems'</strong> assignment.
         This assignment will be created as well as the folder within your home directory.
         The name of the imported problem statement is identical to the of the original one, except that the time of the import is added.
         This due to the fact that problem statements shall have unique names.
     </p>
 
-    <div id="problems-dropdown-container">
-        <label class="dropdown-label" for="problems">
-            Choose a problem:
-        </label>
-        <select name="problems" id="problems-dropdown" disabled>
-            <!-- Dropdown will be filled with options by getContent("problems") which is executed on page load. -->
-        </select>
-
-        <button onclick="getContent('problems')">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-
-        <button id="import-problem-button" disabled onclick="importContent('problem')">
-            Import
-        </button>
+    <div id="problem-dropdown-container">
+        <label for="problems">Choose a problem:</label>
+        <select id="problems-dropdown" disabled></select>
+        <button onclick="getContent('problems', 'problems-dropdown')"><i class="fas fa-sync-alt"></i></button>
+        <button id="import-problem-button" disabled onclick="importContent('problem')">Import</button>
     </div>
-
     <hr>
 
     <div class="inline-container">
@@ -223,9 +292,7 @@ window.onload = async function() {
             </p>
 
             <div class="button-container">
-                <button onClick="executeOperation('PUT')">
-                    Backup course!
-                </button>
+                <button onClick="executeOperation('PUT')">Backup course!</button>
             </div>
         </div>
 
@@ -241,9 +308,7 @@ window.onload = async function() {
             </p>
 
             <div class="button-container">
-                <button onClick="executeOperation('PATCH')">
-                    Reset course!
-                </button>
+                <button onClick="executeOperation('PATCH')">Reset course!</button>
             </div>
         </div>
 
@@ -260,9 +325,7 @@ window.onload = async function() {
             </p>
 
             <div class="button-container">
-                <button onClick="executeOperation('DELETE')">
-                    Delete course!
-                </button>
+                <button onClick="executeOperation('DELETE')">Delete course!</button>
             </div>
         </div>
     </div>
@@ -271,7 +334,6 @@ window.onload = async function() {
 <script>
 // Loading the notifications template, where the toast notifications are declared as class Toasts().
 {% include 'notifications.html.jinja' %}
-
 const toasts = new Toasts({
     width: 300,
     timing: 'ease',
@@ -279,114 +341,5 @@ const toasts = new Toasts({
     dimOld: false,
     position: 'bottom-right' // top-left | top-center | top-right | bottom-left | bottom-center | bottom-right
 });
-
-async function sendGrades() {
-    toasts.push({
-        title: 'Pending',
-        content: 'Sending grades in progress.',
-        dismissAfter: '3s',
-        style: 'verified'
-    });
-
-    const requestOptions = {
-        method: 'POST',
-        mode: 'cors',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ user: "{{ data.user }}" })
-    };
-
-    const response = await fetch("https://gauss.fh-zwickau.de/mahub/services/kore/grades", requestOptions);
-    const data = await response.json();
-
-    if (response.ok) {
-        toasts.push({
-            title: 'Success',
-            content: (data.message),
-            dismissAfter: '3s',
-            style: 'success'
-        });
-    }
-    else {
-        toasts.push({
-            title: 'Error',
-            content: (data) + ' while sending grades to LMS. Contact administrator or see logs for more details.',
-            dismissAfter: '3s',
-            style: 'error'
-        });
-    }
-}
-
-// Function used for importing content (course/assignment/problem) defined in dropdown.
-async function importContent(context) {
-    // Appending s to context due to naming conventions.
-    var dropdownElement = document.getElementById(`${context}s-dropdown`);
-    var contentName = dropdownElement.options[dropdownElement.selectedIndex];
-    var contentPath = contentName.value;
-
-    const requestOptions = {
-        method: 'POST',
-        mode: 'cors',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ user: "{{ data.user }}", path: contentPath })
-    };
-
-    let url = `https://gauss.fh-zwickau.de/mahub/services/kore/${context}s`;
-
-    const response = await fetch(url, requestOptions);
-    const data = await response.json();
-
-    if (response.ok) {
-        toasts.push({
-            title: 'Success',
-            content: (data.message),
-            dismissAfter: '3s',
-            style: 'success'
-        });
-    }
-    else {
-        toasts.push({
-            title: 'Error',
-            content: (data.message) + ` while importing ${context}. Contact administrator or see logs for more details.`,
-            dismissAfter: '3s',
-            style: 'error'
-        });
-    }
-}
-
-// Misc functions for course interaction (backup, reset, deletion). Valid methods to supply are 'PUT', 'PATCH' and 'DELETE'.
-async function executeOperation(method) {
-    const requestOptions = {
-        method: method,
-        mode: 'cors',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ user: "{{ data.user }}" })
-    };
-
-    const response = await fetch("https://gauss.fh-zwickau.de/mahub/services/kore/courses", requestOptions);
-    const data = await response.json();
-
-    if (response.ok) {
-        toasts.push({
-            title: 'Success',
-            content: (data.message),
-            dismissAfter: '3s',
-            style: 'success'
-        });
-    }
-    else {
-        let operationMap = new Map([
-            ["PUT", "backup"],
-            ["PATCH", "reset"],
-            ["DELETE", "deletion"]
-        ]);
-
-        toasts.push({
-            title: 'Error',
-            content: (data.message) + ` while course ${operationMap.get(method)}. Contact administrator or see logs for more details.`,
-            dismissAfter: '3s',
-            style: 'error'
-        });
-    }
-}
 </script>
 {% endblock %}

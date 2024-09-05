@@ -478,7 +478,7 @@ c.JupyterHub.load_roles.append({
 c.JupyterHub.services.append({
     'name': 'kore',
     'url': 'http://127.0.0.1:10001',
-    'display': False,  # Will be changed once refactored.
+    'display': True,
     'api_token': kore_token,
     'oauth_no_confirm': True,
     'cwd': '/opt/kore',
