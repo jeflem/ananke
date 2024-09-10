@@ -60,10 +60,27 @@ With standard kernel management there is no `conda activate` at start-up.
 ## Kore for LTI related features
 
 Ananke adds LTI capabilities to JupyterHub and Nbgrader. Two components are involved:
-* The *Kore service* running as a JupyterHub service provides a REST API for LTI functions. Before Ananke 0.5 this serivce also provided a GUI for course and grades management.
+* The *Kore service* running as a JupyterHub service provides a REST API for LTI functions. Before Ananke 0.5 this service also provided a GUI for course and grades management.
 * The *Kore lab extension* provides a GUI in JupyterLab for course and grades management starting with Ananke 0.5.
 
-Note that there is no Jupyter Server extension involved, because LTI functions heavily interact with the authentication process. Thus, they have to be implemented globally for the whole JupyterHub.
+Note that there is no Jupyter Server extension involved, because LTI functions heavily interact with the authentication process.
+Thus, they have to be implemented globally for the whole JupyterHub.
+
+**Explanation**
+Kore is a Flask-based web application to manages courses, assignments, grades, and related functionalities through a set of routes and integrations with JupyterHub.
+It handles configuration loading, session management, and various HTTP requests to process user actions like managing courses, sending grades, and handling course data.
+
+The `grades_route.py` file implements a `/grades` endpoint, which processes grades and sends them securely to an external Learning Management System (LMS).
+It handles JWT-based authentication, reads data from a local Gradebook, and ensures error handling across several steps, including reading configuration files and posting scores.
+
+The `courses_route.py` file introduces routes for managing courses, including listing active and current courses, copying, backing up, resetting, and deleting courses.
+It interacts with course directories, handles file operations, and modifies JupyterHub configurations for course management.
+The file includes detailed error handling, particularly around system calls and configuration management, and ensures smooth integration with nbgrader for course grading.
+
+The `assignments_route.py` and `problems_route.py` files define the `/assignments` and `/problems` endpoints for listing and copying assignments and problems respectively.
+They retrieve data and manages file operations to copy assignments/problems between directories, ensuring proper permissions and error handling.
+
+The `home_route.py` file in combination with the jinja template files is used to render the frontend if the service is accessed via the Hub Control Panel.
 
 ## Container structure
 
