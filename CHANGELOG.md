@@ -4,6 +4,7 @@
 
 * Bugfixes:
   * avoid `:` in nbgrader feedback paths (timestamps!) to be compatible with jupyter-fs
+  * downgrade jupyter-collaboration to stable release (instead of beta)
 
 ## Ananke 0.5
 
