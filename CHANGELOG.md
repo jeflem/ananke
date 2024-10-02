@@ -1,6 +1,12 @@
 # Changelog
 
+## Next release (dev branch)
+
+* Bugfixes:
+  * avoid `:` in nbgrader feedback paths (timestamps!) to be compatible with jupyter-fs
+
 ## Ananke 0.5
+
 * New features:
   * **BREAKING CHANGE** - LTI/Nbgrader course and grades management is now accessible through the 'Kore' menu item in the instructor's JupyterLab (see [kore-extension](https://github.com/marcwit/kore-extension)). This replaces the former Kore service GUI. See [Update form Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
   * **BREAKING CHANGE** - Images and Containers now are managed by one Python script instead of several bash scripts. Directory structure changed, too. See [Update from Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
