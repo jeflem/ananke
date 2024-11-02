@@ -16,7 +16,9 @@ config['cpus'] = 'interactive'
 config['gpus'] = 'interactive'
 
 # additional arguments to Podman (list of strings)
-config['podman_args'] = []
+config['podman_args'] = [
+    '--pids-limit -1'  # no PID limit (Podman default is 2048, which is too small)
+]
 
 # host directories accessible inside the container (list of (host_path, container_path) tuples)
 # Paths have to be absolute or relative to config file path.
