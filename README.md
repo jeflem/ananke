@@ -42,7 +42,39 @@ Here are the major steps to get your own JupyterHub with LMS integration:
 4. Create a container.
 5. Configure your LMS.
 
-See [documentation](https://gauss.fh-zwickau.de/ananke/doc) for detailled install instructions.
+See [documentation](https://gauss.fh-zwickau.de/ananke/doc) for detailed install instructions.
+
+## Contributing
+
+Contributions are essential to this project’s growth and success, and we warmly welcome all who want to participate!
+Whether you're fixing bugs, reviewing pull requests, opening issues, answering questions, or enhancing our documentation.
+
+There are many ways to contribute:
+- **Opening and reviewing pull requests** - Suggest improvements, help review existing changes, or submit your own pull requests with new features or bug fixes.
+- **Reporting issues** - Found a bug or have an idea for an enhancement? Open an [issue](https://github.com/jeflem/ananke/issues) and let us know. Be sure to check out our guide on [Writing a good issue](#writing-a-good-issue) to help us understand and resolve it quickly.
+- **Answering questions** - Help other users by answering questions and sharing your knowledge.
+- **Improving documentation** - Help us keep our documentation clear, accurate, and up-to-date.
+
+Whatever way you choose to contribute, we’re grateful for your time and effort in making this project better.
+
+## Writing a good issue
+Creating a well-structured issue helps us understand and resolve it more effectively. Here are some tips for writing a good issue:
+- Use a **descriptive title** - Clearly summarize the issue in the title to help others quickly understand the topic.
+- **Provide context** - Explain the problem or feature request in detail. Describe what you’re trying to achieve and why it’s important.
+- **Steps to reproduce** (for bugs) - If you’re reporting a bug, include clear steps to reproduce the issue. Add screenshots, code snippets, or error messages if possible.
+- **Expected vs. actual behavior** - For bugs, describe what you expected to happen and what actually happened.
+- **Environment** details - Specify your setup or any other relevant environment details.
+- **Label** appropriately - Use labels to classify the issue as a bug, enhancement, question, or other categories as relevant.
+
+Following these steps helps us address issues quickly and effectively.
+
+## Support
+
+If you need assistance with this project, we’re here to help!
+Here are ways to get support:
+
+- **Documentation** - Begin with our documentation for answers to common questions and to understand the project’s features.
+- **Known issues** - Check the [issue](https://github.com/jeflem/ananke/issues) tab to see if your question or issue is already known, along with any existing workarounds or general answers.
 
 ## Contact and contributors
 
