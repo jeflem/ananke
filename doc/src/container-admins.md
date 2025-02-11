@@ -283,6 +283,7 @@ Thus, in Moodle only `Existing window` works.
 Even `new window` is not possible due to it's implementation in Moodle via embedding techniques.
 ```
 
+(container-admins-enterprise-ca)=
 #### HTTPS with enterprise root CA or self-signed cert
 
 If JupyterHub shall connect to your LMS via HTTPS with a cert issued by an enterprise root CA, you have to install the CA's root cert in the Ananke container:

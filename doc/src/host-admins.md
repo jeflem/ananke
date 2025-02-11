@@ -1090,6 +1090,7 @@ sudo sysctl vm.overcommit_ratio
 Consider this solution experimental. The authors of this document do not fully understand the details here, but tested suggested commands on a production system. See [How to Adjust Linux Out-Of-Memory Killer Settings for PostgreSQL](https://www.percona.com/blog/out-of-memory-killer-or-savior/) for some background information.
 ```
 
+(host-admins-reverse-proxy)=
 ### Reverse proxy
 
 The host machine will provide (next to SSH) only one service to the outside world: an HTTP server.
@@ -1098,7 +1099,7 @@ Which container to forward to is determined by the request's URL.
 Here we use [`nginx`](https://www.nginx.com/) as HTTP server.
 
 Connection between the world and HTTP server will be encrypted (HTTPS).
-Connection to containers won't be encrypted because traffic does leave the machine.
+Connection to containers won't be encrypted because traffic does not leave the machine.
 
 Install `nginx`:
 ```
