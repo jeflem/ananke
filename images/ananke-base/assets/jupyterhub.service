@@ -5,6 +5,7 @@ After=syslog.target network.target
 [Service]
 User=root
 Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/conda/envs/jhub/bin"
+Environment="SSL_CERT_DIR=/etc/ssl/certs"
 ExecStart=/opt/conda/envs/jhub/bin/jupyterhub -f /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.py
 
 [Install]

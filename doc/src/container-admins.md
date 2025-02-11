@@ -283,6 +283,21 @@ Thus, in Moodle only `Existing window` works.
 Even `new window` is not possible due to it's implementation in Moodle via embedding techniques.
 ```
 
+#### HTTPS with enterprise root CA or self-signed cert
+
+If JupyterHub shall connect to your LMS via HTTPS with a cert issued by an enterprise root CA, you have to install the CA's root cert in the Ananke container:
+1. On the host machine copy the cert file to your container's `jupyterhub_config.d` directory.
+2. In the container's root shell run
+   ```
+   mv /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d/YOUR_CERT_FILE /usr/local/share/ca-certificates/
+   update-ca-certificates
+   ```
+3. Check that the output contains `1 added`.
+
+```{important}
+JupyterHub refuses to connect to servers via HTTPS if the cert is self-signed. Thus, if you want or have to use a self-signed cert for your LMS, you have to create a custom root CA and issue your own certs with that CA. See [documentation for developers](developers.md), where the process of creating a custom CA and issuing certs is described for setting up the development environment.
+```
+
 ### Hub admins
 
 To give a hub user admin privileges inside the hub (see [For hub admins](hub-admins.md)), get the user's username (from URL `.../user/USERNAME/...` when user visits the hub) and write it to `ananke/containers/my-hub/jupyterhub_config.d/20_users.py`:

@@ -2,6 +2,8 @@
 
 ## Next release (dev branch)
 
+* Documentation improvements:
+  * connect to LMS via HTTPS with enterprise root CA
 * Bugfixes:
   * increase PID limit in container templates
   * avoid `:` in nbgrader feedback paths (timestamps!) to be compatible with jupyter-fs
