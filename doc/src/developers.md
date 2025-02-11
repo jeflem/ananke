@@ -211,6 +211,19 @@ This creates the Moodle database and basic Moodle configuration.
 The script will ask you for your Moodle container's URL.
 With the above network configuration use `http://192.168.178.28:9090` (simple networking) or `https://192.168.178.29/moodle` (full networking).
 
+If you are using the full networking setup, in the container's shell edit both files `/var/www/html/moodle/config.php` and `/opt/moodledata/config.php` to contain the config option `$CFG->sslproxy = true;`. The file then might look like:
+```
+...
+$CFG->dataroot = '/opt/moodledata';
+$CFG->admin = 'admin';
+$CFG->reverseproxy = true;
+$CFG->sslproxy = true;
+
+$CFG->directorypermissions = 02777;
+
+require_once(__DIR__ . '/lib/setup.php');
+```
+
 In your webbrowser open `http://192.168.178.28:9090/moodle` (simple networking) or `https://192.168.178.29/moodle` (full networking).
 Log in as user `admin` with password `Admin123.`.
 Answer all questions asked.
