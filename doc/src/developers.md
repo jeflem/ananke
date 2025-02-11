@@ -361,9 +361,9 @@ Each Ananke image comes with a script `assets/boot.sh` which is run at container
 The exchange directory for nbgrader inside a container is `/opt/nbgrader_exchange`.
 It cannot be in `/home` because dynamic users have no access to `/home` (the home path is mapped to dynamic user's home path in `/var`).
 
-## Arguments to `podman run`
+## Arguments to `podman create`
 
-Some special arguments used in `run.sh`:
+Some special arguments are used in the Ananke Manager script `ananke` for creating containers:
 * `-p 8000:8000` makes port 8000 (right one) inside the container available as port 8000 (left one) outside.
 * `--cap-add SYS_ADMIN` allows the container to create dynamic systemd users.
 * `--mount=type=bind,source=runtime/dyn_home,destination=/var/lib/private` mounts the host machines `runtime/dyn_home` to the container's `/var/lib/private` making dynamic users' home directories persist container rebuilds and restarts.
