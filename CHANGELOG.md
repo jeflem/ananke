@@ -11,6 +11,12 @@
   * increase PID limit in container templates
   * avoid `:` in nbgrader feedback paths (timestamps!) to be compatible with jupyter-fs
   * downgrade jupyter-collaboration to stable release (instead of beta)
+* Update all packages:
+  * JupyterHub 5.2.1
+  * JupyterLab 4.3.5
+  * Notebook 7.3.2
+  * Nbgrader 9.5
+  * Python 3.13.1
 
 ## Ananke 0.5
 
