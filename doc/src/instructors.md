@@ -62,6 +62,14 @@ Usage of the formgrader GUI is described in [nbgrader's documentation](https://n
 When collecting submissions with the formgrader, nbgrader will complain about possible cheating attempts in the log output due to unexpected file ownerships. This warning can be savely ignored as long as no student tries cheating ;-) The warning is caused by Ananke's management of user accounts. Developers plan to tackle this problem in a future release.
 ```
 
+### Batch autograding
+
+The "Manage Submissions" page of Nbgraders Formgrader GUI shows commands for batch autgrading in a terminal. Before running those commands you have to activate the Conda environment, where Nbgrader is installed in:
+```
+conda activate jhub
+```
+The environment name always is `jhub`, even if you have created local or global additional environments.
+
 ### Feedback configuration
 
 Nbgrader provides two configuration options for feedback generation. In the course's Lab open a terminal and run `nano ~/.jupyter/nbgrader_config.py`. A console based text editor will open showing a few lines of Python code. Do not change anything here except for (un)commenting following two lines:

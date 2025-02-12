@@ -3,6 +3,7 @@
 ## Next release (dev branch)
 
 * Documentation improvements:
+  * hints on batch autograding with Nbgrader
   * alternative method for enlarging container admins' home directories
   * more realistic test environment for development
   * connect to LMS via HTTPS with enterprise root CA
