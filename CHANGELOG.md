@@ -3,6 +3,8 @@
 ## Next release (dev branch)
 
 * Documentation improvements:
+  * alternative method for enlarging container admins' home directories
+  * more realistic test environment for development
   * connect to LMS via HTTPS with enterprise root CA
 * Bugfixes:
   * increase PID limit in container templates

@@ -1230,7 +1230,7 @@ To prevent a container from filling the host machine's disk, we use separate vir
 
 The container admin's file system's image file will be a sparse file.
 Thus, it requires much less disk space than its size suggests.
-See [Disk quota checks and extension](#disk-quota-checks-and-extension) for commands to check container admins' true disk usage.
+See [Disk quota checks and extension](#disk-quota-check) for commands to check container admins' true disk usage.
 ```
 
 ```{warning}
@@ -1322,39 +1322,104 @@ For each container on the machine use different location and different port.
 
 ### Enlarge container admin's home dir
 
-If the initial maximum size of a container admin's home directory turns out to be too small, you may increase the size limit by, say, 5 GB. Proceed as follows:
-1. Tell the containter admin to stop the container by running
+If the initial maximum size of a container admin's home directory turns out to be too small, you may increase the size limit.
+This requires three steps detailled below:
+1. Stop the container und unmount the file system.
+2. Entlarge the file system.
+3. Mount the file system and restart the container.
+
+For step 2 we provide two fundamentally different variants. A simple one, that should work, but does not work in at least some cases. And more complex one, that always works.
+
+#### Stop and unmount
+
+Tell the containter admin to stop the container by running
+```
+systemctl --user stop ananke-base-hub.service
+```
+in the **container admin's shell** (SSH). Here `ananke-base-hub.service` is the systemd service for the Ananke container. It's structure is `ananke-CONTAINER_DEFINITION.service`, where `CONTAINER_DEFINITION` is the name of the directory containing the containers `config.py`.
+
+Identify processes accessing the container admin's home directory:
+```
+sudo fuser -mv /home/testhub_user
+```
+Then kill all processes listed there:
+```
+sudo kill PID_OF_PROCESS
+```
+
+Unmount the container admin's home directory:
+```
+sudo umount /home/testhub_user
+```
+   
+#### Enlarge the file system (simple method)   
+
+In priciple, following commands should suffice to increase file system size by 5 GB. But in some settings Ananke's development team observed file system corruption and only partial enlargement (not all tools recognize the larger file system size) for unknown reasons. To avoid data loss you should resort to the more complex (and more reliable) procedure described in the next section.
+```
+sudo truncate -s +5G /home/testhub_user.img
+sudo e2fsck -f /home/testhub_user.img
+sudo resize2fs /home/testhub_user.img
+```
+   
+#### Enlarge the file system (complex method)   
+
+Following steps create a new, larger file system and copy all files to this new file system. If something goes wrong, you may restore the old, small file system.
+
+1. Rename the old image file:
    ```
-   systemctl --user stop container-ananke-base-hub.service
+   sudo mv /home/testhub_user.img /home/testhub_user_old.img
    ```
-   in the **container admin's shell** (SSH). Here `container-ananke-base-hub.service` is the systemd service for the container defined in the containers start-up script `run.sh`.
-2. Identify processes accessing the container admin's home directory:
+2. Create a new, empty image file:
    ```
-   sudo fuser -mv /home/testhub_user
+   sudo truncate -s 25G /home/testhub_user.img
+   sudo mkfs.ext4 /home/testhub_user.img
    ```
-   Then kill all processes listed there:
+3. Create a directory for mounting the old file system:
    ```
-   sudo kill PID_OF_PROCESS
+   sudo mkdir /home/testhub_user_old
    ```
-3. Unmount the container admin's home directory:
+4. Add the line
    ```
-   sudo umount /home/testhub_user
+   /home/testhub_user_old.img /home/testhub_user_old ext4 loop,rw,nosuid,nodev    0    3
    ```
-4. Enlarge image file and file system:
+   to `/etc/fstab` and run
    ```
-   sudo truncate -s +5G /home/testhub_user.img
-   sudo e2fsck -f /home/testhub_user.img
-   sudo resize2fs /home/testhub_user.img
+   sudo systemctl daemon-reload
+   sudo mount /home/testhub_user_old
    ```
-5. Mount the home directory:
+   to mount the old file system.
+5. Mount the new file system:
    ```
    sudo mount /home/testhub_user
    ```
-6. Tell the container admin to start its container by running
+6. Transfer all files from old to new file system:
    ```
-   systemctl --user start container-ananke-base-hub.service
+   sudo rsync -av /home/testhub_user_old/ /home/testhub_user
    ```
-   in the **container admin's shell** (SSH).
+7. Unmount both file systems:
+   ```
+   sudo umount /home/testhub_user_old
+   sudo umount /home/testhub_user
+   ```
+8. (optional) Remove the `testhub_user_old` line from `/etc/fstab` and run
+   ```
+   sudo rm /home/testhub_user_old.img
+   rmdir /home/testhub_user_old
+   ```
+   to remove the old file system.
+   
+#### Mount and restart
+
+Mount the home directory:
+```
+sudo mount /home/testhub_user
+```
+
+Tell the container admin to start its container by running
+```
+systemctl --user start ananke-base-hub.service
+```
+in the **container admin's shell** (SSH).
 
 ## Regular maintenance work
 
@@ -1383,14 +1448,6 @@ All vulnerable packages (including ones not repairable by update at the moment):
 ```
 debsecan --suite bookworm --format report
 ```
-
-````{important}
-If you have to reboot the machine after an update (new kernel version, for instance), all Podman container's on the machine will be stopped.
-Thus, container admins have to restart their containers with
-```
-podman restart container_name_or_id
-```
-````
 
 ### Malware
 
@@ -1468,38 +1525,13 @@ iostat -N --human --pretty
 ```
 This prints CPU and disk usage statistics.
 
-(disk-quota-checks-and-extension)=
-### Disk quota checks and extension
+(disk-quota-check)=
+### Disk quota check
 
 List disk usage with
 ```
 du -h /home/*.img
 ```
-
-Extend a container admin's maximum home directory size by
-```
-CONT_ADMIN=testhub_user
-
-sudo truncate -s +5G /home/$CONT_ADMIN.img
-sudo umount /home/$CONT_ADMIN.img
-sudo e2fsck -f /home/$CONT_ADMIN.img
-sudo resize2fs /home/$CONT_ADMIN.img
-sudo mount /home/$CONT_ADMIN.img
-```
-If `umount` fails with `device is busy` run
-```
-sudo lsof /home/$CONT_ADMIN
-```
-and kill corresponding processes.
-Alternatively (or additionally), run
-```
-sudo fuser -mv /home/$CONT_ADMIN.img
-```
-to see processes using the file system and run
-```
-sudo fuser -mkv /home/$CONT_ADMIN.img
-```
-to kill them.
 
 ## Optional features
 
