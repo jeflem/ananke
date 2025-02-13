@@ -4,6 +4,7 @@
 
 * New features:
   * install script for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler)
+  * [jupyter-resource-usage](https://github.com/jupyter-server/jupyter-resource-usage)
 * Documentation improvements:
   * hints on batch autograding with Nbgrader
   * alternative method for enlarging container admins' home directories

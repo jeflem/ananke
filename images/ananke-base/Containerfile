@@ -66,6 +66,7 @@ RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     jupyterhub=$JUPYTERHUB_VERSION \
     jupyterlab=$JUPYTERLAB_VERSION \
     jupyterlab_execute_time \
+    jupyter-resource-usage \
     nb_conda_kernels \
     notebook=$NOTEBOOK_VERSION \
     pycurl \
