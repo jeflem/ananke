@@ -434,6 +434,15 @@ Remember to back up your user's home directories and modifications you made to t
 
 If you use Jupyter RTC, rename your containers RTC config file (usually `80_rtc.py`) to something like `80_rtc.py.disabled` before creating the new container. After running the RTC install script in the new container, reset the file to the original name and restart the hub. Without this procedure some new RTC features (server-side execution) will not work, because corresponding lab extensions won't get enabled.
 
+If your hub has many users (or at least many notebooks opened in parallel) the container may hit its default PID limit. Ananke 0.6 adds
+```
+# additional arguments to Podman (list of strings)
+config['podman_args'] = [
+    '--pids-limit -1'  # no PID limit (Podman default is 2048, which is too small)
+]
+```
+to all container definition templates (in `config.py`) to allow for an unlimited number of processes (might be a security issue depending on your environment). If you reuse you Ananke 0.5 container definition you have to add this option manually.
+
 (update-to-0_5)=
 ### Update from Ananke 0.4 to Ananke 0.5
 
