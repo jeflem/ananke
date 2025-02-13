@@ -599,7 +599,11 @@ To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root s
 The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
 
 ```{important}
-TensorFlow 2.17 does not have NumPy 2 support. The install script will downgrade NumPy to 1.26.4!
+TensorFlow 2.18 does not have Python 3.13 support. The install script will downgrade Python to 3.11.9!
+```
+
+```{important}
+TensorFlow 2.18 does not have NumPy 2.2.3 support. The install script will downgrade NumPy to 2.0.2!
 ```
 
 #### Assign GPUs to users
