@@ -5,6 +5,7 @@
 * New features:
   * install script for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler)
   * [jupyter-resource-usage](https://github.com/jupyter-server/jupyter-resource-usage)
+  * [Jupyter RTC](https://github.com/jupyterlab/jupyter-collaboration) supports [server-side execution](https://github.com/datalayer/jupyter-server-nbmodel) (see [Update from Ananke 0.5 to Ananke 0.6](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_6) for important hints before updating your Ananke containers)
 * Documentation improvements:
   * hints on batch autograding with Nbgrader
   * alternative method for enlarging container admins' home directories

@@ -429,6 +429,11 @@ Alternatively to in-container updates yoyu may replace your container by a new o
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
 
+(update-to-0_6)=
+### Update from Ananke 0.5 to Ananke 0.6
+
+If you use Jupyter RTC, rename your containers RTC config file (usually `80_rtc.py`) to something like `80_rtc.py.disabled` before creating the new container. After running the RTC install script in the new container, reset the file to the original name and restart the hub. Without this procedure some new RTC features (server-side execution) will not work, because corresponding lab extensions won't get enabled.
+
 (update-to-0_5)=
 ### Update from Ananke 0.4 to Ananke 0.5
 
