@@ -482,7 +482,7 @@ c.JupyterHub.services.append({
     'api_token': kore_token,
     'oauth_no_confirm': True,
     'cwd': '/opt/kore',
-    'command': ['gunicorn', '--workers=2', '--bind=localhost:10001', 'kore:app']
+    'command': ['gunicorn', '--workers=1', '--bind=localhost:10001', 'kore:app']
 })
 c.JupyterHub.load_roles.append({
     'name': 'kore_role',
