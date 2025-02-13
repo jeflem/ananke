@@ -1,14 +1,14 @@
 #!/bin/bash
 
-NUMPY_VERSION=2.0.1
-PANDAS_VERSION=2.2.2
+NUMPY_VERSION=2.2.3
+PANDAS_VERSION=2.2.3
 
-MATPLOTLIB_VERSION=3.9.1
-IPYMPL_VERSION=0.9.4
+MATPLOTLIB_VERSION=3.10.0
+IPYMPL_VERSION=0.9.6
 # ipympl is required in both jhub and python3 env for interactive matplotlib output
 SEABORN_VERSION=0.13.2
 
-PLOTLY_VERSION=5.23.0
+PLOTLY_VERSION=6.0.0
 # plotly is required in both jhub and python3 env for proper rendering in JLab
 
 source /opt/conda/etc/profile.d/conda.sh
