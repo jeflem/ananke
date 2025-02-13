@@ -14,7 +14,7 @@ pip install git+https://github.com/ezhov-evgeny/webdav-client-python-3.git@98c23
 # https://github.com/jpmorganchase/jupyter-fs/issues/211
 # https://github.com/jpmorganchase/jupyter-fs/issues/210
 # https://github.com/jpmorganchase/jupyter-fs/pull/212
-pip install git+https://github.com/jeflem/jupyter-fs.git@ananke_0.5
+pip install git+https://github.com/jeflem/jupyter-fs.git@ananke_0.6
 
 # WebDAV support for jupyterfs
 pip install fs.webdavfs
