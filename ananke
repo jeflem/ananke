@@ -490,7 +490,7 @@ def subcmd_create(args):
         return
 
     # create systemd unit
-    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=60 --stop-timeout=60'
+    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=120 --stop-timeout=120 --restart-sec=10'
     if 'requires' in config:
         for unit in config['requires']:
             cmd += f' --after={unit} --requires={unit}'
