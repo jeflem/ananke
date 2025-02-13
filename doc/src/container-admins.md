@@ -605,3 +605,7 @@ TensorFlow 2.17 does not have NumPy 2 support. The install script will downgrade
 #### Assign GPUs to users
 
 Every hub user has access to all GPUs. How to confine a user's TensorFlow commands to a subset of GPUs is described in [TensorFlow and GPUs](hub-users.md#tensorflow-and-gpus).
+
+### Job scheduling in JupyterLab
+
+To allow users to schedul jobs based on notebooks in JupyterLab install [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler) by running `/opt/install/scheduler.sh` in the container's root shell and restart all user servers.

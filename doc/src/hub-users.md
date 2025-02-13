@@ -198,3 +198,16 @@ cd ~
 ln -s / .lsp_symlink
 ```
 once. This makes more detailed package information available to Jupyter LSP.
+
+## Scheduling jobs
+
+If [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler) is available on your JupyterHub, you may schedule jobs based on notebook files.
+
+```{important}
+Do not use the "Run job with input folder" for notebooks in your home directory. If you need that option, create a subdirectory and move the notebook there. Else, job creation will fail.
+```
+
+```{important}
+Don't forget to remove jobs you do not need anymore. Each job execution creates several files filling up disk space if run forever.
+```
+

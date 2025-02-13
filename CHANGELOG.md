@@ -2,6 +2,8 @@
 
 ## Next release (dev branch)
 
+* New features:
+  * install script for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler)
 * Documentation improvements:
   * hints on batch autograding with Nbgrader
   * alternative method for enlarging container admins' home directories
