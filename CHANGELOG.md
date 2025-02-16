@@ -2,6 +2,8 @@
 
 ## Next release (dev branch)
 
+## Ananke 0.6
+
 * New features:
   * install script for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler)
   * [jupyter-resource-usage](https://github.com/jupyter-server/jupyter-resource-usage)
