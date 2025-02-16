@@ -227,6 +227,7 @@ def ask_int(low: int, high: int, default: int) -> int:
     int
         Chosen integer.
     """
+
     range_text = f'{low if low is not None else "-∞"}...{high if high is not None else "+∞"}'
 
     while True:
@@ -424,12 +425,18 @@ def subcmd_create(args):
                 if not choice:
                     break
                 else:
+                    choice_valid = True
+
                     for gpu in choice.split(','):
                         gpu = gpu.strip()
                         if gpu in gpus:
                             chosen_gpus.append(gpu)
                         else:
                             print(f'GPU name "{gpu}" invalid!')
+                            choice_valid = False
+
+                    if choice_valid:
+                        break
 
             for gpu in chosen_gpus:
                 gpu_devices.append(f'nvidia.com/gpu={gpu}')
@@ -483,7 +490,7 @@ def subcmd_create(args):
         return
 
     # create systemd unit
-    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=60 --stop-timeout=60'
+    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=120 --stop-timeout=120 --restart-sec=10'
     if 'requires' in config:
         for unit in config['requires']:
             cmd += f' --after={unit} --requires={unit}'

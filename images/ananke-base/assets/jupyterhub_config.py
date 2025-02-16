@@ -203,6 +203,9 @@ c.LTI13LaunchValidator.max_age = '600'
 # https://jupyterhub.readthedocs.io/en/stable/howto/configuration/config-user-env.html#jupyter-environment-configuration-priority
 c.Spawner.environment.update({'JUPYTER_PREFER_ENV_PATH': '0'})
 
+# use system certs path in Conda envs' OpenSSL (required for Nbgrader (and maybe other packages) if server uses enterprise CA)
+c.Spawner.environment.update({'SSL_CERT_DIR': '/etc/ssl/certs'})
+
 c.Spawner.args = ['--KernelSpecManager.ensure_native_kernel=False']
 c.JupyterHub.spawner_class = 'systemdspawner.SystemdSpawner'
 

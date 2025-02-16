@@ -266,7 +266,7 @@ Note that the value for `c.LTI13Authenticator.client_id` has to be a list of str
 Don't abuse `30_lms.py` for other configuration purposes than the described LTI configuration.
 This may lead to unexpected behavior.
 
-(lit-lms)=
+(lti-lms)=
 #### LMS
 
 For your LMS you need the following configuration information (field names are taken from Moodle here and may be slightly different in other LMS):
@@ -281,6 +281,22 @@ For your LMS you need the following configuration information (field names are t
 For security reasons JupyterHub does not allow to be embedded into another website.
 Thus, in Moodle only `Existing window` works.
 Even `new window` is not possible due to it's implementation in Moodle via embedding techniques.
+```
+
+(container-admins-enterprise-ca)=
+#### HTTPS with enterprise root CA or self-signed cert
+
+If JupyterHub shall connect to your LMS via HTTPS with a cert issued by an enterprise root CA, you have to install the CA's root cert in the Ananke container:
+1. On the host machine copy the cert file to your container's `jupyterhub_config.d` directory.
+2. In the container's root shell run
+   ```
+   mv /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d/YOUR_CERT_FILE /usr/local/share/ca-certificates/
+   update-ca-certificates
+   ```
+3. Check that the output contains `1 added`.
+
+```{important}
+JupyterHub refuses to connect to servers via HTTPS if the cert is self-signed. Thus, if you want or have to use a self-signed cert for your LMS, you have to create a custom root CA and issue your own certs with that CA. See [documentation for developers](developers.md), where the process of creating a custom CA and issuing certs is described for setting up the development environment.
 ```
 
 ### Hub admins
@@ -412,6 +428,20 @@ Updating packages in the `jhub` environment may cause lots of troubles. Unexperi
 Alternatively to in-container updates yoyu may replace your container by a new one based on the latest Ananke release.
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
+
+(update-to-0_6)=
+### Update from Ananke 0.5 to Ananke 0.6
+
+If you use Jupyter RTC, rename your containers RTC config file (usually `80_rtc.py`) to something like `80_rtc.py.disabled` before creating the new container. After running the RTC install script in the new container, reset the file to the original name and restart the hub. Without this procedure some new RTC features (server-side execution) will not work, because corresponding lab extensions won't get enabled.
+
+If your hub has many users (or at least many notebooks opened in parallel) the container may hit its default PID limit. Ananke 0.6 adds
+```
+# additional arguments to Podman (list of strings)
+config['podman_args'] = [
+    '--pids-limit -1'  # no PID limit (Podman default is 2048, which is too small)
+]
+```
+to all container definition templates (in `config.py`) to allow for an unlimited number of processes (might be a security issue depending on your environment). If you reuse you Ananke 0.5 container definition you have to add this option manually.
 
 (update-to-0_5)=
 ### Update from Ananke 0.4 to Ananke 0.5
@@ -583,9 +613,17 @@ To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root s
 The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
 
 ```{important}
-TensorFlow 2.17 does not have NumPy 2 support. The install script will downgrade NumPy to 1.26.4!
+TensorFlow 2.18 does not have Python 3.13 support. The install script will downgrade Python to 3.11.9!
+```
+
+```{important}
+TensorFlow 2.18 does not have NumPy 2.2.3 support. The install script will downgrade NumPy to 2.0.2!
 ```
 
 #### Assign GPUs to users
 
 Every hub user has access to all GPUs. How to confine a user's TensorFlow commands to a subset of GPUs is described in [TensorFlow and GPUs](hub-users.md#tensorflow-and-gpus).
+
+### Job scheduling in JupyterLab
+
+To allow users to schedul jobs based on notebooks in JupyterLab install [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler) by running `/opt/install/scheduler.sh` in the container's root shell and restart all user servers.

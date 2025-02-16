@@ -6,7 +6,7 @@ FROM ananke-base
 # install nbgrader and kore
 RUN bash -c "source /opt/conda/etc/profile.d/conda.sh; \
     conda activate jhub; \
-    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.5; \
+    pip install git+https://github.com/jeflem/nbgrader.git@ananke_0.6; \
     pip install git+https://github.com/marcwit/kore-extension.git@ananke_0.5; \
     pip cache purge"
 #    pip install git+https://github.com/jupyter/nbgrader.git@v$NBGRADER_VERSION"

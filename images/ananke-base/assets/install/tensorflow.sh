@@ -5,8 +5,8 @@ source /opt/conda/etc/profile.d/conda.sh
 conda activate python3
 
 # install
-conda install -y numpy==1.26.4
-pip install tensorflow[and-cuda]==2.17.0
+conda install -y python==3.11.9 numpy==2.0.2
+pip install tensorflow[and-cuda]==2.18.0
 pip install keras_tuner
 
 # test

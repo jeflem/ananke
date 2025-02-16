@@ -62,6 +62,14 @@ Usage of the formgrader GUI is described in [nbgrader's documentation](https://n
 When collecting submissions with the formgrader, nbgrader will complain about possible cheating attempts in the log output due to unexpected file ownerships. This warning can be savely ignored as long as no student tries cheating ;-) The warning is caused by Ananke's management of user accounts. Developers plan to tackle this problem in a future release.
 ```
 
+### Batch autograding
+
+The "Manage Submissions" page of Nbgraders Formgrader GUI shows commands for batch autgrading in a terminal. Before running those commands you have to activate the Conda environment, where Nbgrader is installed in:
+```
+conda activate jhub
+```
+The environment name always is `jhub`, even if you have created local or global additional environments.
+
 ### Feedback configuration
 
 Nbgrader provides two configuration options for feedback generation. In the course's Lab open a terminal and run `nano ~/.jupyter/nbgrader_config.py`. A console based text editor will open showing a few lines of Python code. Do not change anything here except for (un)commenting following two lines:
@@ -94,10 +102,16 @@ to `~/.jupyter/nbgrader_config.py`.
 
 The Kore service shipping with the Ananke Jupyter Distribution on the one hand sends nbgrader's grades to the LMS.
 On the other hand, it provides course management functionality for nbgrader.
+The service can be operated via the JupyterLab extension or via the 'Services' tab in the Hub Control Panel.
 
-Access Kore from your JupyterLab session by clicking the 'Kore' menu item.
-* **Sending grades** to the LMS only works for the LMS course you started your Jupyter session from. All other functionality works for all your courses.
-* **Backup** copies the a whole course (including submissions and grades) to your home directory (in your personal JupyterLab).
-* **Import** searches your home directory for backup directories and shows a selection dialog. Imported course files and directories can be renamed in the course's file browser (to rename assignments, for instance).
-* **Reset a course** to remove all students and their data from the course. So you can start with a fresh course without re-creating it.
-* **Delete a course** if you do not need it anymore. All files and the course's user account will be removed. Don't forget to remove corresponding LMS activity, too. Else coming to JupyterHub through this activity will create a new nbgrader course.
+The following functionality is provided:
+**Grading Scope:**
+    - If the grading_scopes parameter is set to `current`, the instructor can only send grades for the current course—specifically, the course they accessed JupyterHub from.
+    - If it is set to `all`, the instructor can send grades for all courses in which they have access rights, providing broader control for instructors managing multiple courses.
+
+**Importing Courses, Assignments, and Problems:**
+    - Instructors can import data from both running and backed-up courses. This includes importing entire courses, specific assignments, or individual problems.
+    - Note: When copying data (sending "to"), the extension only allows importing to running/active courses, and not to backed up courses.
+
+**Course Management:**
+    - The extension allows instructors to back up, reset, or delete any running course where they have the necessary access rights.

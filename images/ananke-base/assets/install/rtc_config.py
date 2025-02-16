@@ -25,6 +25,8 @@ for idx, room in enumerate(public_rtc_rooms):
                     jupyter labextension enable --level=user @jupyter/collaboration-extension; \
                     jupyter labextension disable --level=user @jupyter/docprovider-extension; \
                     jupyter labextension enable --level=user @jupyter/docprovider-extension; \
+                    jupyter labextension disable --level=user jupyter-server-nbmodel; \
+                    jupyter labextension enable --level=user jupyter-server-nbmodel; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:menu"')
@@ -38,6 +40,7 @@ for idx, room in enumerate(public_rtc_rooms):
         'name': f'{room}',
         'url': f'http://127.0.0.1:{port}',
         'command': ['jupyterhub-singleuser', '--KernelSpecManager.ensure_native_kernel=False'],
+        'environment': {'JUPYTER_PREFER_ENV_PATH': '0'},
         'user': f'{username}',
         'cwd': f'/home/{username}',
         'oauth_no_confirm': True
@@ -69,6 +72,10 @@ for idx, room in enumerate(private_rtc_rooms):
                     conda activate jhub; \
                     jupyter labextension disable --level=user @jupyter/collaboration-extension; \
                     jupyter labextension enable --level=user @jupyter/collaboration-extension; \
+                    jupyter labextension disable --level=user @jupyter/docprovider-extension; \
+                    jupyter labextension enable --level=user @jupyter/docprovider-extension; \
+                    jupyter labextension disable --level=user jupyter-server-nbmodel; \
+                    jupyter labextension enable --level=user jupyter-server-nbmodel; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:menu"')
@@ -82,6 +89,7 @@ for idx, room in enumerate(private_rtc_rooms):
         'name': f'{room["name"]}',
         'url': f'http://127.0.0.1:{port}',
         'command': ['jupyterhub-singleuser', '--KernelSpecManager.ensure_native_kernel=False'],
+        'environment': {'JUPYTER_PREFER_ENV_PATH': '0'},
         'user': f'{username}',
         'cwd': f'/home/{username}',
         'oauth_no_confirm': True

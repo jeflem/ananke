@@ -393,8 +393,8 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
             })
 
             groups.update({
-                f'formgrade-{course_id}': [grader_user],
-                f'nbgrader-{course_id}': [grader_user]
+                f'formgrade-{course_id}': {'users': [grader_user]},
+                f'nbgrader-{course_id}': {'users': [grader_user]}
             })
 
             needs_restart = True
@@ -402,7 +402,7 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         # Add instructor to course.
         group_name = f'formgrade-{course_id}'
         if username not in groups[group_name]:
-            groups[group_name].append(username)
+            groups[group_name]['users'].append(username)
             needs_restart = True
 
         # Write new services, roles, groups to config file.
@@ -478,11 +478,11 @@ c.JupyterHub.load_roles.append({
 c.JupyterHub.services.append({
     'name': 'kore',
     'url': 'http://127.0.0.1:10001',
-    'display': False,  # Will be changed once refactored.
+    'display': True,
     'api_token': kore_token,
     'oauth_no_confirm': True,
     'cwd': '/opt/kore',
-    'command': ['gunicorn', '--workers=2', '--bind=localhost:10001', 'kore:app']
+    'command': ['gunicorn', '--workers=1', '--bind=localhost:10001', 'kore:app']
 })
 c.JupyterHub.load_roles.append({
     'name': 'kore_role',

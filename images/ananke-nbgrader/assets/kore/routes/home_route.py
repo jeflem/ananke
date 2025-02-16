@@ -1,3 +1,4 @@
+import json
 import logging
 
 from flask import make_response
@@ -6,8 +7,6 @@ from flask import render_template, Blueprint, current_app
 from flask import request as flask_request
 from flask import session as flask_session
 from jupyterhub.services.auth import HubOAuth
-
-from models.lti_file_reader import LTIFileReader
 
 home_bp = Blueprint('home', __name__)
 
@@ -41,24 +40,27 @@ def authenticated(route_function, kore_token):
 @home_bp.route('', methods=['GET'])
 def home(user):
     # Defining object containing relevant information for the HTML template.
-    tmpl_data = {}
+    data = {}
 
     config_loader = current_app.config['CONFIG_LOADER']
     if config_loader.preflight_error:
-        tmpl_data['preflight_error'] = config_loader.preflight_error
+        data['preflight_error'] = config_loader.preflight_error
 
     user_name = user.get('name')
-    tmpl_data['user'] = user_name
+    data['user'] = user_name
+
+    try:
+        with open(f'runtime/lti_{user_name}.json', 'r') as file:
+            lti_state = json.load(file)
+        data['url'] = f"{lti_state['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']}/services/kore"
+    except (FileNotFoundError, PermissionError, ValueError, OSError):
+        logging.error(f'LTI state file for user {user_name} not found!')
+
+        if 'preflight_error' in data:
+            data['preflight_error'] += f'\nError while reading lti state file.'
+        else:
+            data['preflight_error'] = 'Error while reading lti state file.'
 
     logging.info(f'User {user_name} is accessing home page of kore service.')
 
-    lti_file_reader: LTIFileReader = LTIFileReader(user_name=user_name, file_path=f'runtime/lti_{user_name}.json')
-    lti_file_reader.read_file()
-
-    if not lti_file_reader.read_success:
-        if 'preflight_error' in tmpl_data:
-            tmpl_data['preflight_error'] += f'\n{lti_file_reader.preflight_error}'
-        else:
-            tmpl_data['preflight_error'] = lti_file_reader.preflight_error
-
-    return render_template('home.html.jinja', data=tmpl_data)
+    return render_template('home.html.jinja', data=data)

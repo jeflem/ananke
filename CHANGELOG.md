@@ -1,9 +1,34 @@
 # Changelog
 
+## Next release (dev branch)
+
+## Ananke 0.6
+
+* New features:
+  * install script for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler)
+  * [jupyter-resource-usage](https://github.com/jupyter-server/jupyter-resource-usage)
+  * [Jupyter RTC](https://github.com/jupyterlab/jupyter-collaboration) supports [server-side execution](https://github.com/datalayer/jupyter-server-nbmodel) (see [Update from Ananke 0.5 to Ananke 0.6](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_6) for important hints before updating your Ananke containers)
+* Documentation improvements:
+  * hints on batch autograding with Nbgrader
+  * alternative method for enlarging container admins' home directories
+  * more realistic test environment for development
+  * connect to LMS via HTTPS with enterprise root CA
+* Bugfixes:
+  * increase PID limit in container templates
+  * avoid `:` in nbgrader feedback paths (timestamps!) to be compatible with jupyter-fs
+  * downgrade jupyter-collaboration to stable release (instead of beta)
+* Update all packages:
+  * JupyterHub 5.2.1
+  * JupyterLab 4.3.5
+  * Notebook 7.3.2
+  * Nbgrader 9.5
+  * Python 3.13.1
+
 ## Ananke 0.5
+
 * New features:
   * **BREAKING CHANGE** - LTI/Nbgrader course and grades management is now accessible through the 'Kore' menu item in the instructor's JupyterLab (see [kore-extension](https://github.com/marcwit/kore-extension)). This replaces the former Kore service GUI. See [Update form Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
-  * **BREAKING CHANGE** - Images and Containers now are managed by one Python script instead of several bash scripts. Directory structure changed, too. See [Update form Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
+  * **BREAKING CHANGE** - Images and Containers now are managed by one Python script instead of several bash scripts. Directory structure changed, too. See [Update from Ananke 0.4 to Ananke 0.5](https://gauss.whz.de/ananke/doc/container-admins.html#update-to-0_5) for hints on updating your installation.
   * [jupyterlab-execute-time extension](https://github.com/deshaw/jupyterlab-execute-time) is activated in all JupyterLabs by default. 
 * Minor additions and corrections to doc.
 * Bugfixes:
