@@ -11,13 +11,15 @@ authors:
   - name: Konrad Schöbel
     affiliation: 2
   - name: Marcus Wittig
-    affiliation: 1
+    affiliation: 3
 affiliations:
- - name: Zwickau University of Applied Sciences
-   index: 1
- - name: Leipzig University of Applied Sciences
-   index: 2
-date: 3 November 2024
+  - name: Hochschule für Technik und Wirtschaft Dresden - University of Applied Sciences
+    index: 1
+  - name: Zwickau University of Applied Sciences
+    index: 3
+  - name: Leipzig University of Applied Sciences
+    index: 2
+date: 5 February 2025
 bibliography: paper.bib
 ---
 
