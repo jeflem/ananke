@@ -36,14 +36,14 @@ Then go on to the corresponding chapter targeting your role and needs.
 
 For source code see [Ananke's GitHub repo](https://github.com/jeflem/ananke).
 
-For general information and download, see [Ananke website](https://gauss.fh-zwickau.de/ananke).
+For general information and download, see [Ananke website](https://www2.htw-dresden.de/~fjeme691/ananke).
 
 ## Contact and contributors
 
 The Ananke project started as a joint project of [Leipzig University of Applied Sciences](https://www.htwk-leipzig.de/en/htwk-leipzig) and [Zwickau University of Applied Sciences](https://www.fh-zwickau.de/english/).
 
 The project team currently consists of:
-* [Jens Flemming](https://www.fh-zwickau.de/~jef19jdw)
+* [Jens Flemming](https://www2.htw-dresden.de/~fjeme691/flemming)
 * [Konrad Schöbel](https://fdit.htwk-leipzig.de/fakultaet-dit/personen/professoren/prof-dr-konrad-schoebel)
 * [Marcus Wittig](https://www.fh-zwickau.de/?id=5361)
 

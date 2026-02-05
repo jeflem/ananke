@@ -10,7 +10,7 @@ The project's focus is not on large-scale JupyterHubs with thousands of users bu
 * advice and preconfiguration for administrators,
 * flexibility to implement different application scenarios.
 
-Also have a look at [Ananke website](https://gauss.fh-zwickau.de/ananke).
+Also have a look at [Ananke website](https://www2.htw-dresden.de/~fjeme691/ananke).
 
 ## Overall architecture
 
@@ -32,7 +32,7 @@ The Ananke project provides the following container images:
 ## Documentation
 
 See `doc` subdirectory.
-There's also an [HTML rendering of the doc](https://gauss.fh-zwickau.de/ananke/doc).
+There's also an [HTML rendering of the doc](https://www2.htw-dresden.de/~fjeme691/ananke/doc).
 
 ## Quickstart
 Here are the major steps to get your own JupyterHub with LMS integration:
@@ -42,7 +42,7 @@ Here are the major steps to get your own JupyterHub with LMS integration:
 4. Create a container.
 5. Configure your LMS.
 
-See [documentation](https://gauss.fh-zwickau.de/ananke/doc) for detailed install instructions.
+See [documentation](https://www2.htw-dresden.de/~fjeme691/ananke/doc) for detailled install instructions.
 
 ## Contributing
 
@@ -81,6 +81,6 @@ Here are ways to get support:
 The Ananke project started as a joint project of [Leipzig University of Applied Sciences](https://www.htwk-leipzig.de/en/htwk-leipzig) and [Zwickau University of Applied Sciences](https://www.fh-zwickau.de/english/).
 
 The project team currently consists of:
-* [Jens Flemming](https://www.fh-zwickau.de/~jef19jdw)
+* [Jens Flemming](https://www2.htw-dresden.de/~fjeme691/flemming)
 * [Konrad Schöbel](https://fdit.htwk-leipzig.de/fakultaet-dit/personen/professoren/prof-dr-konrad-schoebel)
 * [Marcus Wittig](https://www.fh-zwickau.de/?id=5361)
