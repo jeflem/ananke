@@ -1,24 +1,27 @@
 #!/bin/bash
 
-IMAGE_NAME=test-moodle
-CONTAINER_NAME=test-moodle
-PORT=9090
+source ./config.sh
 
-echo "Creating container..."
+mkdir -p $SYSTEMD_PATH
+touch $UNIT_FILE
+echo "[Unit]" >> $UNIT_FILE
+echo "Description=$CONTAINER_NAME container" >> $UNIT_FILE
+echo "" >> $UNIT_FILE
+echo "[Container]" >> $UNIT_FILE
+echo "Image=$IMAGE_NAME" >> $UNIT_FILE
+echo "ContainerName=$CONTAINER_NAME" >> $UNIT_FILE
+echo "PublishPort=$PORT:80" >> $UNIT_FILE
+echo "Environment=\"TZ=$TIME_ZONE\"" >> $UNIT_FILE
+echo "Mount=type=bind,source=$RUNTIME_DIR/mariadb_data,destination=/var/lib/mysql" >> $UNIT_FILE
+echo "Mount=type=bind,source=$RUNTIME_DIR/moodle_data,destination=/opt/moodledata" >> $UNIT_FILE
+echo "AddCapability=SYS_ADMIN" >> $UNIT_FILE
+echo "" >> $UNIT_FILE
+echo "[Install]" >> $UNIT_FILE
+echo "WantedBy=multi-user.target" >> $UNIT_FILE
 
-podman create \
--p $PORT:80 \
---cap-add SYS_ADMIN \
---mount=type=bind,source=runtime/mariadb_data,destination=/var/lib/mysql \
---mount=type=bind,source=runtime/moodle_data,destination=/opt/moodledata \
--m=4g \
---name=$CONTAINER_NAME \
-$IMAGE_NAME
+ln -s $UNIT_FILE $CONTAINER_NAME.container
 
-mkdir -p ~/.config/systemd/user
-podman generate systemd --restart-policy=always --name $CONTAINER_NAME > ~/.config/systemd/user/container-$CONTAINER_NAME.service
+#/usr/lib/systemd/user-generators/podman-user-generator --dryrun
+
 systemctl --user daemon-reload
-systemctl --user enable container-$CONTAINER_NAME.service
-
-echo "Starting container..."
-systemctl --user start container-$CONTAINER_NAME.service
+systemctl --user start $CONTAINER_NAME.service
