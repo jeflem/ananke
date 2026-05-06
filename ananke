@@ -348,13 +348,14 @@ def subcmd_create(args):
     path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CONFIG_FILE}'
     config = load_config(path)
     if not config:
-        print('Not creating container.')
+        print(f'ERROR: Config file "{path}" not found! Not creating container.')
         return
 
     # check config
     required = ['image_name', 'port']
     if not all([r in config for r in required]):
         print(f'ERROR: One of keys {required} missing in container config file! Not creating container.')
+        return
     if 'podman_args' not in config:
         config['podman_args'] = []
     if 'volumes' not in config:
@@ -465,6 +466,7 @@ def subcmd_create(args):
         except (KeyboardInterrupt, CalledProcessError) as e:
             print(f'ERROR: Creating directory {src} failed! Not creating container.')
             logger.error(f'Creating directory at {src} failed with ({type(e).__name__})')
+            return
 
     # create container
     cmd = 'podman create --cap-add=SYS_ADMIN'
@@ -726,6 +728,7 @@ def main():
         logger.addHandler(handler)
     except Exception as e:
         print(f'ERROR: Creating log file failed ({e})! Aborting...')
+        return
     logger.setLevel(logging.INFO)
     logger.info('Logging initialized.')
 
