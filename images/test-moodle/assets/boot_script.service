@@ -1,12 +1,14 @@
 [Unit]
 Description=Run script at startup
 After=mysql.service
+Wants=mysql.service
+Before=nginx.service
 
 [Service]
-Type=simple
-RemainAfterExit=yes
+Type=oneshot
 ExecStart=/opt/boot.sh
-TimeoutStartSec=0
+EnvironmentFile=/opt/container.env
 
 [Install]
+RequiredBy=nginx.service
 WantedBy=default.target

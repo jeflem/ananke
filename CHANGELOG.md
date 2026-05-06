@@ -2,7 +2,9 @@
 
 ## Next release (dev branch)
 
-* update Moodle to 5.2
+* Improvements for developers
+  * update Moodle to 5.2
+  * refactor Moodle initialization and boot script
 
 ## Ananke 0.6
 
