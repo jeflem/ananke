@@ -1,6 +1,6 @@
 #!/bin/bash
 
-timedatectl set-timezone Europe/Berlin
+timedatectl set-timezone $TZ
 
 # initialize Moodle on boot, if no data base exists
 init_moodle () {

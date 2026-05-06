@@ -15,7 +15,7 @@ echo "[Container]" >> $UNIT_FILE
 echo "Image=$IMAGE_NAME" >> $UNIT_FILE
 echo "ContainerName=$CONTAINER_NAME" >> $UNIT_FILE
 echo "PublishPort=$PORT:80" >> $UNIT_FILE
-echo "Environment=\"TZ=$TIME_ZONE\"" >> $UNIT_FILE
+echo "EnvironmentFile=\"$(pwd)/container.env\"" >> $UNIT_FILE
 echo "Mount=type=bind,source=$RUNTIME_DIR/mariadb_data,destination=/var/lib/mysql" >> $UNIT_FILE
 echo "Mount=type=bind,source=$RUNTIME_DIR/moodle_data,destination=/opt/moodledata" >> $UNIT_FILE
 echo "Mount=type=bind,source=$RUNTIME_DIR/moodle_code,destination=/var/www/html/moodle" >> $UNIT_FILE
