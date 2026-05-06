@@ -25,7 +25,7 @@ DEFAULT_VOLUMES = [
 
 NVIDIA_YAML = '/etc/cdi/nvidia.yaml'
 
-DOWNLOAD_URL = 'https://gauss.whz.de/ananke/DOWNLOAD_NAME.tar.gz'
+DOWNLOAD_URL = 'https://www2.htw-dresden.de/~fjeme691/ananke/DOWNLOAD_NAME.tar.gz'
 DOWNLOAD_NAMES = ['ananke-base', 'ananke-nbgrader']
 
 COLOR_RESET = '\x1b[0m'
