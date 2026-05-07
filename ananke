@@ -20,8 +20,11 @@ CONT_PREFIX = 'ananke-'
 DEFAULT_VOLUMES = [
     ('dyn_home', '/var/lib/private'),
     ('home', '/home'),
-    ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d')
+    ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d'),
+    ('container.env', '/opt/container.env')
 ]
+
+CA_FILE = 'ca.pem'
 
 NVIDIA_YAML = '/etc/cdi/nvidia.yaml'
 
@@ -454,6 +457,10 @@ def subcmd_create(args):
     # default volumes
     config['volumes'].extend(DEFAULT_VOLUMES)
 
+    # add volume for CA file (custom CA to be installed in the container)
+    if os.path.exists(f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CA_FILE}'):
+        config['volumes'].append((CA_FILE, '/opt/ca.pem'))
+
     # create directories for volumes and make paths absolute
     cont_path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}'
     for i, (src, dest) in enumerate(config['volumes']):
@@ -461,12 +468,14 @@ def subcmd_create(args):
             src = f'{cont_path}/{src}'
             config['volumes'][i] = (src, dest)
 
-        try:
-            shell(f'mkdir -p "{src}"')
-        except (KeyboardInterrupt, CalledProcessError) as e:
-            print(f'ERROR: Creating directory {src} failed! Not creating container.')
-            logger.error(f'Creating directory at {src} failed with ({type(e).__name__})')
-            return
+        if not os.path.exists(src):  # don't try to create directories for file mounts
+            # FIXME: What to do if a file to be mounted does not exist?
+            try:
+                shell(f'mkdir -p "{src}"')
+            except (KeyboardInterrupt, CalledProcessError) as e:
+                print(f'ERROR: Creating directory {src} failed! Not creating container.')
+                logger.error(f'Creating directory at {src} failed with ({type(e).__name__})')
+                return
 
     # create container
     cmd = 'podman create --cap-add=SYS_ADMIN'
@@ -642,8 +651,7 @@ def subcmd_remove(args):
 
     # ask user for transfer of volume ownership
     print(f'{COLOR_BOLD}You may now transfer ownership of files in container volumes to you.'
-          f'This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container.'
-          f'Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
+          f'This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container. Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
     transfer_paths = []
     for src, dest in config['volumes']:
         print(f'Transfer ownership of volume\n  "{src}" (host) > "{dest}" (container)\nto you?')
