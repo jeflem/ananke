@@ -2,6 +2,14 @@
 
 ## Next release (dev branch)
 
+* New features:
+  * currently no support for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler) due to an unresolvable version conflict
+* Update all packages:
+  * JupyterHub 5.4.6
+  * JupyterLab 4.5.7
+  * Notebook 7.5.6
+  * Nbgrader 9.5
+  * Python 3.14.4
 * Improvements for developers
   * update Moodle to 5.2
   * refactor Moodle initialization and boot script
