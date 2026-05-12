@@ -4,6 +4,7 @@
 
 * New features:
   * currently no support for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler) due to an unresolvable version conflict
+  * keep changes to conda envs and config when removing and recreating containers
 * Update all packages:
   * JupyterHub 5.4.6
   * JupyterLab 4.5.7

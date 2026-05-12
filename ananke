@@ -21,7 +21,10 @@ DEFAULT_VOLUMES = [
     ('dyn_home', '/var/lib/private'),
     ('home', '/home'),
     ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d'),
-    ('container.env', '/opt/container.env')
+    ('container.env', '/opt/container.env'),
+    ('etc', '/etc'),
+    ('conda', '/opt/conda'),
+    ('user_data.json', '/opt/user_data.json')
 ]
 
 CA_FILE = 'ca.pem'
@@ -461,21 +464,29 @@ def subcmd_create(args):
     if os.path.exists(f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CA_FILE}'):
         config['volumes'].append((CA_FILE, '/opt/ca.pem'))
 
-    # create directories for volumes and make paths absolute
+    # create and populate volumes to be mounted
     cont_path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}'
     for i, (src, dest) in enumerate(config['volumes']):
+        
+        # make source path absolute
         if not src.startswith('/'):
             src = f'{cont_path}/{src}'
             config['volumes'][i] = (src, dest)
 
-        if not os.path.exists(src):  # don't try to create directories for file mounts
-            # FIXME: What to do if a file to be mounted does not exist?
-            try:
-                shell(f'mkdir -p "{src}"')
-            except (KeyboardInterrupt, CalledProcessError) as e:
-                print(f'ERROR: Creating directory {src} failed! Not creating container.')
-                logger.error(f'Creating directory at {src} failed with ({type(e).__name__})')
-                return
+        # create and populate path if necessary
+        if os.path.exists(src):
+            continue
+        src_splitted = src.rsplit('/', 1)
+        try:
+            if len(src_splitted) == 2:  # create parent directory
+                shell(f'mkdir -p "{src_splitted[0]}"')
+            shell(f'IMG_DIR=$(podman unshare podman image mount "{config["image_name"]}") && ' \
+                  f'podman unshare cp -r "$IMG_DIR{dest}" "{src}" && ' \
+                  f'podman unshare podman image umount "{config["image_name"]}"')
+        except (KeyboardInterrupt, CalledProcessError) as e:
+            print(f'ERROR: Creating/populating path "{src}" failed! Not creating container.')
+            logger.error(f'Creating/populating path "{src}" failed with ({type(e).__name__})')
+            return
 
     # create container
     cmd = 'podman create --cap-add=SYS_ADMIN'
