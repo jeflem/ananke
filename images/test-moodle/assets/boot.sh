@@ -66,3 +66,6 @@ chmod -R a+r /var/www/html/moodle
 
 # write URL path to nginx config
 sed -i "s#MOODLE_URL_PATH#$MOODLE_URL_PATH#g" /etc/nginx/sites-available/default
+
+# install CA cert to system cert store
+test -e /opt/ca.pem && cp /opt/ca.pem /usr/local/share/ca-certificates/ca.crt && update-ca-certificates

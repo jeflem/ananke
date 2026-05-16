@@ -20,6 +20,7 @@ echo "Mount=type=bind,source=$RUNTIME_DIR/mariadb_data,destination=/var/lib/mysq
 echo "Mount=type=bind,source=$RUNTIME_DIR/moodle_data,destination=/opt/moodledata" >> $UNIT_FILE
 echo "Mount=type=bind,source=$RUNTIME_DIR/moodle_code,destination=/var/www/html/moodle" >> $UNIT_FILE
 echo "Mount=type=bind,source=$(pwd)/container.env,destination=/opt/container.env" >> $UNIT_FILE
+test -e $(pwd)/ca.pem && echo "Mount=type=bind,source=$(pwd)/ca.pem,destination=/opt/ca.pem" >> $UNIT_FILE
 echo "AddCapability=SYS_ADMIN" >> $UNIT_FILE
 echo "" >> $UNIT_FILE
 echo "[Install]" >> $UNIT_FILE
