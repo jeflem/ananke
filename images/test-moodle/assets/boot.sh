@@ -5,14 +5,6 @@ timedatectl set-timezone $TZ
 # initialize Moodle on boot, if no data base exists
 init_moodle () {
 
-    # move directories to be persisted to mounted volumes
-    cp -a /var/lib/mysql_original/. /var/lib/mysql/
-    cp -a /opt/moodledata_original/. /opt/moodledata/
-    cp -a /var/www/html/moodle_original/. /var/www/html/moodle/
-    
-    # start MariaDB (starting this failed at first boot, because of missing /var/lib/mysql)
-    systemctl start mysql
-
     # create Moodle data base user and data base
     mysql -u root -e "CREATE DATABASE moodle DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
     mysql -u root -e "CREATE USER moodleuser@localhost IDENTIFIED BY 'moodleuserpassword'"
@@ -48,7 +40,7 @@ init_moodle () {
     php install_database.php --adminpass=Admin123. --agree-license
 
 }
-test ! -e /var/lib/mysql/mysql && init_moodle
+test ! -e /var/lib/mysql/moodle && init_moodle
 
 # make data base files accessible to all users
 # (else, deleting the data base outside the container requires root privileges)

@@ -64,9 +64,9 @@ COPY ./assets/crontab /etc/crontab
 
 # move all directories to be persisted to temporary location
 # (boot script will copy those to mounted volumes at first boot)
-RUN mv /var/lib/mysql /var/lib/mysql_original
-RUN mv /opt/moodledata /opt/moodledata_original
-RUN mv /var/www/html/moodle /var/www/html/moodle_original
+#RUN mv /var/lib/mysql /var/lib/mysql_original
+#RUN mv /opt/moodledata /opt/moodledata_original
+#RUN mv /var/www/html/moodle /var/www/html/moodle_original
     
 # copy boot script and create systemd service for boot script
 COPY ./assets/boot.sh /opt/boot.sh

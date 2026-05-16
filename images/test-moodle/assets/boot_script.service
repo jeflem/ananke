@@ -1,7 +1,7 @@
 [Unit]
 Description=Run script at startup
 After=mysql.service
-Wants=mysql.service
+Requires=mysql.service
 Before=nginx.service
 
 [Service]
