@@ -79,6 +79,6 @@ RUN passwd -l root
 
 WORKDIR /
 
-EXPOSE 8000
+EXPOSE 80
 
 ENTRYPOINT ["/lib/systemd/systemd"]
