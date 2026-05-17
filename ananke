@@ -40,6 +40,8 @@ COLOR_RED = '\x1b[31m'
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 
+SYSTEMD_PATH = os.path.expanduser('~/.config/containers/systemd')
+
 logger = logging.getLogger(__name__)
 
 
@@ -488,52 +490,51 @@ def subcmd_create(args):
             logger.error(f'Creating/populating path "{src}" failed with ({type(e).__name__})')
             return
 
-    # create container
-    cmd = 'podman create --cap-add=SYS_ADMIN'
-    cmd += f' --name="{cont_name}"'
-    cmd += f' --publish={config["port"]}:8000'
-    for src, dest in config['volumes']:
-        cmd += f' --mount=type=bind,source="{src}",destination="{dest}"'
-    for arg in config['podman_args']:
-        cmd += f' {arg}'
-    if 'memory' in config:
-        cmd += f' --memory={config["memory"]}'
-    if 'cpus' in config:
-        cmd += f' --cpus={config["cpus"]}'
-    for dev in gpu_devices:
-        cmd += f' --device={dev}'
-    cmd += f' "{config["image_name"]}"'
+    # create quadlet
+    cont_path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}'
+    unit_file = f'{SYSTEMD_PATH}/{cont_name}.container'
+    shell(f'mkdir -p {SYSTEMD_PATH}')
+    with open(unit_file, 'w') as f:
+        f.write('[Unit]\n')
+        f.write(f'Description={cont_name} container\n')
+        if 'requires' in config:
+            for unit in config['requires']:
+                f.write(f'After={unit}\n')
+                f.write(f'Requires={unit}\n')
+        f.write('\n')
+        f.write('[Service]\n')
+        f.write('Restart=always\n')
+        f.write('TimeoutStartSec=120\n')
+        f.write('TimeoutStopSec=120\n')
+        f.write('RestartSec=10\n')
+        f.write('\n')
+        f.write('[Container]\n')
+        f.write(f'Image=localhost/{config['image_name']}\n')
+        f.write(f'ContainerName={cont_name}\n')
+        f.write(f'PublishPort={config['port']}:8000\n')
+        f.write(f'EnvironmentFile="{cont_path}/container.env"\n')
+        for src, dest in config['volumes']:
+            f.write(f'Mount=type=bind,source={src},destination={dest}\n')
+        f.write('AddCapability=SYS_ADMIN\n')
+        if 'memory' in config:
+            f.write(f'PodmanArgs=--memory={config['memory']}\n')
+        if 'cpus' in config:
+            f.write(f'PodmanArgs=--cpus={config['cpus']}\n')
+        for dev in gpu_devices:
+            f.write(f'PodmanArgs=--device={dev}\n')
+        for arg in config['podman_args']:
+            f.write(f'PodmanArgs={arg}\n')
+        f.write('\n')
+        f.write('[Install]\n')
+        f.write('WantedBy=default.target\n')
 
+    # start container
     try:
-        shell(cmd)
+        shell('systemctl --user daemon-reload')
+        shell(f'systemctl --user start {cont_name}.service')
     except CalledProcessError as e:
         print(f'ERROR: Container creation failed! See {LOG_FILE} for details.')
         logger.error(f'Container creation failed with ({type(e).__name__})')
-        return
-
-    # create systemd unit
-    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=120 --stop-timeout=120 --restart-sec=10'
-    if 'requires' in config:
-        for unit in config['requires']:
-            cmd += f' --after={unit} --requires={unit}'
-    cmd += f' --name "{cont_name}"'
-
-    try:
-        shell(cmd)
-        shell('mkdir -p ~/.config/systemd/user')
-        shell(f'mv "container-{cont_name}.service" ~/.config/systemd/user/"{cont_name}.service"')
-    except CalledProcessError as e:
-        print(f'ERROR: Creating systemd service file failed! See {LOG_FILE} for details.')
-        logger.error(f'Creating systemd service file failed with ({type(e).__name__})')
-        return
-
-    try:
-        shell('systemctl --user daemon-reload')
-        shell(f'systemctl --user enable "{cont_name}.service"')
-        shell(f'systemctl --user start "{cont_name}.service"')
-    except CalledProcessError as e:
-        print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
-        logger.error(f'Starting systemd service failed with ({type(e).__name__})')
         return
 
     # create script for starting root shell
@@ -706,18 +707,11 @@ def subcmd_remove(args):
                 logger.error(f'Changing ownership of {path} in container failed with ({type(e).__name__})')
                 return
 
-    # remove systemd service
+    # remove container
     try:
-        shell(f'systemctl --user stop "{cont_name}.service"')
-        shell(f'systemctl --user disable "{cont_name}.service"')
-        shell(f'rm ~/.config/systemd/user/"{cont_name}.service"')
-    except CalledProcessError as e:
-        print(f'ERROR: Ownership of {path} in container could not be transferred! See {LOG_FILE} for details. Not removing container.')
-        logger.error(f'Changing ownership of {path} in container failed with ({type(e).__name__})')
-
-    # remove Podman container
-    try:
-        shell(f'podman rm "{cont_name}"')
+        shell(f'systemctl --user stop {cont_name}.service')
+        shell(f'rm {SYSTEMD_PATH}/{cont_name}.container')
+        shell('systemctl --user daemon-reload')
     except CalledProcessError as e:
         print(f'ERROR: Removing container failed! See {LOG_FILE} for details.')
         logger.error(f'Removing container failed with ({type(e).__name__})')
