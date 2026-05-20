@@ -44,11 +44,26 @@ Here are the major steps to get your own JupyterHub with LMS integration:
 
 See [documentation](https://www2.htw-dresden.de/~fjeme691/ananke/doc) for detailled install instructions.
 
+## Contributing
+
+Contributions welcome!
+
+There are many ways to contribute:
+* open and review pull requests,
+* report issues,
+* answer questions of other users.
+
+## Support
+
+If you need assistance with this project, reach out to the development team (see below) or check
+* [documentation](https://www2.htw-dresden.de/~fjeme691/ananke/doc),
+* [known issues](https://github.com/jeflem/ananke/issues).
+
 ## Contact and contributors
 
-The Ananke project started as a joint project of [Leipzig University of Applied Sciences](https://www.htwk-leipzig.de/en/htwk-leipzig) and [Zwickau University of Applied Sciences](https://www.fh-zwickau.de/english/).
+The Ananke project started as a joint project of [Leipzig University of Applied Sciences](https://www.htwk-leipzig.de/en/htwk-leipzig) and [Zwickau University of Applied Sciences](https://www.fh-zwickau.de/english/). Currently, it's maintained and further developed at [Hochschule für Technik und Wirtschaft Dresden - University of Applied Sciences](https://htw-dresden.de/en).
 
-The project team currently consists of:
+Major contributors:
 * [Jens Flemming](https://www2.htw-dresden.de/~fjeme691/flemming)
 * [Konrad Schöbel](https://fdit.htwk-leipzig.de/fakultaet-dit/personen/professoren/prof-dr-konrad-schoebel)
 * [Marcus Wittig](https://www.fh-zwickau.de/?id=5361)
