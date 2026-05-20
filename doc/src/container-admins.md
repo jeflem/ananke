@@ -144,7 +144,7 @@ There are two alternatives to get an Ananke image.
 cd ~/ananke
 ./ananke load
 ```
-This asks for an image to load and then downloads the image file from [Ananke website](https://gauss.whz.de/ananke).
+This asks for an image to load and then downloads the image file from [Ananke website](https://www2.htw-dresden.de/~fjeme691/flemming/codedata/ananke.html).
 
 **Alternative 2** (customizable): Run
 ```

@@ -36,7 +36,7 @@ Then go on to the corresponding chapter targeting your role and needs.
 
 For source code see [Ananke's GitHub repo](https://github.com/jeflem/ananke).
 
-For general information and download, see [Ananke website](https://www2.htw-dresden.de/~fjeme691/ananke).
+For general information and download, see [Ananke website](https://www2.htw-dresden.de/~fjeme691/flemming/codedata/ananke.html).
 
 ## Contact and contributors
 

@@ -10,7 +10,7 @@ The project's focus is not on large-scale JupyterHubs with thousands of users bu
 * advice and preconfiguration for administrators,
 * flexibility to implement different application scenarios.
 
-Also have a look at [Ananke website](https://www2.htw-dresden.de/~fjeme691/ananke).
+Also have a look at [Ananke website](https://www2.htw-dresden.de/~fjeme691/flemming/codedata/ananke.html).
 
 ## Overall architecture
 
