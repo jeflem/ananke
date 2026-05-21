@@ -11,6 +11,9 @@ SEABORN_VERSION=0.13.2
 PLOTLY_VERSION=6.6.0
 # plotly is required in both jhub and python3 env for proper rendering in JLab
 
+IPYWIDGETS_VERSION=8.1.8
+ANYWIDGET_VERSION=0.11.0
+
 source /opt/conda/etc/profile.d/conda.sh
 
 conda activate python3
@@ -20,14 +23,20 @@ conda install -y \
       pandas=$PANDAS_VERSION \
       ipympl=$IPYMPL_VERSION \
       seaborn=$SEABORN_VERSION \
+      sympy \
+      requests \
       plotly=$PLOTLY_VERSION \
+      ipywidgets=$IPYWIDGETS_VERSION \
+      anywidget=$ANYWIDGET_VERSION \
       nbformat \
       python-kaleido
 # nbformat and python-kaleido are required by plotly
 
 conda activate jhub
 conda install -y \
-      plotly=$PLOTLY_VERSION
+      plotly=$PLOTLY_VERSION \
+      ipywidgets=$IPYWIDGETS_VERSION \
+      anywidget=$ANYWIDGET_VERSION
 
 # installing ipympl with conda seems to be broken, see https://github.com/matplotlib/ipympl/issues/564
 pip install --root-user-action=ignore ipympl==$IPYMPL_VERSION
