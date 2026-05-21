@@ -29,6 +29,10 @@ def authenticated(route_function, kore_token):
             return route_function(user, *args, **kwargs)
         else:
             # Redirect to login-url on failed auth.
+            # (state is saved in the auth._oauth_states dict and a key is saved in a client side cookie;
+            # problem: with multiple unicorn workers each worker has its own auth object and thus different dicts;
+            # workaround: save next_url in flask session to have it in oauth_callback)
+            flask_session['next_url'] = flask_request.path
             state = auth.generate_state(next_url=flask_request.path)
             response = make_response(flask_redirect(auth.login_url + f'&state={state}'))
             response.set_cookie(auth.state_cookie_name, state)
