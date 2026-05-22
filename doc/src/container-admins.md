@@ -170,7 +170,7 @@ Open your container definition's `config.py` in a text editor:
 ```
 nano ~/ananke/containers/my-hub/config.py
 ```
-Adjust settings as needed. In most cases the `port` has to be set to a value provided to you by your host machine's admin.
+Adjust settings as needed. In most cases the `port` has to be set to a value provided to you by your host machine's admin and `url_domain` has to be set to the domain part of your hub's URL.
 
 If you plan to mount external data directories to the container, do it now. Mounting directories to running containers is not supported by Podman. See [Shared directories](#shared-directories) for more details.
 
@@ -421,7 +421,14 @@ Remember to back up your user's home directories and modifications you made to t
 (update-to-0_7)=
 ### Update from Ananke 0.6 to Ananke 0.7
 
-Remove the old Ananke 0.6 container. Then copy the file `container.env` from an Ananke 0.7 container definition template to your container definition directory. Create a new container.
+1. Remove the old Ananke 0.6 container.
+2. Copy the file `container.env` from an Ananke 0.7 container definition template to your container definition directory.
+3. Add the line
+   ```
+   config['url_domain'] = 'subdomains.domain.tld'
+   ```
+   with the domain part of your hub's URL in your container definition's `config.py` (only necessary for ananke-nbgrader).
+4. Create a new container.
 
 (update-to-0_6)=
 ### Update from Ananke 0.5 to Ananke 0.6

@@ -6,6 +6,9 @@ config['image_name'] = 'ananke-nbgrader:latest'
 # port the container is accessible through (ask your host admin for this value)
 config['port'] = 8000
 
+# domain part of your hub's URL
+config['url_domain'] = 'subdomains.domain.tld'
+
 # memory limit for container ('interactive', '500m', '8g',..., 'max')
 config['memory'] = 'interactive'
 

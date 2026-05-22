@@ -517,6 +517,8 @@ def subcmd_create(args):
             f.write(f'Mount=type=bind,source={src},destination={dest}\n')
         f.write('AddCapability=SYS_ADMIN\n')
         f.write('PodmanArgs=--hosts-file=none\n')
+        if 'url_domain' in config:
+            f.write(f'AddHost={config['url_domain']}:host-gateway\n')
         if 'memory' in config:
             f.write(f'PodmanArgs=--memory={config['memory']}\n')
         if 'cpus' in config:
