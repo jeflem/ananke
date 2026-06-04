@@ -1,11 +1,13 @@
 [Unit]
 Description=Run script at startup
+Before=jupyterhub.service
 
 [Service]
-Type=simple
+Type=oneshot
 RemainAfterExit=yes
 ExecStart=/opt/boot.sh
-TimeoutStartSec=0
+EnvironmentFile=/opt/container.env
 
 [Install]
 WantedBy=default.target
+RequiredBy=jupyterhub.service

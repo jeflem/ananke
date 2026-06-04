@@ -43,7 +43,7 @@ As soon as you have created a new Jupyter activity in your LMS (and client IDs a
 ```
 
 ```{note}
-After creating a new Jupyter activity, your first log in to Jupyter via this activity will take up tp 60 seconds due to lots of background work for creating corresponding nbgrader course and user management. Even if you see JupyterLab's GUI wait another 10 second and ignore cumbersome messages (click 'Dismiss').s. Subsequent logins and your student's login will be much faster.
+After creating a new Jupyter activity, your first log in to Jupyter via this activity will take up tp 60 seconds due to lots of background work for creating corresponding nbgrader course and user management. Even if you see JupyterLab's GUI wait another 10 second and ignore cumbersome messages (click 'Dismiss'). Subsequent logins and your student's login will be much faster.
 ```
 
 If students log in to Jupyter via the LMS activity they automatically get enroled to the corresponding nbgrader course. Once enroled, they have access to all their nbgrader courses. Which activity is chosen for entering Jupyter then does not matter anymore.

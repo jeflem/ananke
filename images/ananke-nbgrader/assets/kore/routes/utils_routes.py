@@ -45,6 +45,9 @@ def oauth_callback():
     token = auth.token_for_code(code)
     flask_session['token'] = token
     next_url = auth.get_next_url(cookie_state) or prefix
+    # get_next_url returns auth.base_url if cookie_state is not a known key to auth._oauth_states (multiple worker problem)
+    if next_url == auth.base_url:
+        next_url = flask_session.get('next_url', next_url)
     response = make_response(flask_redirect(next_url))
     return response
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONTAINER_NAME=test-moodle
+source ./config.sh
 
 read -p "Do you really want to remove container $CONTAINER_NAME? Modifications inside the container will be lost! (y/n) " yn
 case $yn in
@@ -9,10 +9,9 @@ case $yn in
     * ) echo "Invalid response!"; exit;;
 esac
 
-systemctl --user stop container-$CONTAINER_NAME
-systemctl --user disable container-$CONTAINER_NAME
+systemctl --user stop $CONTAINER_NAME.service
 
-rm ~/.config/systemd/user/container-$CONTAINER_NAME.service
+rm $CONTAINER_NAME.container
+rm $SYSTEMD_PATH/$CONTAINER_NAME.container
 
-podman rm $CONTAINER_NAME
- 
+systemctl --user daemon-reload

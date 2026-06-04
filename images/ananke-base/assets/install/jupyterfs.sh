@@ -4,20 +4,16 @@ source /opt/conda/etc/profile.d/conda.sh
 
 conda activate jhub
 
-# development version of webdav-client
-# has bug fix for
-# sed -i 's/root=self.webdav.root, path=urn.path()/root=unquote(self.webdav.root), path=urn.path()/' \
-#     /opt/conda/envs/jhub/lib/python3.11/site-packages/webdav3/client.py
-pip install git+https://github.com/ezhov-evgeny/webdav-client-python-3.git@98c23d1abd15efc3db9cfc756429f00041578bc2
+# SMB support for jupyterfs via fsspec
+conda install -y fsspec smbprotocol
 
-# install jupyter-fs from fork with some bugfixes
-# https://github.com/jpmorganchase/jupyter-fs/issues/211
-# https://github.com/jpmorganchase/jupyter-fs/issues/210
-# https://github.com/jpmorganchase/jupyter-fs/pull/212
-pip install git+https://github.com/jeflem/jupyter-fs.git@ananke_0.6
+# WebDAV support for jupyterfs via pyfs
+pip install --root-user-action=ignore fs.webdavfs
 
-# WebDAV support for jupyterfs
-pip install fs.webdavfs
+pip install --root-user-action=ignore jupyter-fs==1.1.2
+
+# jupyter-fs doesn't work with newer versions of setuptools (downgrade!)
+conda install -y setuptools==81.0.0
 
 # config file
 cp /opt/install/jupyter_server_config_jupyterfs.py /opt/conda/envs/jhub/etc/jupyter/jupyter_server_config_jupyterfs.py

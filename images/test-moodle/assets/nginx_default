@@ -2,21 +2,49 @@ server {
         listen 80 default_server;
         listen [::]:80 default_server;
 
-        root /var/www/html;
         server_name _;
+
+        root /var/www/html/moodle/public;
+        index index.php;
 
         absolute_redirect off;
 
+        set $moodleurlpath 'MOODLE_URL_PATH';
+        rewrite MOODLE_URL_PATH/(.*) /$1 break;
+
         location / {
-                index index.php index.html index.htm;
+                try_files $uri $uri/ @rphp;
         }
 
-        location ~ ^(.+\.php)(.*)$ {
-                fastcgi_split_path_info ^(.+\.php)(/.+)$;
-                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                fastcgi_param PATH_INFO $fastcgi_path_info;
+        location @rphp {
                 fastcgi_pass unix:/run/php/php-fpm.sock;
-                fastcgi_index index.php;
                 include fastcgi_params;
+                fastcgi_param SCRIPT_FILENAME $realpath_root/r.php;
+                fastcgi_param DOCUMENT_ROOT $realpath_root;
+                fastcgi_param PATH_INFO $moodleurlpath$uri;
+                fastcgi_param DOCUMENT_URI $moodleurlpath$uri;
+                fastcgi_param REQUEST_URI $moodleurlpath$uri$is_args$args;
+                fastcgi_param SCRIPT_NAME $moodleurlpath$uri;
         }
+
+        location ~ \.php(/|$) {
+                fastcgi_split_path_info ^(.+\.php)(/.*)$;
+                set $path_info $fastcgi_path_info;
+                try_files $fastcgi_script_name $fastcgi_script_name/ /r.php$is_args$args;
+                fastcgi_pass unix:/run/php/php-fpm.sock;
+                include fastcgi_params;
+                fastcgi_param PATH_INFO $path_info;
+                fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+                fastcgi_param DOCUMENT_ROOT $realpath_root;
+        }
+
+        location ~ /\.(?!well-known).* {
+            return 404;
+        } 
+
+        location ~ (/vendor/|/node_modules/|composer\.json|/readme|/README|readme\.txt|/upgrade\.txt|/UPGRADING\.md|db/install\.xml|/fixtures/|/behat/|phpunit\.xml|\.lock|environment\.xml) { 
+            deny all;
+            return 404; 
+        }
+        
 }

@@ -1,6 +1,23 @@
 # Changelog
 
-## Next release (dev branch)
+## Ananke 0.7
+
+This release contains all changes necessary to run Ananke with Debian 13 and Podman 5. Container management now uses Podman Quadlets (only relevant for developers). GPU support has not been tested, but should work as usual (no changes here).
+
+* New features:
+  * currently no support for [jupyter_scheduler](https://github.com/jupyter-server/jupyter-scheduler) due to an unresolvable version conflict
+  * keep changes to conda envs and config when removing and recreating containers
+  * simplified usage of enterprise CA cers
+* Update all packages:
+  * JupyterHub 5.4.6
+  * JupyterLab 4.5.7
+  * Notebook 7.5.6
+  * Nbgrader 9.5
+  * Python 3.14.4
+* Improvements for developers
+  * update Moodle to 5.2
+  * refactor Moodle initialization and boot script
+  * simplified handling of custom root CA
 
 ## Ananke 0.6
 

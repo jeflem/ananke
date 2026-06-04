@@ -6,10 +6,10 @@ This documentation aims at different types of users:
 * Jupyter users with maximum permissions inside Jupyter (denoted *hub admins*)
 * users with access to the host system (denoted *container admins*)
 * users with maximum permissions on the host system (denoted *host admins*)
-* members of the development team (denoted *developers*)
+* people who contribute code or develop their own customized variant of Ananke (denoted *developers*)
 
-The Documentation structure follows these user types.
-Depending on your roles, you should read the corresponding sections.
+Thedocumentation structure follows these user types.
+Depending on your roles, you should read corresponding sections.
 
 Users may have different roles at once.
 An instructor is likely to be a hub admin, too.

@@ -123,9 +123,9 @@ If the jupyter-fs extension is available in your JupyterLab, you may set up acce
 
 In JupyterLab's menu click 'Settings', 'Settings Editor', 'jupyter-fs', 'Add'.
 Choose a name for the external resource and provide a URL:
-* for WebDAV (Nextcloud, for instance) use `webdavs://YOUR_CLOUD_USERNAME:{{password}}@YOUR_CLOUDS_WEBDAV_URL` (`{{password}}` may be replaced by your cloud password if you don't want to be asked for the password at JupyterLab start-up; special characters like `@` in your cloud's WebDAV URL have to be %-quoted, `@` is `%40`, for instance),
-* for local file systems on the host machine use `osfs://PATH` (to get access to your home directory via jupyter-fs use `osfs://~/`, for instance),
-* for Windows shares use `smb://YOUR_WINDOWS_USERNAME:{{passwd}}@SERVER/PATH?name-port=3669` (not tested by Ananke team),
+* for WebDAV (Nextcloud, for instance) use `webdavs://YOUR_CLOUD_USERNAME:{{password}}@YOUR_CLOUDS_WEBDAV_URL` (`{{password}}` may be replaced by your cloud password if you don't want to be asked for the password at JupyterLab start-up; special characters like `@` in your cloud's WebDAV URL have to be %-quoted, `@` is `%40`, for instance) and set type to `fsspec`,
+* for local file systems on the host machine use `osfs://PATH` (to get access to your home directory via jupyter-fs use `osfs://~/`, for instance) and set type to `fsspec`,
+* for Windows shares use `smb://YOUR_WINDOWS_USERNAME:{{passwd}}@SERVER/PATH?name-port=3669` and set type to `pyfs`,
 * for other supported resources, have a look at [Index of Filesystems](https://www.pyfilesystem.org/page/index-of-filesystems/) (non-built-in file systems may require additional setup by your admin).
 
 In the auth list choose 'ask'.

@@ -20,12 +20,18 @@ CONT_PREFIX = 'ananke-'
 DEFAULT_VOLUMES = [
     ('dyn_home', '/var/lib/private'),
     ('home', '/home'),
-    ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d')
+    ('jupyterhub_config.d', '/opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d'),
+    ('container.env', '/opt/container.env'),
+    ('etc', '/etc'),
+    ('conda', '/opt/conda'),
+    ('user_data.json', '/opt/user_data.json')
 ]
+
+CA_FILE = 'ca.pem'
 
 NVIDIA_YAML = '/etc/cdi/nvidia.yaml'
 
-DOWNLOAD_URL = 'https://gauss.whz.de/ananke/DOWNLOAD_NAME.tar.gz'
+DOWNLOAD_URL = 'https://www2.htw-dresden.de/~fjeme691/ananke/DOWNLOAD_NAME.tar.gz'
 DOWNLOAD_NAMES = ['ananke-base', 'ananke-nbgrader']
 
 COLOR_RESET = '\x1b[0m'
@@ -33,6 +39,8 @@ COLOR_BOLD = '\x1b[1m'
 COLOR_RED = '\x1b[31m'
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
+
+SYSTEMD_PATH = os.path.expanduser('~/.config/containers/systemd')
 
 logger = logging.getLogger(__name__)
 
@@ -348,13 +356,14 @@ def subcmd_create(args):
     path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CONFIG_FILE}'
     config = load_config(path)
     if not config:
-        print('Not creating container.')
+        print(f'ERROR: Config file "{path}" not found! Not creating container.')
         return
 
     # check config
     required = ['image_name', 'port']
     if not all([r in config for r in required]):
         print(f'ERROR: One of keys {required} missing in container config file! Not creating container.')
+        return
     if 'podman_args' not in config:
         config['podman_args'] = []
     if 'volumes' not in config:
@@ -453,65 +462,82 @@ def subcmd_create(args):
     # default volumes
     config['volumes'].extend(DEFAULT_VOLUMES)
 
-    # create directories for volumes and make paths absolute
+    # add volume for CA file (custom CA to be installed in the container)
+    if os.path.exists(f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}/{CA_FILE}'):
+        config['volumes'].append((CA_FILE, '/opt/ca.pem'))
+
+    # create and populate volumes to be mounted
     cont_path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}'
     for i, (src, dest) in enumerate(config['volumes']):
+        
+        # make source path absolute
         if not src.startswith('/'):
             src = f'{cont_path}/{src}'
             config['volumes'][i] = (src, dest)
 
+        # create and populate path if necessary
+        if os.path.exists(src):
+            continue
+        src_splitted = src.rsplit('/', 1)
         try:
-            shell(f'mkdir -p "{src}"')
+            if len(src_splitted) == 2:  # create parent directory
+                shell(f'mkdir -p "{src_splitted[0]}"')
+            shell(f'IMG_DIR=$(podman unshare podman image mount "{config["image_name"]}") && ' \
+                  f'podman unshare cp -r "$IMG_DIR{dest}" "{src}" && ' \
+                  f'podman unshare podman image umount "{config["image_name"]}"')
         except (KeyboardInterrupt, CalledProcessError) as e:
-            print(f'ERROR: Creating directory {src} failed! Not creating container.')
-            logger.error(f'Creating directory at {src} failed with ({type(e).__name__})')
+            print(f'ERROR: Creating/populating path "{src}" failed! Not creating container.')
+            logger.error(f'Creating/populating path "{src}" failed with ({type(e).__name__})')
+            return
 
-    # create container
-    cmd = 'podman create --cap-add=SYS_ADMIN'
-    cmd += f' --name="{cont_name}"'
-    cmd += f' --publish={config["port"]}:8000'
-    for src, dest in config['volumes']:
-        cmd += f' --mount=type=bind,source="{src}",destination="{dest}"'
-    for arg in config['podman_args']:
-        cmd += f' {arg}'
-    if 'memory' in config:
-        cmd += f' --memory={config["memory"]}'
-    if 'cpus' in config:
-        cmd += f' --cpus={config["cpus"]}'
-    for dev in gpu_devices:
-        cmd += f' --device={dev}'
-    cmd += f' "{config["image_name"]}"'
+    # create quadlet
+    cont_path = f'{BASE_PATH}/{CONT_DEF_DIR}/{cont_def}'
+    unit_file = f'{SYSTEMD_PATH}/{cont_name}.container'
+    shell(f'mkdir -p {SYSTEMD_PATH}')
+    with open(unit_file, 'w') as f:
+        f.write('[Unit]\n')
+        f.write(f'Description={cont_name} container\n')
+        if 'requires' in config:
+            for unit in config['requires']:
+                f.write(f'After={unit}\n')
+                f.write(f'Requires={unit}\n')
+        f.write('\n')
+        f.write('[Service]\n')
+        f.write('Restart=always\n')
+        f.write('TimeoutStartSec=120\n')
+        f.write('TimeoutStopSec=120\n')
+        f.write('RestartSec=10\n')
+        f.write('\n')
+        f.write('[Container]\n')
+        f.write(f'Image=localhost/{config['image_name']}\n')
+        f.write(f'ContainerName={cont_name}\n')
+        f.write(f'PublishPort={config['port']}:8000\n')
+        f.write(f'EnvironmentFile="{cont_path}/container.env"\n')
+        for src, dest in config['volumes']:
+            f.write(f'Mount=type=bind,source={src},destination={dest}\n')
+        f.write('AddCapability=SYS_ADMIN\n')
+        f.write('PodmanArgs=--hosts-file=none\n')
+        if 'url_domain' in config:
+            f.write(f'AddHost={config['url_domain']}:host-gateway\n')
+        if 'memory' in config:
+            f.write(f'PodmanArgs=--memory={config['memory']}\n')
+        if 'cpus' in config:
+            f.write(f'PodmanArgs=--cpus={config['cpus']}\n')
+        for dev in gpu_devices:
+            f.write(f'PodmanArgs=--device={dev}\n')
+        for arg in config['podman_args']:
+            f.write(f'PodmanArgs={arg}\n')
+        f.write('\n')
+        f.write('[Install]\n')
+        f.write('WantedBy=default.target\n')
 
+    # start container
     try:
-        shell(cmd)
+        shell('systemctl --user daemon-reload')
+        shell(f'systemctl --user start {cont_name}.service')
     except CalledProcessError as e:
         print(f'ERROR: Container creation failed! See {LOG_FILE} for details.')
         logger.error(f'Container creation failed with ({type(e).__name__})')
-        return
-
-    # create systemd unit
-    cmd = f'podman generate systemd --restart-policy=always --files --start-timeout=120 --stop-timeout=120 --restart-sec=10'
-    if 'requires' in config:
-        for unit in config['requires']:
-            cmd += f' --after={unit} --requires={unit}'
-    cmd += f' --name "{cont_name}"'
-
-    try:
-        shell(cmd)
-        shell('mkdir -p ~/.config/systemd/user')
-        shell(f'mv "container-{cont_name}.service" ~/.config/systemd/user/"{cont_name}.service"')
-    except CalledProcessError as e:
-        print(f'ERROR: Creating systemd service file failed! See {LOG_FILE} for details.')
-        logger.error(f'Creating systemd service file failed with ({type(e).__name__})')
-        return
-
-    try:
-        shell('systemctl --user daemon-reload')
-        shell(f'systemctl --user enable "{cont_name}.service"')
-        shell(f'systemctl --user start "{cont_name}.service"')
-    except CalledProcessError as e:
-        print(f'ERROR: Starting systemd service failed! See {LOG_FILE} for details.')
-        logger.error(f'Starting systemd service failed with ({type(e).__name__})')
         return
 
     # create script for starting root shell
@@ -640,8 +666,7 @@ def subcmd_remove(args):
 
     # ask user for transfer of volume ownership
     print(f'{COLOR_BOLD}You may now transfer ownership of files in container volumes to you.'
-          f'This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container.'
-          f'Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
+          f'This simplifies modifying and deleting files created during container runtime, but may cause troubles if you plan to reuse volumes in a new container. Changes won\'t be applied immediately, but only after confirming container removal.{COLOR_RESET}')
     transfer_paths = []
     for src, dest in config['volumes']:
         print(f'Transfer ownership of volume\n  "{src}" (host) > "{dest}" (container)\nto you?')
@@ -685,18 +710,11 @@ def subcmd_remove(args):
                 logger.error(f'Changing ownership of {path} in container failed with ({type(e).__name__})')
                 return
 
-    # remove systemd service
+    # remove container
     try:
-        shell(f'systemctl --user stop "{cont_name}.service"')
-        shell(f'systemctl --user disable "{cont_name}.service"')
-        shell(f'rm ~/.config/systemd/user/"{cont_name}.service"')
-    except CalledProcessError as e:
-        print(f'ERROR: Ownership of {path} in container could not be transferred! See {LOG_FILE} for details. Not removing container.')
-        logger.error(f'Changing ownership of {path} in container failed with ({type(e).__name__})')
-
-    # remove Podman container
-    try:
-        shell(f'podman rm "{cont_name}"')
+        shell(f'systemctl --user stop {cont_name}.service')
+        shell(f'rm {SYSTEMD_PATH}/{cont_name}.container')
+        shell('systemctl --user daemon-reload')
     except CalledProcessError as e:
         print(f'ERROR: Removing container failed! See {LOG_FILE} for details.')
         logger.error(f'Removing container failed with ({type(e).__name__})')
@@ -726,6 +744,7 @@ def main():
         logger.addHandler(handler)
     except Exception as e:
         print(f'ERROR: Creating log file failed ({e})! Aborting...')
+        return
     logger.setLevel(logging.INFO)
     logger.info('Logging initialized.')
 

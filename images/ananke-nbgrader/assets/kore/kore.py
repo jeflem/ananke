@@ -20,9 +20,16 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
+try:
+    with open('/opt/kore/cookie_secret', 'rb') as f:
+        cookie_secret = f.read()
+except Exception as e:
+    logging.warning('Couldn\'t load Kore cookie secret from file. Generating one.')
+    cookie_secret = secrets.token_bytes(32)
+
 app = Flask(__name__)
 app.config.update(
-    SECRET_KEY=secrets.token_bytes(32),
+    SECRET_KEY=cookie_secret,
     SESSION_COOKIE_NAME='kore-sessionid',
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SECURE=True,  # should be True in case of HTTPS usage (production)

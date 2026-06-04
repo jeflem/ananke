@@ -25,8 +25,8 @@ for idx, room in enumerate(public_rtc_rooms):
                     jupyter labextension enable --level=user @jupyter/collaboration-extension; \
                     jupyter labextension disable --level=user @jupyter/docprovider-extension; \
                     jupyter labextension enable --level=user @jupyter/docprovider-extension; \
-                    jupyter labextension disable --level=user jupyter-server-nbmodel; \
-                    jupyter labextension enable --level=user jupyter-server-nbmodel; \
+                    jupyter labextension disable --level=user @datalayer/jupyter-server-nbmodel; \
+                    jupyter labextension enable --level=user @datalayer/jupyter-server-nbmodel; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:menu"')
@@ -74,8 +74,8 @@ for idx, room in enumerate(private_rtc_rooms):
                     jupyter labextension enable --level=user @jupyter/collaboration-extension; \
                     jupyter labextension disable --level=user @jupyter/docprovider-extension; \
                     jupyter labextension enable --level=user @jupyter/docprovider-extension; \
-                    jupyter labextension disable --level=user jupyter-server-nbmodel; \
-                    jupyter labextension enable --level=user jupyter-server-nbmodel; \
+                    jupyter labextension disable --level=user @datalayer/jupyter-server-nbmodel; \
+                    jupyter labextension enable --level=user @datalayer/jupyter-server-nbmodel; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:assignment-list; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:validate-assignment; \
                     jupyter labextension disable --level=user @jupyter/nbgrader:menu"')

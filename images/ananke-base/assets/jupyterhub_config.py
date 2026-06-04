@@ -192,8 +192,8 @@ c.post_auth_hook_callbacks.append(update_user_data)
 #-------------------------------------------------------------------------------
 
 c.LTI13Authenticator.username_key = 'sub'
-c.LTI13LaunchValidator.time_leeway = '0'
-c.LTI13LaunchValidator.max_age = '600'
+c.LTI13LaunchValidator.time_leeway = 0
+c.LTI13LaunchValidator.max_age = 600
 
 #-------------------------------------------------------------------------------
 # Spawner

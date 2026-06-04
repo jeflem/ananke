@@ -203,6 +203,13 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
         # Activate nbgrader and kore extensions for instructor user.
         logging.debug(f'Activating nbgrader extensions for user: {username}.')
         uid, gid = get_dir_owner(path=user_home)
+        # prepare user config (necessary since https://github.com/jupyter-server/jupyter_server/pull/1509)
+        # (without this, server extensions cannot be enabled/disabled per user)
+        await run_as_user(username, 'mkdir', ['-p', f'{user_home}/.jupyter/jupyter_server_config.d'])
+        await run_as_user(username, 'cp', [
+            '/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.d/nbgrader.server_extensions.course_list.json',
+            f'{user_home}/.jupyter/jupyter_server_config.d/nbgrader.server_extensions.course_list.json'
+        ])
         await run_as_user(username, 'jupyter', ['server', 'extension', 'enable', '--user', 'nbgrader.server_extensions.course_list'])
         os.system('jupyter labextension unlock @jupyter/nbgrader:course-list')
         await run_as_user(username, 'jupyter', ['labextension', 'disable', '--level=user', '@jupyter/nbgrader:course-list'])
@@ -259,6 +266,21 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
 
         # Activate nbgrader extensions for current user.
         try:
+            # prepare user config (necessary since https://github.com/jupyter-server/jupyter_server/pull/1509)
+            # (without this, server extensions cannot be enabled/disabled per user)
+            run(['runuser', '-u', grader_user, '--', 'mkdir', '-p', f'/home/{grader_user}/.jupyter/jupyter_server_config.d'], check=True)
+            run(['runuser', '-u', grader_user, '--', 'cp',
+                '/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.d/nbgrader.server_extensions.formgrader.json',
+                f'/home/{grader_user}/.jupyter/jupyter_server_config.d/nbgrader.server_extensions.formgrader.json'
+            ], check=True)
+            run(['runuser', '-u', grader_user, '--', 'cp',
+                '/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.d/nbgrader.server_extensions.assignment_list.json',
+                f'/home/{grader_user}/.jupyter/jupyter_server_config.d/nbgrader.server_extensions.assignment_list.json'
+            ], check=True)
+            run(['runuser', '-u', grader_user, '--', 'cp',
+                '/opt/conda/envs/jhub/etc/jupyter/jupyter_server_config.d/nbgrader.server_extensions.validate_assignment.json',
+                f'/home/{grader_user}/.jupyter/jupyter_server_config.d/nbgrader.server_extensions.validate_assignment.json'
+            ], check=True)
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'enable', '--user', 'nbgrader.server_extensions.formgrader'], check=True)
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user', 'nbgrader.server_extensions.assignment_list'], check=True)
             run(['runuser', '-u', grader_user, '--', 'jupyter', 'server', 'extension', 'disable', '--user', 'nbgrader.server_extensions.validate_assignment'], check=True)
@@ -401,7 +423,7 @@ async def nbgrader_post_auth(authenticator: LTI13Authenticator, handler: LTI13Ca
 
         # Add instructor to course.
         group_name = f'formgrade-{course_id}'
-        if username not in groups[group_name]:
+        if username not in groups[group_name]['users']:
             groups[group_name]['users'].append(username)
             needs_restart = True
 
@@ -482,7 +504,7 @@ c.JupyterHub.services.append({
     'api_token': kore_token,
     'oauth_no_confirm': True,
     'cwd': '/opt/kore',
-    'command': ['gunicorn', '--workers=1', '--bind=localhost:10001', 'kore:app']
+    'command': ['gunicorn', '--workers=4', '--bind=localhost:10001', 'kore:app']
 })
 c.JupyterHub.load_roles.append({
     'name': 'kore_role',

@@ -144,7 +144,7 @@ There are two alternatives to get an Ananke image.
 cd ~/ananke
 ./ananke load
 ```
-This asks for an image to load and then downloads the image file from [Ananke website](https://gauss.whz.de/ananke).
+This asks for an image to load and then downloads the image file from [Ananke website](https://www2.htw-dresden.de/~fjeme691/flemming/codedata/ananke.html).
 
 **Alternative 2** (customizable): Run
 ```
@@ -170,7 +170,7 @@ Open your container definition's `config.py` in a text editor:
 ```
 nano ~/ananke/containers/my-hub/config.py
 ```
-Adjust settings as needed. In most cases the `port` has to be set to a value provided to you by your host machine's admin.
+Adjust settings as needed. In most cases the `port` has to be set to a value provided to you by your host machine's admin and `url_domain` has to be set to the domain part of your hub's URL.
 
 If you plan to mount external data directories to the container, do it now. Mounting directories to running containers is not supported by Podman. See [Shared directories](#shared-directories) for more details.
 
@@ -178,7 +178,7 @@ If you plan to use NVIDIA GPUs inside the container, set the `required` option a
 
 #### Step 5: Adjust JupyterHub configuration
 
-JupyterHub configuration files are in `ananke/containers/my-hub/jupyterhubc_conf.d`. Settings may be changed during container runtime, too. But some settings are required for successful start-up.
+JupyterHub configuration files are in `ananke/containers/my-hub/jupyterhub_config.d`. Settings may be changed during container runtime, too. But some settings are required for successful start-up.
 
 In `00_base.py` set `c.JupyterHub.base_url` to the value provided by your host machine's admin.
 
@@ -223,7 +223,7 @@ cd ~/ananke
 ```
 This opens a shell inside the container. There you are the container's root user. You may check the logs (`journalctl`) or install additional software.
 
-The hub users home directories are in `/var/lib/private` inside the container.
+The hub users' home directories are in `/var/lib/private` inside the container.
 
 ### Remove a container
 
@@ -235,6 +235,15 @@ cd ~/ananke
 Choose the container to remove.
 
 Files living in volumes mounted to the container (everything you see in `ananke/containers/my-hub`) won't be removed. During the removal procedure you'll be asked whether ownership of those file shall be transfered to you. Without transfering ownership you may have problems deleting files because you do not have sufficient permissions. Do NOT transfer ownership if you plan to reuse the volumes in a new container!
+
+Following mounted volumes exist in `ananke/containers/my-hub`:
+* `conda` - global conda environments,
+* `dyn_home` - home directories of hub users,
+* `etc` - global configuration files (e.g., information on user accounts),
+* `home` - user accounts for real-time collaboration and nbgrader,
+* `jupyterhub_config.d` - config files for Jupyter.
+
+All but the last are automatically created at container startup if not already existing (reuse from removed container).
 
 ```{important}
 If you remove a container, all modifications to files inside the container not living in a mounted volume will be lost.
@@ -248,7 +257,7 @@ systemctl restart jupyterhub
 ```
 Restarting the hub does not kill user's JupyterLabs.
 Thus, the hub can be restarted whenever necessary.
-Only users currently active users may experience [cumbersome error messages](#cumbersome-errors) for some seconds.
+Only currently active users may experience [cumbersome error messages](#cumbersome-errors) for some seconds.
 
 (lti-configuration)=
 ### LTI configuration
@@ -286,14 +295,7 @@ Even `new window` is not possible due to it's implementation in Moodle via embed
 (container-admins-enterprise-ca)=
 #### HTTPS with enterprise root CA or self-signed cert
 
-If JupyterHub shall connect to your LMS via HTTPS with a cert issued by an enterprise root CA, you have to install the CA's root cert in the Ananke container:
-1. On the host machine copy the cert file to your container's `jupyterhub_config.d` directory.
-2. In the container's root shell run
-   ```
-   mv /opt/conda/envs/jhub/etc/jupyterhub/jupyterhub_config.d/YOUR_CERT_FILE /usr/local/share/ca-certificates/
-   update-ca-certificates
-   ```
-3. Check that the output contains `1 added`.
+If JupyterHub shall connect to your LMS via HTTPS with a cert issued by an enterprise root CA, you have to install the CA's root cert in the Ananke container. Simply place the CA's cert in the container definition directory in a file named `ca.pem`. Then the cert will be installed during container boot. The cert file has to be placed there before starting the container!
 
 ```{important}
 JupyterHub refuses to connect to servers via HTTPS if the cert is self-signed. Thus, if you want or have to use a self-signed cert for your LMS, you have to create a custom root CA and issue your own certs with that CA. See [documentation for developers](developers.md), where the process of creating a custom CA and issuing certs is described for setting up the development environment.
@@ -314,13 +316,14 @@ In `ananke/containers/my-hub/jupyterhub_config.d/10_servers.py` you may modify J
 
 ### Time zone
 
-After start-up the container's time zone is set to `Europe/Berlin`. To modify the time zone run `timedatectl list-timezones` in the container's root shell and then set the time zone with `timedatectl set-timezone TIME_ZONE_FROM_LIST`.
+A container's time zone is set in `container.env` in the container definition directory. To get a list of available time zones run `timedatectl list-timezones` in the container's root shell.
 
 (backups)=
 ## Backups
 
-Hub user's home directories and the hub's configuration are accessible from outside the container.
+Hub users' home directories and the hub's configuration are accessible from outside the container.
 To back up home directories and configuration, simply make a copy of the `ananke/containers/my-hub` directory.
+This will also include other things like global configuration files and global conda environments.
 
 Example backup procedure:
 1. Log in to the host machine via SSH (see [SSH login to host machine](#ssh-login-to-host-machine)).
@@ -342,13 +345,6 @@ There are two default Python environments: `jhub` (contains all the Jupyter stuf
 conda install package_name
 ```
 
-```{important}
-Modification of Python environment is done inside the container.
-Replacing the container by a new one (even from the same image) resets the Python environment.
-
-Python environments live in `/opt/conda/envs` inside the container.
-```
-
 ## Additional global Python environments
 
 To create another conda environment for all users next to the default `python3` environment in the container's root shell proceed as follows:
@@ -368,13 +364,6 @@ To create another conda environment for all users next to the default `python3` 
    ```
 
 The new environment's kernel appears in all users' JupyterLabs after a few seconds without restarting the hub or user servers.
-
-```{important}
-Creation of an additional global Python environment is done inside the container.
-Replacing the container by a new one (even from the same image) removes all additional Python environments.
-
-Python environments live in `/opt/conda/envs` inside the container.
-```
 
 ## Log files
 
@@ -425,9 +414,21 @@ Updating packages in the `jhub` environment may cause lots of troubles. Unexperi
 
 ### Update the whole container
 
-Alternatively to in-container updates yoyu may replace your container by a new one based on the latest Ananke release.
+Alternatively to in-container updates you may replace your container by a new one based on the latest Ananke release.
 
 Remember to back up your user's home directories and modifications you made to the container (Python environments, ...).
+
+(update-to-0_7)=
+### Update from Ananke 0.6 to Ananke 0.7
+
+1. Remove the old Ananke 0.6 container.
+2. Copy the file `container.env` from an Ananke 0.7 container definition template to your container definition directory.
+3. Add the line
+   ```
+   config['url_domain'] = 'subdomains.domain.tld'
+   ```
+   with the domain part of your hub's URL in your container definition's `config.py` (only necessary for ananke-nbgrader).
+4. Create a new container.
 
 (update-to-0_6)=
 ### Update from Ananke 0.5 to Ananke 0.6
@@ -525,7 +526,7 @@ config['volumes'].append(('/home/username/container-data', '/data'))
 ```
 to the container definitions `config.py`.
 ```{important}
-Do not use `~` in paths in `config['volumes']`. The `~` will not be resolved to the your home directory.
+Do not use `~` in paths in `config['volumes']`. The `~` will not be resolved to your home directory.
 ```
 ```{note}
 After modifying `config.py` you have to recreate your container if it already exists, that is, run `./ananke remove` and then run `./ananke create` again.
@@ -594,6 +595,10 @@ LSP support allows for code completion, automatic code formatting and several ot
 
 If the host machine has got one or more GPUs and Podman is configured to provide GPU access inside containers, then TensorFlow should be installed with GPU support. Have a look at [GPU support](host-admins.md#gpu-support) in the documentation for host admins and/or ask your host admin for details on GPU availability.
 
+```{warning}
+Current Ananke version has not been tested with GPU support. All instructions below have been tested with Ananke 0.6 on Debian 12. For more recent Ananke and system versions you are on your own.
+```
+
 #### Configuration
 
 Ananke supports autoconfiguration of NVIDIA GPUs during container creation (if GPU support for Podman is available on your host machine). If no GPUs are found by the container creation procedure (either not NVIDIA or for other reasons), add a line
@@ -608,16 +613,12 @@ In the container's root shell run `nvidia-smi` to see whether and how many GPUs 
 
 #### Install Tensorflow
 
-To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell.
+To install TensorFlow run `/opt/install/tensorflow.sh` in the container's root shell. You will be ask whether you want to install TensorFlow with or without GPU support.
 
 The install script also runs some TensorFlow commands to test the installation. Carefully check the output for errors.
 
 ```{important}
-TensorFlow 2.18 does not have Python 3.13 support. The install script will downgrade Python to 3.11.9!
-```
-
-```{important}
-TensorFlow 2.18 does not have NumPy 2.2.3 support. The install script will downgrade NumPy to 2.0.2!
+TensorFlow 2.21 does not have Python 3.14 support. The install script will downgrade Python to 3.12.7!
 ```
 
 #### Assign GPUs to users

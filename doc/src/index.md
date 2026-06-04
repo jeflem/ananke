@@ -36,13 +36,13 @@ Then go on to the corresponding chapter targeting your role and needs.
 
 For source code see [Ananke's GitHub repo](https://github.com/jeflem/ananke).
 
-For general information and download, see [Ananke website](https://www2.htw-dresden.de/~fjeme691/ananke).
+For general information and download, see [Ananke website](https://www2.htw-dresden.de/~fjeme691/flemming/codedata/ananke.html).
 
 ## Contact and contributors
 
-The Ananke project started as a joint project of [Leipzig University of Applied Sciences](https://www.htwk-leipzig.de/en/htwk-leipzig) and [Zwickau University of Applied Sciences](https://www.fh-zwickau.de/english/).
+The Ananke project started as a joint project of [Leipzig University of Applied Sciences](https://www.htwk-leipzig.de/en/htwk-leipzig) and [Zwickau University of Applied Sciences](https://www.fh-zwickau.de/english/). Currently, it's maintained and further developed at [Hochschule für Technik und Wirtschaft Dresden - University of Applied Sciences](https://htw-dresden.de/en).
 
-The project team currently consists of:
+Major contributors:
 * [Jens Flemming](https://www2.htw-dresden.de/~fjeme691/flemming)
 * [Konrad Schöbel](https://fdit.htwk-leipzig.de/fakultaet-dit/personen/professoren/prof-dr-konrad-schoebel)
 * [Marcus Wittig](https://www.fh-zwickau.de/?id=5361)
@@ -50,9 +50,9 @@ The project team currently consists of:
 ## Funding
 
 The Ananke project started in 2022 as a government-funded project.
-Funding is provided by [Saxon State Ministry of Education and Cultural Affairs](https://www.smk.sachsen.de/) (Germany) till the end of 2023.
+Funding was provided by [Saxon State Ministry of Education and Cultural Affairs](https://www.smk.sachsen.de/) (Germany) till the end of 2023.
 
-For legal reasons, we state the following (funding information in German):
+For legal reasons, we state the following funding information in German:
 
 > Dieses Projekt wurde durch den [Arbeitskreis E-Learning](https://bildungsportal.sachsen.de/portal/parentpage/institutionen/arbeitskreis-e-learning-der-lrk-sachsen/) der [Landesrektorenkonferenz Sachsen](https://www.lrk-sachsen.de/) im Rahmen der sächsischen E-Learning-Landesinitiative gefördert.
 > Die sächsische E-Learning-Landesinitiative wird mitfinanziert durch Steuermittel auf der Grundlage des vom [Sächsischen Landtag](https://www.landtag.sachsen.de) beschlossenen Haushaltes.
