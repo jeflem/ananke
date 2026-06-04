@@ -4,10 +4,10 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 project = 'Ananke'
-copyright = '2025, Ananke Team'
+copyright = '2026, Ananke Team'
 author = 'Ananke Team'
 version = ''
-release = '0.6'
+release = '0.7'
 
 extensions = ['myst_parser']
 myst_heading_anchors = 4

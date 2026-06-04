@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release (dev branch)
+## Ananke 0.7
 
 This release contains all changes necessary to run Ananke with Debian 13 and Podman 5. Container management now uses Podman Quadlets (only relevant for developers). GPU support has not been tested, but should work as usual (no changes here).
 
